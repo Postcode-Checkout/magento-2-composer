@@ -16,35 +16,36 @@
                     <comment>Enable address lookup on the checkout and account pages</comment>
                     <source_model>Codebrainbv\PostcodeCheckout\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="api_key" translate="label" type="text" sortOrder="20">
+                <field id="api_key" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>API Key</label>
                 </field>
-                <field id="license_key" translate="label" type="text" sortOrder="30">
+                <field id="license_key" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>License Key</label>
                 </field>
-                <field id="hide_address_fields" translate="label" type="select" sortOrder="40">
+                <field id="hide_address_fields" translate="label" type="select" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Hide Address Fields</label>
                     <source_model>Codebrainbv\PostcodeCheckout\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="empty_default_address_fields" translate="label" type="select" sortOrder="50">
+                <field id="empty_default_address_fields" translate="label" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Empty default address fields?</label>
                     <source_model>Codebrainbv\PostcodeCheckout\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="housenumber_addition_address2" translate="label" type="select" sortOrder="60">
+                <field id="housenumber_addition_address2" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Housenumber and addition on address 2</label>
                     <source_model>Codebrainbv\PostcodeCheckout\Model\Config\Source\HousenumberAddition</source_model>
                 </field>
-                <field id="autocomplete_off" translate="label" type="select" sortOrder="70">
+                <field id="autocomplete_off" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Autocomplete off</label>
                     <source_model>Codebrainbv\PostcodeCheckout\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="debug_mode" translate="label comment" type="select" sortOrder="80">
+                <field id="debug_mode" translate="label comment" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Debug mode</label>
                     <comment>Enable debug mode to get console logs in the frontend</comment>
                     <source_model>Codebrainbv\PostcodeCheckout\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="configured_provider" translate="label" type="text" sortOrder="90">
+                <field id="configured_provider" translate="label" type="text" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Configured Provider</label>
+                    <frontend_model>Codebrainbv\PostcodeCheckout\Block\System\Config\Form\Field\Disable</frontend_model> 
                 </field>
             </group>
         </section>
