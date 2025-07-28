@@ -31,9 +31,9 @@
                     <source_model>Codebrainbv\PostcodeCheckout\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="housenumber_addition_address2" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Housenumber and addition on address 2</label>
-                    <source_model>Codebrainbv\PostcodeCheckout\Model\Config\Source\HousenumberAddition</source_model>
-                </field>
+					<label>Housenumber and addition on divergent address fields</label>
+					<source_model>Codebrainbv\PostcodeCheckout\Model\Config\Source\HousenumberAddition</source_model>
+				</field>
                 <field id="autocomplete_off" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>Autocomplete off</label>
                     <source_model>Codebrainbv\PostcodeCheckout\Model\Config\Source\Yesno</source_model>
