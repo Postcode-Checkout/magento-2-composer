@@ -11,17 +11,19 @@
  * @version 1.4.2
  */
 
-(function (global, factory) {
+(function (root, factory) {
 	'use strict';
 
 	// eslint-disable-next-line no-undef
-	if (typeof define === 'function' && define.amd) {
+	if (typeof define === 'function' && define.amd)
+	{
 		// eslint-disable-next-line no-undef
 		define([], factory);
 	}
-	else {
-		global.PostcodeNl = global.PostcodeNl || {};
-		global.PostcodeNl.AutocompleteAddress = factory();
+	else
+	{
+		root.PostcodeNl = root.PostcodeNl || {};
+		root.PostcodeNl.AutocompleteAddress = factory();
 	}
 }(typeof self !== 'undefined' ? self : this, function () {
 	'use strict';
@@ -166,13 +168,16 @@
 			 * @return {string} Screen reader message based on the number of matches.
 			 */
 			getResponseMessage: {
-				value: function (count) {
+				value: function (count)
+				{
 					let message;
 
-					if (count > 1) {
+					if (count > 1)
+					{
 						message = count + ' address suggestions available. ';
 					}
-					else {
+					else
+					{
 						message = 'One address suggestion available. ';
 					}
 
@@ -197,15 +202,17 @@
 			 * - 'short': building results are limited to the first few items, similar to matches in other contexts.
 			 */
 			buildingListMode: {
-				set(mode) {
-					if (Object.values(BUILDING_LIST_MODES).includes(mode)) {
+				set (mode) {
+					if (Object.values(BUILDING_LIST_MODES).includes(mode))
+					{
 						this.mode = mode;
 					}
-					else {
+					else
+					{
 						console.error('Invalid mode for option buildingListMode:', mode);
 					}
 				},
-				get() {
+				get () {
 					return this.mode || BUILDING_LIST_MODES.SHORT;
 				},
 			},
@@ -217,7 +224,8 @@
 	 * @constructor
 	 * @param {Object} options - Autocomplete options.
 	 */
-	const Menu = function (options) {
+	const Menu = function (options)
+	{
 		const self = this,
 			ul = document.createElement('ul'),
 			wrapper = document.createElement('div'),
@@ -232,12 +240,14 @@
 			 *
 			 * @param {HTMLElement} element
 			 */
-			positionTo = function (element) {
+			positionTo = function (element)
+			{
 				const rect = element.getBoundingClientRect();
 				wrapper.style.top = rect.bottom + (window.scrollY || window.pageYOffset) + 'px';
 				wrapper.style.left = rect.left + (window.scrollX || window.pageXOffset) + 'px';
 
-				if (options.autoResize) {
+				if (options.autoResize)
+				{
 					wrapper.style.width = rect.width + 'px';
 				}
 			},
@@ -249,9 +259,11 @@
 			 * @param {boolean} [isRelative] - Treat index as relative to current item (optional). Default false.
 			 * @param {boolean} [setValue] - Set the value of the associated input element (optional). Default false.
 			 */
-			moveItemFocus = function (index, isRelative, setValue) {
+			moveItemFocus = function (index, isRelative, setValue)
+			{
 				const numberOfItems = ul.children.length;
-				if (numberOfItems === 0) {
+				if (numberOfItems === 0)
+				{
 					return;
 				}
 
@@ -260,11 +272,14 @@
 
 				let toIndex = index,
 					fromIndex;
-				if (isRelative) {
-					if (item === null) {
+				if (isRelative)
+				{
+					if (item === null)
+					{
 						toIndex = index > 0 ? index - 1 : numberOfItems + index;
 					}
-					else {
+					else
+					{
 						fromIndex = indexOf(item);
 						toIndex = fromIndex + index;
 					}
@@ -278,7 +293,8 @@
 					isRelative
 					&& item !== null
 					&& (index > 0 && toIndex < fromIndex || index < 0 && toIndex > fromIndex) // Wrapping
-				) {
+				)
+				{
 					setActiveItem(null);
 					inputElement.value = inputValue;
 					elementData.get(inputElement).context = inputContext;
@@ -293,18 +309,21 @@
 				if (
 					setValue
 					&& true === inputElement.dispatchEvent(
-						new CustomEvent(EVENT_NAMESPACE + 'focus', { detail: data, cancelable: true, bubbles: true })
+						new CustomEvent(EVENT_NAMESPACE + 'focus', {detail: data, cancelable: true, bubbles: true})
 					)
-				) {
+				)
+				{
 					inputElement.value = data.value;
 					elementData.get(inputElement).context = data.context;
 					selectedIndex = toIndex;
 
 					// Scroll the menu item into view if needed.
-					if (ul.scrollTop > item.offsetTop) {
+					if (ul.scrollTop > item.offsetTop)
+					{
 						ul.scrollTop = item.offsetTop;
 					}
-					else if (item.offsetTop >= (ul.clientHeight + ul.scrollTop)) {
+					else if (item.offsetTop >= (ul.clientHeight + ul.scrollTop))
+					{
 						ul.scrollTop = (item.offsetHeight + item.offsetTop) - ul.clientHeight;
 					}
 				}
@@ -313,18 +332,21 @@
 			/**
 			 * Get the index of an element in the menu.
 			 */
-			indexOf = function (element) {
+			indexOf = function (element)
+			{
 				return Array.prototype.indexOf.call(ul.children, element);
 			},
 
 			/**
 			 * Set and focus active item. Removes focus from previous item.
 			 */
-			setActiveItem = function (newItem) {
+			setActiveItem = function (newItem)
+			{
 				removeItemFocus();
 
 				item = newItem;
-				if (item) {
+				if (item)
+				{
 					item.classList.add(classNames.itemFocus);
 				}
 			},
@@ -332,8 +354,10 @@
 			/**
 			 * Remove the item focus CSS class from the active item, if any.
 			 */
-			removeItemFocus = function () {
-				if (item !== null) {
+			removeItemFocus = function ()
+			{
+				if (item !== null)
+				{
 					item.classList.remove(classNames.itemFocus);
 				}
 			},
@@ -341,8 +365,10 @@
 			/**
 			 * Event handler to close the menu on outside click.
 			 */
-			closeOnClickOutside = function (e) {
-				if (isOpen && e.target !== inputElement && !wrapper.contains(e.target)) {
+			closeOnClickOutside = function (e)
+			{
+				if (isOpen && e.target !== inputElement && !wrapper.contains(e.target))
+				{
 					self.close();
 				}
 			},
@@ -350,8 +376,10 @@
 			/**
 			 * Event handler to close the menu on window resize.
 			 */
-			closeOnWindowResize = function () {
-				if (isOpen) {
+			closeOnWindowResize = function ()
+			{
+				if (isOpen)
+				{
 					self.close();
 				}
 			};
@@ -403,13 +431,15 @@
 		wrapper.appendChild(ul);
 
 		ul.addEventListener('mousemove', function (e) {
-			if (e.target === item || e.target === ul) {
+			if (e.target === item || e.target === ul)
+			{
 				return;
 			}
 
 			let target = e.target;
 
-			while (target.parentElement !== ul) {
+			while (target.parentElement !== ul)
+			{
 				target = target.parentElement;
 			}
 
@@ -424,7 +454,8 @@
 		wrapper.addEventListener('click', function (e) {
 			e.preventDefault();
 
-			if (item !== null) {
+			if (item !== null)
+			{
 				self.select();
 			}
 
@@ -433,10 +464,12 @@
 		});
 
 		// Add the menu to the page.
-		if (Object.prototype.isPrototypeOf.call(HTMLElement.prototype, options.appendTo)) {
+		if (Object.prototype.isPrototypeOf.call(HTMLElement.prototype, options.appendTo))
+		{
 			options.appendTo.appendChild(wrapper);
 		}
-		else {
+		else
+		{
 			(document.querySelector(options.appendTo) || document.body).appendChild(wrapper);
 		}
 
@@ -446,10 +479,12 @@
 		 * @param {Object[]} matches - Matches from the autocomplete response.
 		 * @param {Function} renderItem - Function to create a list item and add it to the menu element.
 		 */
-		this.setItems = function (matches, renderItem) {
+		this.setItems = function (matches, renderItem)
+		{
 			ul.innerHTML = '';
 
-			for (let i = 0, li, match; (match = matches[i++]);) {
+			for (let i = 0, li, match; (match = matches[i++]);)
+			{
 				li = renderItem(ul, match);
 				elementData.set(li, match);
 			}
@@ -464,20 +499,24 @@
 		 *
 		 * @param {HTMLElement} element - Associated input element.
 		 */
-		this.open = function (element) {
+		this.open = function (element)
+		{
 			inputElement = element;
 			inputValue = inputElement.value;
 			inputContext = elementData.get(inputElement).context;
 
-			if (options.autoFocus && selectedIndex === null) {
+			if (options.autoFocus && selectedIndex === null)
+			{
 				selectedIndex = 0;
 			}
 
-			if (selectedIndex !== null) {
+			if (selectedIndex !== null)
+			{
 				moveItemFocus(selectedIndex);
 			}
 
-			if (isOpen || this.suppress) {
+			if (isOpen || this.suppress)
+			{
 				return;
 			}
 
@@ -485,7 +524,7 @@
 			wrapper.classList.add(classNames.menuOpen);
 			ul.scrollTop = 0;
 			isOpen = true;
-			inputElement.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'open', { bubbles: true }));
+			inputElement.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'open', {bubbles: true}));
 		}
 
 		/**
@@ -493,12 +532,15 @@
 		 *
 		 * @param {boolean} [restoreValue] Restore input element value and context if true.
 		 */
-		this.close = function (restoreValue) {
-			if (!isOpen) {
+		this.close = function (restoreValue)
+		{
+			if (!isOpen)
+			{
 				return;
 			}
 
-			if (restoreValue) {
+			if (restoreValue)
+			{
 				inputElement.value = inputValue;
 				elementData.get(inputElement).context = inputContext;
 				selectedIndex = null;
@@ -507,7 +549,7 @@
 			self.blur();
 			wrapper.classList.remove(classNames.menuOpen);
 			isOpen = false;
-			inputElement.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'close', { bubbles: true }));
+			inputElement.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'close', {bubbles: true}));
 		}
 
 		/**
@@ -523,7 +565,8 @@
 		/**
 		 * Remove the item focus CSS class and clear the active item, if any.
 		 */
-		this.blur = function () {
+		this.blur = function ()
+		{
 			setActiveItem(null);
 		}
 
@@ -532,7 +575,8 @@
 		 *
 		 * @param {boolean} [focusInput] Focus the associated input element if true. Default true.
 		 */
-		this.select = function (focusInput) {
+		this.select = function (focusInput)
+		{
 			const selectedMatch = elementData.get(item),
 				itemIndex = indexOf(item);
 
@@ -541,15 +585,17 @@
 				true === inputElement.dispatchEvent(
 					new CustomEvent(
 						EVENT_NAMESPACE + 'select',
-						{ detail: selectedMatch, cancelable: true, bubbles: true }
+						{detail: selectedMatch, cancelable: true, bubbles: true}
 					)
 				)
-			) {
+			)
+			{
 				inputElement.value = selectedMatch.value;
 				selectedIndex = itemIndex;
 			}
 
-			if (typeof focusInput === 'undefined' || focusInput) {
+			if (typeof focusInput === 'undefined' || focusInput)
+			{
 				inputElement.focus();
 			}
 		}
@@ -557,7 +603,8 @@
 		/**
 		 * Remove menu items.
 		 */
-		this.clear = function () {
+		this.clear = function ()
+		{
 			setActiveItem(null);
 			selectedIndex = null;
 			ul.innerHTML = '';
@@ -568,8 +615,10 @@
 		 *
 		 * @return {boolean} True if the menu is removed, false if already removed.
 		 */
-		this.destroy = function () {
-			if (wrapper.parentNode === null) {
+		this.destroy = function ()
+		{
+			if (wrapper.parentNode === null)
+			{
 				return false;
 			}
 
@@ -588,7 +637,8 @@
 	 *
 	 * @return {string} Session identifier.
 	 */
-	const getSessionId = function () {
+	const getSessionId = function ()
+	{
 		const length = 32,
 			randomIntegers = new Uint8Array(length),
 			randomCharacters = [],
@@ -596,7 +646,8 @@
 
 		(window.crypto || window.msCrypto).getRandomValues(randomIntegers);
 
-		for (let i = 0, j = characterSet.length; i < length; i++) {
+		for (let i = 0, j = characterSet.length; i < length; i++)
+		{
 			randomCharacters.push(characterSet[randomIntegers[i] % j]);
 		}
 
@@ -609,11 +660,13 @@
 	 * @param {string} id - Element identifier.
 	 * @return {string} Element identifier, with numeric suffix if the original identifier is already in use.
 	 */
-	const getUniqueId = function (id) {
+	const getUniqueId = function (id)
+	{
 		let i = 2,
 			result = id;
 
-		while (document.getElementById(result) !== null) {
+		while (document.getElementById(result) !== null)
+		{
 			result = id + '-' + i;
 			i++;
 		}
@@ -628,8 +681,10 @@
 	 * @param {Object} source
 	 * @return {Object} target
 	 */
-	const extend = function (target, source) {
-		for (let prop in source) {
+	const extend = function (target, source)
+	{
+		for (let prop in source)
+		{
 			target[prop] = source[prop];
 		}
 
@@ -645,11 +700,13 @@
 	 * @param {*} value - Any value.
 	 * @return {string} Class name extracted from internal [[class]] property.
 	 */
-	const getClass = function (value) {
+	const getClass = function (value)
+	{
 		return Object.prototype.toString.call(value).slice(8, -1);
 	}
 
-	if (typeof window.CustomEvent !== 'function') {
+	if (typeof window.CustomEvent !== 'function')
+	{
 		/**
 		 * Fix CustomEvent in IE11.
 		 *
@@ -658,8 +715,9 @@
 		 * @return {Event} Custom event.
 		 * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/CustomEvent#Polyfill}
 		 */
-		const CustomEvent = function (event, params) {
-			params = params || { bubbles: false, cancelable: false, detail: null };
+		const CustomEvent = function (event, params)
+		{
+			params = params || {bubbles: false, cancelable: false, detail: null};
 			var evt = document.createEvent('CustomEvent');
 			evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
 			return evt;
@@ -668,7 +726,8 @@
 		window.CustomEvent = CustomEvent;
 	}
 
-	if (window.DOMTokenList.prototype.toggle.length === 0) {
+	if (window.DOMTokenList.prototype.toggle.length === 0)
+	{
 		/**
 		 * Fix DOMTokenList.toggle in IE11.
 		 *
@@ -677,8 +736,10 @@
 		 * @return {boolean} True if the class value is added, false if removed.
 		 * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Element/classList}
 		 */
-		window.DOMTokenList.prototype.toggle = function (value) {
-			if (arguments.length > 1) {
+		window.DOMTokenList.prototype.toggle = function (value)
+		{
+			if (arguments.length > 1)
+			{
 				return (this[arguments[1] ? 'add' : 'remove'](value), !!arguments[1]);
 			}
 
@@ -691,23 +752,29 @@
 	 * @param {HTMLElement|NodeList|string} elementsOrSelector - Element(s) or CSS selector string for element(s) to be used as autocomplete input.
 	 * @param {Object} options - Options to override the defaults. @see PostcodeNl~defaults.
 	 */
-	const autocomplete = function (elementsOrSelector, options) {
+	const autocomplete = function (elementsOrSelector, options)
+	{
 		let inputElements;
 
-		if (getClass(elementsOrSelector) === 'String') {
+		if (getClass(elementsOrSelector) === 'String')
+		{
 			inputElements = $(elementsOrSelector);
 		}
-		else if (Object.prototype.isPrototypeOf.call(HTMLElement.prototype, elementsOrSelector)) {
+		else if (Object.prototype.isPrototypeOf.call(HTMLElement.prototype, elementsOrSelector))
+		{
 			inputElements = [elementsOrSelector];
 		}
-		else if (Object.prototype.isPrototypeOf.call(NodeList.prototype, elementsOrSelector)) {
+		else if (Object.prototype.isPrototypeOf.call(NodeList.prototype, elementsOrSelector))
+		{
 			inputElements = elementsOrSelector;
 		}
-		else {
+		else
+		{
 			throw new TypeError('Element(s) or selector has invalid type. Use HTMLElement, NodeList or valid CSS selector string.');
 		}
 
-		if (inputElements.length === 0) {
+		if (inputElements.length === 0)
+		{
 			return;
 		}
 
@@ -766,7 +833,8 @@
 		 *
 		 * @param {string} str - Text to announce.
 		 */
-		this.announce = function (str) {
+		this.announce = function (str)
+		{
 			liveRegion.innerHTML = '<div>' + str + '</div>';
 		}
 
@@ -782,26 +850,32 @@
 		 * @param {successCallback} success - Function that is executed if the request succeeds.
 		 * @return {XMLHttpRequest} Object representing the eventual completion/failure of the request, and its resulting value.
 		 */
-		this.xhrGet = function (url, success) {
-			if (xhr !== null && xhr.readyState < 4) {
+		this.xhrGet = function (url, success)
+		{
+			if (xhr !== null && xhr.readyState < 4)
+			{
 				xhr.abort();
 			}
 
 			xhr = new XMLHttpRequest();
 
 			xhr.addEventListener('load', function () {
-				if (this.status === 200) {
+				if (this.status === 200)
+				{
 					success.call(this, JSON.parse(xhr.response));
 				}
 			});
 
 			let sessionId = instanceSessionId;
 
-			if (activeElement !== null) {
+			if (activeElement !== null)
+			{
 				const element = activeElement,
-					xhrErrorHandler = function (e) {
-						if (this.status !== 200) {
-							element.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'error', { detail: { 'event': e, request: this }, bubbles: true }));
+					xhrErrorHandler = function (e)
+					{
+						if (this.status !== 200)
+						{
+							element.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'error', {detail: {'event': e, request: this}, bubbles: true}));
 						}
 					};
 
@@ -834,7 +908,8 @@
 		 * @param {successCallback} response - Function that handles the response.
 		 * @return {XMLHttpRequest} @see PostcodeNl.AutocompleteAddress.xhrGet.
 		 */
-		this.getSuggestions = function (context, term, response) {
+		this.getSuggestions = function (context, term, response)
+		{
 			const url = [
 				this.options.autocompleteUrl,
 				encodeURIComponent(context),
@@ -842,7 +917,8 @@
 				options.language || '',
 			];
 
-			if (options.buildingListMode !== BUILDING_LIST_MODES.SHORT) {
+			if (options.buildingListMode !== BUILDING_LIST_MODES.SHORT)
+			{
 				// Only specify when not the API default, for better compatibility with client proxies
 				url.push(options.buildingListMode);
 			}
@@ -863,13 +939,15 @@
 		 * @param {successCallback} response - Function that handles the response.
 		 * @return {XMLHttpRequest} @see PostcodeNl.AutocompleteAddress.xhrGet.
 		 */
-		this.getDetails = function (addressId) {
+		this.getDetails = function (addressId)
+		{
 			let dispatchCountry = null,
 				response = arguments[1];
 
 			const params = [addressId];
 
-			if (arguments.length === 3) {
+			if (arguments.length === 3)
+			{
 				dispatchCountry = arguments[1];
 				response = arguments[2];
 				params.push(dispatchCountry);
@@ -885,7 +963,8 @@
 		 * @param {Object} item - Single autocomplete item.
 		 * @return {HTMLElement} List item element containing an autocomplete match.
 		 */
-		this.renderItem = function (ul, item) {
+		this.renderItem = function (ul, item)
+		{
 			const li = document.createElement('li'),
 				label = document.createElement('span');
 
@@ -894,19 +973,23 @@
 			label.innerHTML = this.highlight(item.label, item.highlights);
 			li.appendChild(label);
 
-			if (item.precision !== PRECISION_ADDRESS) {
+			if (item.precision !== PRECISION_ADDRESS)
+			{
 				li.classList.add(this.options.cssPrefix + 'item-more');
 			}
 
-			if (item.description) {
+			if (item.description)
+			{
 				const span = document.createElement('span');
 				span.textContent = item.description;
 				span.classList.add(this.options.cssPrefix + 'item-description');
 				li.appendChild(span);
 			}
 
-			if (item.tags) {
-				for (let i = 0, tag; (tag = item.tags[i++]);) {
+			if (item.tags)
+			{
+				for (let i = 0, tag; (tag = item.tags[i++]);)
+				{
 					const em = document.createElement('em');
 					em.textContent = this.options.tags[tag];
 					em.classList.add(this.options.cssPrefix + 'item-tag');
@@ -925,8 +1008,10 @@
 		* @param {Array.Array.<number>} indices - Array of character offset pairs.
 		* @return {string} Highlighted string (using "mark" elements).
 		*/
-		this.highlight = function (str, indices) {
-			if (indices.length === 0) {
+		this.highlight = function (str, indices)
+		{
+			if (indices.length === 0)
+			{
 				return str;
 			}
 
@@ -936,7 +1021,8 @@
 				result = [],
 				pair;
 
-			while ((pair = indices[i++])) {
+			while ((pair = indices[i++]))
+			{
 				result.push(str.slice(end, pair[0]));
 				start = pair[0];
 				end = pair[1];
@@ -952,10 +1038,12 @@
 		 *
 		 * @param {string} iso3Code ISO 3166-1 alpha-3 country code.
 		 */
-		this.setCountry = function (iso3Code) {
+		this.setCountry = function (iso3Code)
+		{
 			options.context = iso3Code.toLowerCase();
 
-			for (let i = 0, element; (element = inputElements[i++]);) {
+			for (let i = 0, element; (element = inputElements[i++]);)
+			{
 				elementData.get(element).context = options.context;
 			}
 		}
@@ -965,7 +1053,8 @@
 		 *
 		 * @param {string} languageTag - Language tag, e.g. "nl", "nl_NL", "en-GB" or "de-DE".
 		 */
-		this.setLanguage = function (languageTag) {
+		this.setLanguage = function (languageTag)
+		{
 			options.language = languageTag;
 		}
 
@@ -984,21 +1073,26 @@
 		 * @param {(string|SearchOptions)} [term] - Search query, optional. Or SearchOptions object, optional.
 		 * @param {string} [context] - Autocomplete context, optional. Ignored if using SearchOptions.
 		 */
-		this.search = function (element) {
+		this.search = function (element)
+		{
 			let options;
 
-			if (getClass(arguments[1]) === 'Object') {
+			if (getClass(arguments[1]) === 'Object')
+			{
 				options = arguments[1];
 			}
-			else {
+			else
+			{
 				options = { term: arguments[1], context: arguments[2] };
 			}
 
-			if (typeof options.term !== 'undefined') {
+			if (typeof options.term !== 'undefined')
+			{
 				element.value = options.term;
 			}
 
-			if (typeof options.context !== 'undefined') {
+			if (typeof options.context !== 'undefined')
+			{
 				const data = elementData.get(element);
 				data.context = options.context;
 				elementData.set(element, data);
@@ -1017,14 +1111,16 @@
 		/**
 		 * Reset to initial context, clear the menu, clear input values.
 		 */
-		this.reset = function () {
+		this.reset = function ()
+		{
 			previousValue = null;
 			previousContext = null;
 			matches = [];
 
 			menu.clear();
 
-			for (let i = 0, element; (element = inputElements[i++]);) {
+			for (let i = 0, element; (element = inputElements[i++]);)
+			{
 				const data = elementData.get(element);
 
 				data.context = options.context;
@@ -1037,27 +1133,34 @@
 		/**
 		 * Remove autocomplete functionality and return the input element to its pre-init state.
 		 */
-		this.destroy = function () {
-			if (!menu.destroy()) {
+		this.destroy = function ()
+		{
+			if (!menu.destroy())
+			{
 				return; // Menu is not part of the DOM, assume already destroyed.
 			}
 
 			document.body.removeChild(liveRegion);
 
-			for (let i = 0, element; (element = inputElements[i++]);) {
+			for (let i = 0, element; (element = inputElements[i++]);)
+			{
 				const data = elementData.get(element);
 
-				for (var eventType in data.eventHandlers) {
+				for (var eventType in data.eventHandlers)
+				{
 					element.removeEventListener(eventType, data.eventHandlers[eventType]);
 				}
 
-				for (var attr in data.initialAttributeValues) {
+				for (var attr in data.initialAttributeValues)
+				{
 					const value = data.initialAttributeValues[attr];
 
-					if (value === null) {
+					if (value === null)
+					{
 						element.removeAttribute(attr);
 					}
-					else {
+					else
+					{
 						element.setAttribute(attr, value);
 					}
 				}
@@ -1089,7 +1192,8 @@
 				sessionId: getSessionId(),
 			});
 
-			if (false === element.hasAttribute('autocomplete')) {
+			if (false === element.hasAttribute('autocomplete'))
+			{
 				element.autocomplete = 'off';
 			}
 
@@ -1102,52 +1206,60 @@
 			element.addEventListener('keydown', eventHandlers.keydown = function (e) {
 				isKeyEvent = true;
 
-				switch (e.key) {
+				switch (e.key)
+				{
 					case KEY_UP:
 					case KEY_UP_LEGACY:
-						if (menu.isOpen) {
+						if (menu.isOpen)
+						{
 							menu.focusPrevious(true);
 						}
-						else {
+						else
+						{
 							search(element);
 						}
 
 						e.preventDefault();
-						break;
+					break;
 
 					case KEY_DOWN:
 					case KEY_DOWN_LEGACY:
-						if (menu.isOpen) {
+						if (menu.isOpen)
+						{
 							menu.focusNext(true);
 						}
-						else {
+						else
+						{
 							search(element);
 						}
 
 						e.preventDefault();
-						break;
+					break;
 
 					case KEY_ESC:
 					case KEY_ESC_LEGACY:
 						menu.close(true);
-						break;
+					break;
 
 					case KEY_TAB:
-						if (menu.hasFocus) {
+						if (menu.hasFocus)
+						{
 							menu.select();
 							e.preventDefault();
 						}
-						break;
+					break;
 
 					case KEY_ENTER:
-						if (menu.hasFocus) {
+						if (menu.hasFocus)
+						{
 							menu.select();
 							e.preventDefault();
 						}
-						else {
+						else
+						{
 							menu.close();
 						}
-						break;
+					break;
 
 					default:
 						searchDebounced(element);
@@ -1160,7 +1272,8 @@
 				matches = []; // Prevent auto-selecting old menu item on blur.
 
 				// Skip key event to prevent searching twice.
-				if (isKeyEvent) {
+				if (isKeyEvent)
+				{
 					isKeyEvent = false;
 					return;
 				}
@@ -1169,7 +1282,8 @@
 			});
 
 			element.addEventListener('focus', eventHandlers.focus = function () {
-				if (menu.isMousedown) {
+				if (menu.isMousedown)
+				{
 					return;
 				}
 
@@ -1178,7 +1292,8 @@
 				const data = elementData.get(element);
 
 				// Trigger search if the address is incomplete.
-				if (typeof data.match.precision === 'undefined' || data.match.precision !== PRECISION_ADDRESS) {
+				if (typeof data.match.precision === 'undefined' || data.match.precision !== PRECISION_ADDRESS)
+				{
 					search(element);
 				}
 			});
@@ -1190,10 +1305,12 @@
 
 				data.match = e.detail;
 
-				if (e.detail.precision === PRECISION_ADDRESS) {
+				if (e.detail.precision === PRECISION_ADDRESS)
+				{
 					menu.close();
 				}
-				else {
+				else
+				{
 					menu.open(element);
 					data.context = e.detail.context;
 					window.setTimeout(search, 0, element);
@@ -1201,7 +1318,8 @@
 			});
 
 			element.addEventListener('blur', eventHandlers.blur = function () {
-				if (menu.isMousedown) {
+				if (menu.isMousedown)
+				{
 					return;
 				}
 
@@ -1212,17 +1330,19 @@
 				element.classList.toggle(inputBlankClassName, element.value === '');
 			});
 
-			element.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'create', { detail: self, bubbles: true }));
+			element.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'create', {detail: self, bubbles: true}));
 		});
 
-		const autoSelectSingleAddress = function () {
+		const autoSelectSingleAddress = function ()
+		{
 			if (
 				options.autoFocus
 				&& options.autoSelectSingleAddress
 				&& menu.hasFocus
 				&& matches.length === 1
 				&& matches[0].precision === PRECISION_ADDRESS
-			) {
+			)
+			{
 				menu.select(false);
 			}
 		}
@@ -1233,12 +1353,14 @@
 		 *
 		 * @param {HTMLElement} element - Associated input element.
 		 */
-		const searchDebounced = function (element) {
+		const searchDebounced = function (element)
+		{
 			window.clearTimeout(searchTimeoutId);
 
 			let delay = 10;
 
-			if (element.value.length > 3) {
+			if (element.value.length > 3)
+			{
 				delay = options.delay;
 			}
 
@@ -1250,13 +1372,15 @@
 		 *
 		 * @param {HTMLElement} element - Associated input element.
 		 */
-		const search = function (element) {
+		const search = function (element)
+		{
 			menu.open(element);
 
 			const data = elementData.get(element);
 			activeElement = element;
 
-			if (element.value === previousValue && data.context === previousContext) {
+			if (element.value === previousValue && data.context === previousContext)
+			{
 				return;
 			}
 
@@ -1270,36 +1394,42 @@
 			data.match = {};
 
 			// Reset context if we are below minimum length and clear menu instead of searching.
-			if (element.value.length < options.minLength) {
+			if (element.value.length < options.minLength)
+			{
 				data.context = options.context;
 				menu.clear();
 				return;
 			}
 
 			// Trigger the search event. Cancel this event to prevent the request for address suggestions.
-			if (false === element.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'search', { cancelable: true, bubbles: true }))) {
+			if (false === element.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'search', {cancelable: true, bubbles: true})))
+			{
 				return;
 			}
 
 			const menuSuppress = menu.suppress;
 			self.getSuggestions.call(self, data.context, element.value, function (result) {
-				if (getClass(result.newContext) === 'String') {
+				if (getClass(result.newContext) === 'String')
+				{
 					// Forced switch away from current context - current context no longer valid given user input.
 					data.context = result.newContext;
 				}
 
 				// Trigger the response event. Cancel this event to prevent rendering address suggestions.
-				if (true === element.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'response', { detail: result, cancelable: true, bubbles: true }))) {
+				if (true === element.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'response', {detail: result, cancelable: true, bubbles: true})))
+				{
 					matches = result.matches || [];
 
-					if (hasSubstring && matches.length === 0) {
+					if (hasSubstring && matches.length === 0)
+					{
 						return;
 					}
 
 					menu.setItems(matches, self.renderItem.bind(self));
 					self.announce(options.getResponseMessage(matches.length, options.language));
 
-					if (menuSuppress === false) {
+					if (menuSuppress === false)
+					{
 						menu.open(element);
 					}
 				}
