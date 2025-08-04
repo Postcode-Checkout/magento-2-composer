@@ -1,37 +1,24 @@
 /*!
- * Postcode.eu international address autocompletion
+ * Postcode.nl international address autocompletion
  *
- * https://developer.postcode.eu/documentation/international/javascript
+ * https://api.postcode.nl
  *
  * Copyright Postcode.nl
- * Released under the Apple MIT License (AML)
- * https://www.tldrlegal.com/license/apple-mit-license-aml
+ * Released under the MIT license
+ * https://tldrlegal.com/l/mit
  *
  * @author Postcode.nl
- * @version 1.4.2
+ * @version 1.1
  */
 
-(function (root, factory) {
-	'use strict';
+var PostcodeNl = PostcodeNl || {};
 
-	// eslint-disable-next-line no-undef
-	if (typeof define === 'function' && define.amd)
-	{
-		// eslint-disable-next-line no-undef
-		define([], factory);
-	}
-	else
-	{
-		root.PostcodeNl = root.PostcodeNl || {};
-		root.PostcodeNl.AutocompleteAddress = factory();
-	}
-}(typeof self !== 'undefined' ? self : this, function () {
+(function () {
 	'use strict';
 
 	const document = window.document,
 		$ = function (selector) { return document.querySelectorAll(selector); },
 		elementData = new WeakMap(),
-		VERSION = '1.4.2',
 		EVENT_NAMESPACE = 'autocomplete-',
 		PRECISION_ADDRESS = 'Address',
 		KEY_ESC = 'Escape',
@@ -42,7 +29,6 @@
 		KEY_UP_LEGACY = 'Up',
 		KEY_DOWN = 'ArrowDown',
 		KEY_DOWN_LEGACY = 'Down',
-		BUILDING_LIST_MODES = { PAGED: 'paged', SHORT: 'short' },
 
 		/**
 		 * Default options.
@@ -127,16 +113,16 @@
 			 * @type {boolean}
 			 */
 			autoFocus: {
-				value: true,
+				value: false,
 				writable: true,
 			},
 
 			/**
-			 * Automatically select an address match if it's the only menu item.
+			 * Select the first full address suggestion on blur (if any, and no menu item was selected).
 			 * @type {boolean}
 			 */
-			autoSelectSingleAddress: {
-				value: true,
+			autoSelect: {
+				value: false,
 				writable: true,
 			},
 
@@ -150,21 +136,11 @@
 			},
 
 			/**
-			 * Show the Postcode logo on the input
-			 * @type {boolean}
-			 */
-			showLogo: {
-				value: true,
-				writable: true,
-			},
-
-			/**
 			 * Get screen reader text for a successful response with at least one match.
 			 * Override this function to translate the message.
 			 * @type {Function}
 			 *
 			 * @param {number} count - Number of matches. Will be at least one.
-			 * @param {string} languageTag - Language tag, if specified via language option or setLanguage().
 			 * @return {string} Screen reader message based on the number of matches.
 			 */
 			getResponseMessage: {
@@ -187,35 +163,6 @@
 				},
 				writable: true,
 			},
-
-			/**
-			 * The language used for API calls.
-			 */
-			language: {
-				writable: true,
-			},
-
-			/**
-			 * Set mode for listing buildings in `Street` context. Supported modes:
-			 *
-			 * - 'paged': get a larger list of building results (actual number determined by API). Includes link to view more buildings.
-			 * - 'short': building results are limited to the first few items, similar to matches in other contexts.
-			 */
-			buildingListMode: {
-				set (mode) {
-					if (Object.values(BUILDING_LIST_MODES).includes(mode))
-					{
-						this.mode = mode;
-					}
-					else
-					{
-						console.error('Invalid mode for option buildingListMode:', mode);
-					}
-				},
-				get () {
-					return this.mode || BUILDING_LIST_MODES.SHORT;
-				},
-			},
 		});
 
 	/**
@@ -232,7 +179,6 @@
 			classNames = {
 				menuOpen: options.cssPrefix + 'menu-open',
 				itemFocus: options.cssPrefix + 'item-focus',
-				logo: options.cssPrefix + 'logo',
 			},
 
 			/**
@@ -253,101 +199,63 @@
 			},
 
 			/**
-			 * Move focus to the menu item specified by index and optionally set the input element value.
+			 * Move focus to the next or previous menu item and set the input element value.
 			 *
-			 * @param {number} index - Move focus to the next item if true, to previous item otherwise.
-			 * @param {boolean} [isRelative] - Treat index as relative to current item (optional). Default false.
-			 * @param {boolean} [setValue] - Set the value of the associated input element (optional). Default false.
+			 * @param {boolean} focusNext - Move focus to the next item if true, to previous item otherwise.
+			 * @param {boolean} [setValue] - Set the value of the associated input element (optional).
 			 */
-			moveItemFocus = function (index, isRelative, setValue)
+			moveItemFocus = function (focusNext, setValue)
 			{
-				const numberOfItems = ul.children.length;
-				if (numberOfItems === 0)
+				if (ul.children.length === 0)
 				{
 					return;
 				}
 
-				setValue = setValue || false;
-				isRelative = isRelative || false;
+				const startChild = focusNext? ul.firstElementChild : ul.lastElementChild,
+					endChild = focusNext? ul.lastElementChild : ul.firstElementChild;
 
-				let toIndex = index,
-					fromIndex;
-				if (isRelative)
+				if (typeof setValue === 'undefined')
 				{
-					if (item === null)
-					{
-						toIndex = index > 0 ? index - 1 : numberOfItems + index;
-					}
-					else
-					{
-						fromIndex = indexOf(item);
-						toIndex = fromIndex + index;
-					}
+					setValue = true;
 				}
 
-				// Stay in range.
-				toIndex %= numberOfItems;
-				toIndex = toIndex >= 0 ? toIndex : numberOfItems + toIndex;
+				removeItemFocus();
 
-				if (
-					isRelative
-					&& item !== null
-					&& (index > 0 && toIndex < fromIndex || index < 0 && toIndex > fromIndex) // Wrapping
-				)
+				if (item === null)
 				{
-					setActiveItem(null);
+					item = startChild;
+				}
+				else if (item === endChild)
+				{
+					item = null;
 					inputElement.value = inputValue;
 					elementData.get(inputElement).context = inputContext;
 					return;
 				}
+				else
+				{
+					item = (focusNext? item.nextElementSibling : item.previousElementSibling) || startChild;
+				}
 
-				setActiveItem(ul.children[toIndex]);
+				item.classList.add(classNames.itemFocus);
+
+				// Scroll the menu item into view if needed.
+				if (ul.scrollTop > item.offsetTop)
+				{
+					ul.scrollTop = item.offsetTop;
+				}
+				else if ((item.offsetHeight + item.offsetTop) > ul.clientHeight)
+				{
+					ul.scrollTop = (item.offsetHeight + item.offsetTop) - ul.clientHeight;
+				}
 
 				const data = elementData.get(item);
 
 				// Update the input element value unless the focus event was cancelled.
-				if (
-					setValue
-					&& true === inputElement.dispatchEvent(
-						new CustomEvent(EVENT_NAMESPACE + 'focus', {detail: data, cancelable: true, bubbles: true})
-					)
-				)
+				if (setValue && true === inputElement.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'focus', {detail: data, cancelable: true})))
 				{
 					inputElement.value = data.value;
 					elementData.get(inputElement).context = data.context;
-					selectedIndex = toIndex;
-
-					// Scroll the menu item into view if needed.
-					if (ul.scrollTop > item.offsetTop)
-					{
-						ul.scrollTop = item.offsetTop;
-					}
-					else if (item.offsetTop >= (ul.clientHeight + ul.scrollTop))
-					{
-						ul.scrollTop = (item.offsetHeight + item.offsetTop) - ul.clientHeight;
-					}
-				}
-			},
-
-			/**
-			 * Get the index of an element in the menu.
-			 */
-			indexOf = function (element)
-			{
-				return Array.prototype.indexOf.call(ul.children, element);
-			},
-
-			/**
-			 * Set and focus active item. Removes focus from previous item.
-			 */
-			setActiveItem = function (newItem)
-			{
-				removeItemFocus();
-
-				item = newItem;
-				if (item)
-				{
-					item.classList.add(classNames.itemFocus);
 				}
 			},
 
@@ -387,7 +295,6 @@
 		let isOpen = false,
 			isMousedown = false,
 			item = null,
-			selectedIndex = null,
 			inputElement,
 			inputValue,
 			inputContext;
@@ -408,33 +315,19 @@
 					return item !== null;
 				},
 			},
-			wrapper: {
-				get: function () {
-					return wrapper;
-				},
-			},
-			ul: {
-				get: function () {
-					return ul;
-				},
-			},
-			suppress: {
-				value: false,
-				writable: true,
-			},
 		});
 
 		wrapper.classList.add(options.cssPrefix + 'menu');
-		wrapper.classList.toggle(classNames.logo, options.showLogo);
-
 		ul.classList.add(options.cssPrefix + 'menu-items');
 		wrapper.appendChild(ul);
 
-		ul.addEventListener('mousemove', function (e) {
-			if (e.target === item || e.target === ul)
+		ul.addEventListener('mouseover', function (e) {
+			if (e.target === ul)
 			{
 				return;
 			}
+
+			removeItemFocus();
 
 			let target = e.target;
 
@@ -443,8 +336,13 @@
 				target = target.parentElement;
 			}
 
-			setActiveItem(target);
-			moveItemFocus(indexOf(target));
+			item = target;
+			item.classList.add(classNames.itemFocus);
+		});
+
+		ul.addEventListener('mouseout', function () {
+			removeItemFocus();
+			item = null;
 		});
 
 		wrapper.addEventListener('mousedown', function () {
@@ -459,12 +357,11 @@
 				self.select();
 			}
 
-			// IEfix: Use setTimeout to assign after the event happens.
-			window.setTimeout(function () { isMousedown = false });
+			window.setTimeout(function () { isMousedown = false }); // IEfix: Use setTimeout to assign after the event happens.
 		});
 
 		// Add the menu to the page.
-		if (Object.prototype.isPrototypeOf.call(HTMLElement.prototype, options.appendTo))
+		if (HTMLElement.prototype.isPrototypeOf(options.appendTo))
 		{
 			options.appendTo.appendChild(wrapper);
 		}
@@ -482,16 +379,15 @@
 		this.setItems = function (matches, renderItem)
 		{
 			ul.innerHTML = '';
+			ul.scrollTop = 0;
 
-			for (let i = 0, li, match; (match = matches[i++]);)
+			for (let i = 0, li, match; match = matches[i++];)
 			{
 				li = renderItem(ul, match);
 				elementData.set(li, match);
 			}
 
-			setActiveItem(null);
-			selectedIndex = null;
-			ul.scrollTop = 0;
+			item = null;
 		}
 
 		/**
@@ -505,17 +401,12 @@
 			inputValue = inputElement.value;
 			inputContext = elementData.get(inputElement).context;
 
-			if (options.autoFocus && selectedIndex === null)
+			if (options.autoFocus && item === null)
 			{
-				selectedIndex = 0;
+				this.focusNext(false);
 			}
 
-			if (selectedIndex !== null)
-			{
-				moveItemFocus(selectedIndex);
-			}
-
-			if (isOpen || this.suppress)
+			if (isOpen)
 			{
 				return;
 			}
@@ -524,7 +415,7 @@
 			wrapper.classList.add(classNames.menuOpen);
 			ul.scrollTop = 0;
 			isOpen = true;
-			inputElement.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'open', {bubbles: true}));
+			inputElement.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'open'));
 		}
 
 		/**
@@ -543,61 +434,39 @@
 			{
 				inputElement.value = inputValue;
 				elementData.get(inputElement).context = inputContext;
-				selectedIndex = null;
 			}
 
-			self.blur();
+			removeItemFocus();
+			item = null;
 			wrapper.classList.remove(classNames.menuOpen);
 			isOpen = false;
-			inputElement.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'close', {bubbles: true}));
+			inputElement.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'close'));
 		}
 
 		/**
 		 * Focus the previous menu item.
 		 */
-		this.focusPrevious = moveItemFocus.bind(this, -1, true);
+		this.focusPrevious = moveItemFocus.bind(this, false);
 
 		/**
 		 * Focus the next menu item.
 		 */
-		this.focusNext = moveItemFocus.bind(this, 1, true);
+		this.focusNext = moveItemFocus.bind(this, true);
 
 		/**
-		 * Remove the item focus CSS class and clear the active item, if any.
+		 * Select the active menu item, update and focus the associated input element.
 		 */
-		this.blur = function ()
+		this.select = function ()
 		{
-			setActiveItem(null);
-		}
-
-		/**
-		 * Select the active menu item, update and optionally focus the associated input element.
-		 *
-		 * @param {boolean} [focusInput] Focus the associated input element if true. Default true.
-		 */
-		this.select = function (focusInput)
-		{
-			const selectedMatch = elementData.get(item),
-				itemIndex = indexOf(item);
+			const selectedMatch = elementData.get(item);
 
 			// Update the input element value unless the select event was cancelled.
-			if (
-				true === inputElement.dispatchEvent(
-					new CustomEvent(
-						EVENT_NAMESPACE + 'select',
-						{detail: selectedMatch, cancelable: true, bubbles: true}
-					)
-				)
-			)
+			if (true === inputElement.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'select', {detail: selectedMatch, cancelable: true})))
 			{
 				inputElement.value = selectedMatch.value;
-				selectedIndex = itemIndex;
 			}
 
-			if (typeof focusInput === 'undefined' || focusInput)
-			{
-				inputElement.focus();
-			}
+			inputElement.focus();
 		}
 
 		/**
@@ -605,8 +474,8 @@
 		 */
 		this.clear = function ()
 		{
-			setActiveItem(null);
-			selectedIndex = null;
+			removeItemFocus();
+			item = null;
 			ul.innerHTML = '';
 		}
 
@@ -633,138 +502,23 @@
 	}
 
 	/**
-	 * Get a random session identifier.
-	 *
-	 * @return {string} Session identifier.
-	 */
-	const getSessionId = function ()
-	{
-		const length = 32,
-			randomIntegers = new Uint8Array(length),
-			randomCharacters = [],
-			characterSet = '0123456789abcdef';
-
-		(window.crypto || window.msCrypto).getRandomValues(randomIntegers);
-
-		for (let i = 0, j = characterSet.length; i < length; i++)
-		{
-			randomCharacters.push(characterSet[randomIntegers[i] % j]);
-		}
-
-		return randomCharacters.join('');
-	};
-
-	/**
-	 * Get a unique element identifier.
-	 *
-	 * @param {string} id - Element identifier.
-	 * @return {string} Element identifier, with numeric suffix if the original identifier is already in use.
-	 */
-	const getUniqueId = function (id)
-	{
-		let i = 2,
-			result = id;
-
-		while (document.getElementById(result) !== null)
-		{
-			result = id + '-' + i;
-			i++;
-		}
-
-		return result;
-	}
-
-	/**
-	 * Basic object extension method.
-	 *
-	 * @param {Object} target
-	 * @param {Object} source
-	 * @return {Object} target
-	 */
-	const extend = function (target, source)
-	{
-		for (let prop in source)
-		{
-			target[prop] = source[prop];
-		}
-
-		return target;
-	}
-
-	/**
-	 * Returns the name of the class of an object.
-	 *
-	 * To be used instead of typeof or instanceof, which are broken.
-	 * @see {@link https://github.com/BonsaiDen/JavaScript-Garden/blob/master/doc/en/types/typeof.md}
-	 *
-	 * @param {*} value - Any value.
-	 * @return {string} Class name extracted from internal [[class]] property.
-	 */
-	const getClass = function (value)
-	{
-		return Object.prototype.toString.call(value).slice(8, -1);
-	}
-
-	if (typeof window.CustomEvent !== 'function')
-	{
-		/**
-		 * Fix CustomEvent in IE11.
-		 *
-		 * @param {string} event - DOMString representing the name of the event.
-		 * @param {Object} [params] - Optional dictionary that emulates CustomEventInit.
-		 * @return {Event} Custom event.
-		 * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/CustomEvent#Polyfill}
-		 */
-		const CustomEvent = function (event, params)
-		{
-			params = params || {bubbles: false, cancelable: false, detail: null};
-			var evt = document.createEvent('CustomEvent');
-			evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
-			return evt;
-		}
-
-		window.CustomEvent = CustomEvent;
-	}
-
-	if (window.DOMTokenList.prototype.toggle.length === 0)
-	{
-		/**
-		 * Fix DOMTokenList.toggle in IE11.
-		 *
-		 * @param {string} value - Class value to toggle.
-		 * @param {boolean} [force] - Add class value if the argument evaluates to true, else remove it.
-		 * @return {boolean} True if the class value is added, false if removed.
-		 * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Element/classList}
-		 */
-		window.DOMTokenList.prototype.toggle = function (value)
-		{
-			if (arguments.length > 1)
-			{
-				return (this[arguments[1] ? 'add' : 'remove'](value), !!arguments[1]);
-			}
-
-			return (this[this.contains(value) ? 'remove' : 'add'](value), this.contains(value));
-		}
-	}
-
-	/**
 	 * @constructor
 	 * @param {HTMLElement|NodeList|string} elementsOrSelector - Element(s) or CSS selector string for element(s) to be used as autocomplete input.
 	 * @param {Object} options - Options to override the defaults. @see PostcodeNl~defaults.
 	 */
-	const autocomplete = function (elementsOrSelector, options)
+	this.AutocompleteAddress = function (elementsOrSelector, options)
 	{
 		let inputElements;
 
-		if (getClass(elementsOrSelector) === 'String')
+		if (typeof elementsOrSelector === 'string')
 		{
 			inputElements = $(elementsOrSelector);
 		}
-		else if (Object.prototype.isPrototypeOf.call(HTMLElement.prototype, elementsOrSelector))
+		else if (HTMLElement.prototype.isPrototypeOf(elementsOrSelector))
 		{
 			inputElements = [elementsOrSelector];
 		}
-		else if (Object.prototype.isPrototypeOf.call(NodeList.prototype, elementsOrSelector))
+		else if (NodeList.prototype.isPrototypeOf(elementsOrSelector))
 		{
 			inputElements = elementsOrSelector;
 		}
@@ -781,9 +535,6 @@
 		// Create options object that inherits from defaults.
 		options = extend(Object.create(defaults), options);
 
-		// Make context lowercase as required by API.
-		options.context = options.context.toLowerCase();
-
 		// Expose options.
 		Object.defineProperty(this, 'options', {
 			get: function () {
@@ -794,39 +545,20 @@
 		let searchTimeoutId = null,
 			previousValue = null,
 			previousContext = null,
-			xhr = null,
-			activeElement = null,
 			matches = [];
 
 		const self = this,
 			menu = new Menu(options),
-			inputBlankClassName = options.cssPrefix + 'address-input-blank',
-			instanceSessionId = getSessionId();
+			inputBlankClassName = options.cssPrefix + 'address-input-blank';
 
 		// Create an ARIA live region for screen readers.
 		// See https://developer.mozilla.org/en-US/docs/Web/Accessibility/ARIA/ARIA_Live_Regions
-		const liveRegion = document.createElement('div'),
-			liveRegionId = 'aria-live-region';
-		liveRegion.id = getUniqueId(liveRegionId);
-		liveRegion.setAttribute('role', 'status');
+		const liveRegion = document.createElement('div');
+		liveRegion.id = getUniqueId('aria-live-region');
+		liveRegion.setAttribute('aria-role', 'status');
 		liveRegion.setAttribute('aria-live', 'assertive');
-		liveRegion.classList.add(options.cssPrefix + liveRegionId);
+		liveRegion.classList.add(options.cssPrefix + liveRegion.id);
 		document.body.appendChild(liveRegion);
-
-		window.addEventListener('beforeunload', function () {
-			window.clearTimeout(searchTimeoutId);
-		});
-
-		// Expose elements.
-		Object.defineProperty(this, 'elements', {
-			get: function () {
-				return {
-					menu: menu.wrapper,
-					menuItems: menu.ul,
-					liveRegion: liveRegion,
-				};
-			},
-		});
 
 		/**
 		 * Announce screen reader text via the live region.
@@ -852,12 +584,7 @@
 		 */
 		this.xhrGet = function (url, success)
 		{
-			if (xhr !== null && xhr.readyState < 4)
-			{
-				xhr.abort();
-			}
-
-			xhr = new XMLHttpRequest();
+			const xhr = new XMLHttpRequest();
 
 			xhr.addEventListener('load', function () {
 				if (this.status === 200)
@@ -866,34 +593,8 @@
 				}
 			});
 
-			let sessionId = instanceSessionId;
-
-			if (activeElement !== null)
-			{
-				const element = activeElement,
-					xhrErrorHandler = function (e)
-					{
-						if (this.status !== 200)
-						{
-							element.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'error', {detail: {'event': e, request: this}, bubbles: true}));
-						}
-					};
-
-				sessionId = elementData.get(element).sessionId;
-
-				// Trigger an error event for failed requests.
-				xhr.addEventListener('error', xhrErrorHandler);
-				xhr.addEventListener('load', xhrErrorHandler);
-
-				element.classList.add(options.cssPrefix + 'loading');
-
-				xhr.addEventListener('loadend', function () { // All three load-ending conditions (abort, load, or error).
-					element.classList.remove(options.cssPrefix + 'loading');
-				});
-			}
-
 			xhr.open('GET', url);
-			xhr.setRequestHeader('X-Autocomplete-Session', sessionId);
+			xhr.setRequestHeader('X-Autocomplete-Session', getSessionId());
 			xhr.send();
 
 			return xhr;
@@ -902,38 +603,22 @@
 		/**
 		 * Get autocomplete matches for the specified context and term.
 		 *
-		 * @see {@link https://developer.postcode.eu/documentation/international/v1/Autocomplete/autocomplete}
-		 * @param {string} context - A place identifier denoting the context to search in. e.g. "nld".
-		 * @param {string} term - The search query to process. e.g. "2012ES", "Haarlem", "Julian".
+		 * @see {@link https://api.postcode.nl/documentation/international/v1/Autocomplete/autocomplete}
+		 * @param {string} context - A place identifier denoting the context to search in. e.g. Ã¢â‚¬Å“nldÃ¢â‚¬Â.
+		 * @param {string} term - The search query to process. e.g. Ã¢â‚¬Å“2012ESÃ¢â‚¬Â, Ã¢â‚¬Å“HaarlemÃ¢â‚¬Â, Ã¢â‚¬Å“JulianÃ¢â‚¬Â.
 		 * @param {successCallback} response - Function that handles the response.
 		 * @return {XMLHttpRequest} @see PostcodeNl.AutocompleteAddress.xhrGet.
 		 */
 		this.getSuggestions = function (context, term, response)
 		{
-			const url = [
-				this.options.autocompleteUrl,
-				encodeURIComponent(context),
-				encodeURIComponent(term),
-				options.language || '',
-			];
-
-			if (options.buildingListMode !== BUILDING_LIST_MODES.SHORT)
-			{
-				// Only specify when not the API default, for better compatibility with client proxies
-				url.push(options.buildingListMode);
-			}
-
-			return this.xhrGet(
-				url.join('/').replace(/\/+$/, ''),
-				response
-			);
+			return this.xhrGet(this.options.autocompleteUrl + '/' + encodeURIComponent(context) + '/' + encodeURIComponent(term), response);
 		}
 
 		/**
 		 * Get address details for the specified address identifier.
 		 *
-		 * @see {@link https://developer.postcode.eu/documentation/international/v1/Autocomplete/getDetails}
-		 * @param {string} addressId - Address identifier returned by a match of precision "Address".
+		 * @see {@link https://api.postcode.nl/documentation/international/v1/Autocomplete/getDetails}
+		 * @param {string} addressId - Address identifier returned by a match of precision Ã¢â‚¬Å“AddressÃ¢â‚¬Â.
 		 * @param {string} [dispatchCountry] - Dispatching country ISO3 code, used to determine country address line presence and language.
 		 * If not given, country is not added in mailLines.
 		 * @param {successCallback} response - Function that handles the response.
@@ -988,7 +673,7 @@
 
 			if (item.tags)
 			{
-				for (let i = 0, tag; (tag = item.tags[i++]);)
+				for (let i = 0, tag; tag = item.tags[i++];)
 				{
 					const em = document.createElement('em');
 					em.textContent = this.options.tags[tag];
@@ -1015,13 +700,13 @@
 				return str;
 			}
 
-			let i = 0,
+			var i = 0,
 				start = 0,
 				end = 0,
 				result = [],
 				pair;
 
-			while ((pair = indices[i++]))
+			while (pair = indices[i++])
 			{
 				result.push(str.slice(end, pair[0]));
 				start = pair[0];
@@ -1042,70 +727,27 @@
 		{
 			options.context = iso3Code.toLowerCase();
 
-			for (let i = 0, element; (element = inputElements[i++]);)
+			for (let i = 0, element; element = inputElements[i++];)
 			{
 				elementData.get(element).context = options.context;
 			}
 		}
 
 		/**
-		 * Set the language used for API calls.
-		 *
-		 * @param {string} languageTag - Language tag, e.g. "nl", "nl_NL", "en-GB" or "de-DE".
-		 */
-		this.setLanguage = function (languageTag)
-		{
-			options.language = languageTag;
-		}
-
-		/**
-		 * @typedef SearchOptions
-		 * @type {Object}
-		 * @property {string} term - Search query, optional.
-		 * @property {string} context - Autocomplete context, optional.
-		 * @property {boolean} showMenu - Wether to show the menu, optional. Default is true.
-		 */
-
-		/**
 		 * Trigger a search on the specified input element. If invoked without a term, the current input's value is used.
 		 *
 		 * @param {HTMLElement} element - Input element associated with the autocomplete instance.
-		 * @param {(string|SearchOptions)} [term] - Search query, optional. Or SearchOptions object, optional.
-		 * @param {string} [context] - Autocomplete context, optional. Ignored if using SearchOptions.
+		 * @param {string} term - Search query.
 		 */
-		this.search = function (element)
+		this.search = function (element, term)
 		{
-			let options;
-
-			if (getClass(arguments[1]) === 'Object')
+			if (typeof term !== 'undefined')
 			{
-				options = arguments[1];
-			}
-			else
-			{
-				options = { term: arguments[1], context: arguments[2] };
+				element.value = term;
 			}
 
-			if (typeof options.term !== 'undefined')
-			{
-				element.value = options.term;
-			}
-
-			if (typeof options.context !== 'undefined')
-			{
-				const data = elementData.get(element);
-				data.context = options.context;
-				elementData.set(element, data);
-			}
-
-			const currentMenuSuppress = menu.suppress;
-			menu.suppress = !(typeof options.showMenu === 'undefined' || options.showMenu);
-
-			activeElement = element;
 			element.classList.toggle(inputBlankClassName, element.value === '');
 			search(element);
-
-			menu.suppress = currentMenuSuppress;
 		}
 
 		/**
@@ -1119,7 +761,7 @@
 
 			menu.clear();
 
-			for (let i = 0, element; (element = inputElements[i++]);)
+			for (let i = 0, element; element = inputElements[i++];)
 			{
 				const data = elementData.get(element);
 
@@ -1142,7 +784,7 @@
 
 			document.body.removeChild(liveRegion);
 
-			for (let i = 0, element; (element = inputElements[i++]);)
+			for (let i = 0, element; element = inputElements[i++];)
 			{
 				const data = elementData.get(element);
 
@@ -1166,12 +808,7 @@
 				}
 
 				elementData.delete(element);
-				element.classList.remove(
-					options.cssPrefix + 'address-input',
-					options.cssPrefix + 'loading',
-					inputBlankClassName,
-					options.cssPrefix + 'logo'
-				);
+				element.classList.remove(options.cssPrefix + 'address-input', options.cssPrefix + 'loading', inputBlankClassName);
 			}
 		}
 
@@ -1189,19 +826,13 @@
 					autocomplete: element.hasAttribute('autocomplete') ? element.getAttribute('autocomplete') : null,
 					'aria-controls': element.hasAttribute('aria-controls') ? element.getAttribute('aria-controls') : null,
 				},
-				sessionId: getSessionId(),
 			});
 
-			if (false === element.hasAttribute('autocomplete'))
-			{
-				element.autocomplete = 'off';
-			}
-
 			element.spellcheck = false;
+			element.autocomplete = 'off';
 			element.setAttribute('aria-controls', liveRegion.id);
 			element.classList.add(options.cssPrefix + 'address-input');
 			element.classList.toggle(inputBlankClassName, element.value === '');
-			element.classList.toggle(options.cssPrefix + 'logo', options.showLogo);
 
 			element.addEventListener('keydown', eventHandlers.keydown = function (e) {
 				isKeyEvent = true;
@@ -1212,7 +843,7 @@
 					case KEY_UP_LEGACY:
 						if (menu.isOpen)
 						{
-							menu.focusPrevious(true);
+							menu.focusPrevious();
 						}
 						else
 						{
@@ -1226,7 +857,7 @@
 					case KEY_DOWN_LEGACY:
 						if (menu.isOpen)
 						{
-							menu.focusNext(true);
+							menu.focusNext();
 						}
 						else
 						{
@@ -1255,9 +886,10 @@
 							menu.select();
 							e.preventDefault();
 						}
-						else
+						else if (menu.isOpen)
 						{
 							menu.close();
+							e.preventDefault();
 						}
 					break;
 
@@ -1266,10 +898,8 @@
 				}
 			});
 
-			element.addEventListener('input', eventHandlers.input = function () {
+			element.addEventListener('input', eventHandlers.input = function (e) {
 				element.classList.remove(inputBlankClassName);
-				menu.blur(); // Prevent focus on old menu item when value has changed.
-				matches = []; // Prevent auto-selecting old menu item on blur.
 
 				// Skip key event to prevent searching twice.
 				if (isKeyEvent)
@@ -1323,48 +953,39 @@
 					return;
 				}
 
+				const data = elementData.get(element);
 				window.clearTimeout(searchTimeoutId);
-
-				autoSelectSingleAddress();
 				menu.close();
+
+				if (options.autoSelect && typeof data.match.context === 'undefined')
+				{
+					// Get first full address from matches, if any.
+					for (let i = 0, m; m = matches[i++];)
+					{
+						if (m.precision === PRECISION_ADDRESS)
+						{
+							element.value = m.value;
+							element.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'select', {detail: m}));
+							break;
+						}
+					}
+				}
+
 				element.classList.toggle(inputBlankClassName, element.value === '');
 			});
 
-			element.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'create', {detail: self, bubbles: true}));
+			element.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'create'));
 		});
-
-		const autoSelectSingleAddress = function ()
-		{
-			if (
-				options.autoFocus
-				&& options.autoSelectSingleAddress
-				&& menu.hasFocus
-				&& matches.length === 1
-				&& matches[0].precision === PRECISION_ADDRESS
-			)
-			{
-				menu.select(false);
-			}
-		}
 
 		/**
 		 * Search after input has stopped arriving for the amount of milliseconds specified by options.delay.
-		 * Values of up to three characters have practically no delay because most of these queries will be served from cache.
 		 *
 		 * @param {HTMLElement} element - Associated input element.
 		 */
 		const searchDebounced = function (element)
 		{
 			window.clearTimeout(searchTimeoutId);
-
-			let delay = 10;
-
-			if (element.value.length > 3)
-			{
-				delay = options.delay;
-			}
-
-			searchTimeoutId = window.setTimeout(search, delay, element);
+			searchTimeoutId = window.setTimeout(search, options.delay, element);
 		}
 
 		/**
@@ -1377,23 +998,7 @@
 			menu.open(element);
 
 			const data = elementData.get(element);
-			activeElement = element;
 
-			if (element.value === previousValue && data.context === previousContext)
-			{
-				return;
-			}
-
-			const hasSubstring = (
-				data.context === previousContext
-				&& previousValue !== null
-				&& (element.value.indexOf(previousValue) === 0 || previousValue.indexOf(element.value) === 0)
-			);
-			previousValue = element.value;
-			previousContext = data.context;
-			data.match = {};
-
-			// Reset context if we are below minimum length and clear menu instead of searching.
 			if (element.value.length < options.minLength)
 			{
 				data.context = options.context;
@@ -1401,22 +1006,27 @@
 				return;
 			}
 
-			// Trigger the search event. Cancel this event to prevent the request for address suggestions.
-			if (false === element.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'search', {cancelable: true, bubbles: true})))
+			if (element.value === previousValue && data.context === previousContext)
 			{
 				return;
 			}
 
-			const menuSuppress = menu.suppress;
-			self.getSuggestions.call(self, data.context, element.value, function (result) {
-				if (getClass(result.newContext) === 'String')
-				{
-					// Forced switch away from current context - current context no longer valid given user input.
-					data.context = result.newContext;
-				}
+			const hasSubstring = data.context === previousContext && previousValue !== null && (element.value.indexOf(previousValue) === 0 || previousValue.indexOf(element.value) === 0);
+			previousValue = element.value;
+			previousContext = data.context;
+			data.match = {};
 
+			// Trigger the search event. Cancel this event to prevent the request for address suggestions.
+			if (false === element.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'search', {cancelable: true})))
+			{
+				return;
+			}
+
+			element.classList.add(options.cssPrefix + 'loading');
+
+			const xhr = self.getSuggestions.call(self, data.context, element.value, function (result) {
 				// Trigger the response event. Cancel this event to prevent rendering address suggestions.
-				if (true === element.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'response', {detail: result, cancelable: true, bubbles: true})))
+				if (true === element.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'response', {detail: result, cancelable: true})))
 				{
 					matches = result.matches || [];
 
@@ -1426,28 +1036,142 @@
 					}
 
 					menu.setItems(matches, self.renderItem.bind(self));
-					self.announce(options.getResponseMessage(matches.length, options.language));
+					self.announce(options.getResponseMessage(matches.length));
 
-					if (menuSuppress === false)
+					if (options.autoFocus)
 					{
-						menu.open(element);
+						menu.focusNext(false);
 					}
 				}
+			});
+
+			const xhrErrorHandler = function (e)
+			{
+				if (this.status !== 200)
+				{
+					element.dispatchEvent(new CustomEvent(EVENT_NAMESPACE + 'error', {detail: {'event': e, request: this}}));
+				}
+			}
+
+			// Trigger an error event for failed requests.
+			xhr.addEventListener('error', xhrErrorHandler);
+			xhr.addEventListener('load', xhrErrorHandler);
+
+			xhr.addEventListener('loadend', function (e) { // All three load-ending conditions (abort, load, or error).
+				element.classList.remove(options.cssPrefix + 'loading');
 			});
 		}
 	}
 
 	// Expose plugin defaults.
-	Object.defineProperty(autocomplete, 'defaults', {
+	Object.defineProperty(this.AutocompleteAddress, 'defaults', {
 		get: function () {
 			return defaults;
 		},
 	});
 
-	// Expose readonly version number.
-	Object.defineProperty(autocomplete, 'version', {
-		value: VERSION,
-	});
+	/**
+	 * Get a random session identifier.
+	 *
+	 * @return {string} Cached session identifier.
+	 */
+	const getSessionId = (function () {
+		const length = 32,
+			randomIntegers = new Uint8Array(length),
+			randomCharacters = [],
+			characterSet = '0123456789abcdef';
 
-	return autocomplete;
-}));
+		(window.crypto || window.msCrypto).getRandomValues(randomIntegers);
+
+		for (let i = 0, j = characterSet.length; i < length; i++)
+		{
+			randomCharacters.push(characterSet[randomIntegers[i] % j]);
+		}
+
+		const id = randomCharacters.join('');
+
+		return function () {
+			return id;
+		};
+	})();
+
+	/**
+	 * Get a unique element identifier.
+	 *
+	 * @param {string} id - Element identifier.
+	 * @return {string} Element identifier, with numeric suffix if the original identifier is already in use.
+	 */
+	const getUniqueId = function (id)
+	{
+		let i = 2,
+			result = id;
+
+		while (document.getElementById(result) !== null)
+		{
+			result = id + '-' + i;
+			i++;
+		}
+
+		return result;
+	}
+
+	/**
+	 * Basic object extension method.
+	 *
+	 * @param {Object} target
+	 * @param {Object} source
+	 * @return {Object} target
+	 */
+	const extend = function (target, source)
+	{
+		for (let prop in source)
+		{
+			target[prop] = source[prop];
+		}
+
+		return target;
+	}
+
+	if (typeof window.CustomEvent !== 'function')
+	{
+		/**
+		 * Fix CustomEvent in IE11.
+		 *
+		 * @param {string} event - DOMString representing the name of the event.
+		 * @param {Object} [params] - Optional dictionary that emulates CustomEventInit.
+		 * @return {Event} Custom event.
+		 * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/CustomEvent/CustomEvent#Polyfill}
+		 */
+		const CustomEvent = function (event, params)
+		{
+			params = params || {bubbles: false, cancelable: false, detail: null};
+			var evt = document.createEvent('CustomEvent');
+			evt.initCustomEvent(event, params.bubbles, params.cancelable, params.detail);
+			return evt;
+		}
+
+		window.CustomEvent = CustomEvent;
+	}
+
+	if (window.DOMTokenList.prototype.toggle.length === 0)
+	{
+		/**
+		 * Fix DOMTokenList.toggle in IE11.
+		 *
+		 * @param {string} value - Class value to toggle.
+		 * @param {boolean} [force] - Add class value if the argument evaluates to true, else remove it.
+		 * @return {boolean} True if the class value is added, false if removed.
+		 * @see {@link https://developer.mozilla.org/en-US/docs/Web/API/Element/classList}
+		 */
+		window.DOMTokenList.prototype.toggle = function (value)
+		{
+			if (arguments.length > 1)
+			{
+				return (this[arguments[1]? 'add' : 'remove'](value), !!arguments[1]);
+			}
+
+			return (this[this.contains(value)? 'remove' : 'add'](value), this.contains(value));
+		}
+	}
+
+}).apply(PostcodeNl);
