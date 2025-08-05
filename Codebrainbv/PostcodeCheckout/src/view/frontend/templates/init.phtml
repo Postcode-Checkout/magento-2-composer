@@ -1,0 +1,41 @@
+<script>
+    (function() {
+            var config = window.pcm2_config || {};
+            var provider = config.configured_provider || '';
+            var moduleName = null;
+
+            if (['pro6pp', 'postcodenl', 'postcodeapi'].includes(provider)) {
+                moduleName = 'Codebrainbv_PostcodeCheckout/js/national/postcodecheckoutnational';
+                if (moduleName) {
+                    require([moduleName]);
+                }
+            } else if (provider === 'postcodenlext') {
+                var cssId = 'postcodecheckout-autocomplete-css';
+                if (!document.getElementById(cssId)) {
+                    var head = document.getElementsByTagName('head')[0];
+                    var link = document.createElement('link');
+                    link.id = cssId;
+                    link.rel = 'stylesheet';
+                    link.type = 'text/css';
+                    link.href = require.toUrl('Codebrainbv_PostcodeCheckout/css/autocompleteaddress.css');
+                    link.media = 'all';
+                    head.appendChild(link);
+                }
+                var scriptId = 'autocompleteaddress-js';
+                if (!document.getElementById(scriptId)) {
+                    var script = document.createElement('script');
+                    script.id = scriptId;
+                    script.type = 'text/javascript';
+                    script.src = require.toUrl('Codebrainbv_PostcodeCheckout/js/vendor/autocompleteaddress.js');
+                    script.onload = function() {
+                        require(['Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternational']);
+                    };
+                    document.body.appendChild(script);
+                } else {
+                    require(['Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternational']);
+                }
+            } else {
+            console.log('No provider found');
+        }
+    })();
+</script>

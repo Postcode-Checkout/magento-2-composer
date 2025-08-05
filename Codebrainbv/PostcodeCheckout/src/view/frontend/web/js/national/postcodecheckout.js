@@ -1,1 +1,0 @@
-console.log('ik wordt ingeladen ik ben de nationale checkout postcode script');

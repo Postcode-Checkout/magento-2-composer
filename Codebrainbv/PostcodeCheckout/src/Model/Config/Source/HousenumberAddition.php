@@ -1,5 +1,4 @@
 <?php
-
 namespace Codebrainbv\PostcodeCheckout\Model\Config\Source;
 
 use Magento\Framework\Option\ArrayInterface;
@@ -9,9 +8,18 @@ class HousenumberAddition implements ArrayInterface
     public function toOptionArray()
     {
         return [
-            ['value' => '0', 'label' => __('everything in one field')],
-            ['value' => 'additionHousenumber', 'label' => __('Housenumber in onther field than addition')],
-            ['value' => 'housenumber_addition', 'label' => __('Housenumber + addition in same field')]
+            [
+                'value' => 'street1_all',
+                'label' => __('Alles op straat 1')
+            ],
+            [
+                'value' => 'street1_street2_rest',
+                'label' => __('Straat op veld 1, rest op veld 2')
+            ],
+            [
+                'value' => 'street1_street2_housenumber_street3_addition',
+                'label' => __('Straat op veld 1, huisnummer op veld 2, toevoeging op veld 3')
+            ],
         ];
     }
 }
