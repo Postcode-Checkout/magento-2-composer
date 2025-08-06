@@ -5,6 +5,7 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
     var pcm2_SupportedCountries = window.pcm2_config.countries;
     var debugEnabled = window.pcm2_config.debug_mode ? true : false;
     var config = window.pcm2_config;
+    var pcm2_oDomElements = {};
 
     pcm2ConsoleLogs(config);
 
