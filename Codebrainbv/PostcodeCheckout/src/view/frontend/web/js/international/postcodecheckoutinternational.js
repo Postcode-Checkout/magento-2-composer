@@ -8,12 +8,19 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
 
     pcm2ConsoleLogs(config);
 
-        document.addEventListener('DOMContentLoaded', function () {
+        function pcm2_onDomReady() {
             var checkoutDiv = document.getElementById('checkout');
-            if (checkoutDiv) {
+            var isShippingStep = window.location.hash === '#shipping';
+            if (checkoutDiv && isShippingStep) {
                 pcm2_removeDefaultAddressFields();
             }
-        });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', pcm2_onDomReady);
+        } else {
+            pcm2_onDomReady();
+        }
 
         function pcm2ConsoleLogs(msg, data) {
             if (debugEnabled) {
@@ -23,7 +30,7 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
         }
 
         function pcm2_getDomElements() {
-            return {
+            pcm2_oDomElements = {
                 street: document.querySelector('[name="street[0]"]'),
                 housenumber: document.querySelector('[name="street[1]"]'),
                 addition: document.querySelector('[name="street[2]"]'),
@@ -32,6 +39,7 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
                 country: document.querySelector('[name="country_id"]'),
                 region: document.querySelector('[name="region"]'),
             };
+            return pcm2_oDomElements;
         }
 
         function pcm2_hideForm(sFormId, bCheckbox) {
@@ -56,7 +64,7 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
             if (resultDiv) resultDiv.required = true;
 
             // Add our template to the checkout if not present
-            if (!searchWrapper && dom.address_1 && dom.address_1.parentNode) {
+            if (!searchWrapper && dom.street && dom.street.parentNode) {
                 var pcm2_trans = window.pcm2_trans || { field_label: 'Address lookup', enter_manually: 'Enter manually', enter_automatically: 'Enter automatically' };
                 var sPcex4prestaSearchTemplate =
                     '<div class="form-group row" id="pcm2_' + sFormId + '_search_wrapper">' +
@@ -81,18 +89,18 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
                     '</div>' +
                     '</div>';
 
-                dom.address_1.parentNode.insertAdjacentHTML('beforebegin', sPcex4prestaSearchTemplate);
+                dom.street.parentNode.insertAdjacentHTML('beforebegin', sPcex4prestaSearchTemplate);
             }
 
             if (window.pcm2_config.hide_fields === 'true') {
-                ['address_1', 'address_2', 'postcode', 'city'].forEach(function (key) {
+                ['street', 'housenumber', 'addition', 'postcode', 'city'].forEach(function (key) {
                     if (dom[key]) {
                         dom[key].value = '';
                         dom[key].style.display = 'none';
                     }
                 });
             } else {
-                ['address_1', 'address_2', 'postcode', 'city'].forEach(function (key) {
+                ['street', 'housenumber', 'addition', 'postcode', 'city'].forEach(function (key) {
                     if (dom[key]) {
                         dom[key].value = '';
                         dom[key].setAttribute('readonly', '');
@@ -105,11 +113,11 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
             var dom = pcm2_getDomElements();
 
             if (window.pcm2_config.hide_fields === 'true') {
-                ['address_1', 'address_2', 'postcode', 'city'].forEach(function (key) {
+                ['street', 'housenumber', 'addition', 'postcode', 'city'].forEach(function (key) {
                     if (dom[key]) dom[key].style.display = '';
                 });
             } else {
-                ['address_1', 'address_2', 'postcode', 'city'].forEach(function (key) {
+                ['street', 'housenumber', 'addition', 'postcode', 'city'].forEach(function (key) {
                     if (dom[key]) dom[key].removeAttribute('readonly');
                 });
             }
@@ -143,15 +151,18 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
         }
 
         function pcm2_removeDefaultAddressFields() {
-            console.log('Removing default address fields');
             var dom = pcm2_getDomElements();
+
+            console.dir('Removing default address fields:', dom);
             Object.keys(dom).forEach(function (key) {
+                // Do not hide the region field
+                if (key === 'region') return;
                 if (dom[key]) {
                     var fieldWrapper = dom[key].closest('.field') || dom[key].closest('.form-group');
                     if (fieldWrapper) {
-                        fieldWrapper.style.display = 'none';
+                        fieldWrapper.classList.add('hidden');
                     } else {
-                        dom[key].style.display = 'none';
+                        dom[key].classList.add('hidden');
                     }
                 }
             });
