@@ -102,19 +102,18 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
                     enter_automatically: 'Enter automatically'
                 };
                 var sPcex4prestaSearchTemplate =
-                    '<div class="form-group row margin_buttons" id="pcm2_' + sFormId + '_search_wrapper">' +
-                    '<label class="col-md-3 form-control-label">' + pcm2_trans.field_label + '</label>' +
+                    '<div class="field" id="pcm2_' + sFormId + '_search_wrapper">' +
+                    '<label class="form-control-label">' + pcm2_trans.field_label + '</label>' +
                     '<div class="col-md-6">' +
                     '<input id="pcm2_' + sFormId + '_search" name="pcm2_' + sFormId + '_search" class="form-control" type="text" required>' +
                     '</div>' +
                     '</div>' +
-                    '<div class="form-group row margin_buttons" id="pcm2_' + sFormId + '_result_wrapper">' +
-                    '<label class="col-md-3 form-control-label"></label>' +
+                    '<div class="field" id="pcm2_' + sFormId + '_result_wrapper">' +
+                    '<label class="label"></label>' +
                     '<div class="col-md-6" id="pcm2_' + sFormId + '_result"></div>' +
                     '</div>' +
                     '<div class="required form-group row">' +
-                    '<label class="col-md-3 form-control-label"></label>' +
-                    '<div class="col-md-3 margin_buttons">' +
+                    '<div class="field">' +
                     '<button type="button" class="btn btn-default button button-small" id="pcm2_' + sFormId + '_manualbtn">' +
                     '<span>' + pcm2_trans.enter_manually + '<i class="icon-chevron-right right"></i></span>' +
                     '</button>' +
@@ -197,7 +196,6 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
                 if (key === 'region' || key === 'country') return;
                 if (dom[key]) {
                     dom[key].style.display = 'none';
-                    // Hide label for the field
                     var label = dom[key].closest('label');
                     if (!label) {
                         var id = dom[key].id;
