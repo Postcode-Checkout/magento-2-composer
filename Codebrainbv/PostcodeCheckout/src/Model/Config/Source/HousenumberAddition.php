@@ -9,15 +9,15 @@ class HousenumberAddition implements ArrayInterface
     {
         return [
             [
-                'value' => 'street1_all',
+                'value' => 0,
                 'label' => __('Alles op straat 1')
             ],
             [
-                'value' => 'street1_street2_rest',
+                'value' => 1,
                 'label' => __('Straat op veld 1, rest op veld 2')
             ],
             [
-                'value' => 'street1_street2_housenumber_street3_addition',
+                'value' => 2,
                 'label' => __('Straat op veld 1, huisnummer op veld 2, toevoeging op veld 3')
             ],
         ];

@@ -10,7 +10,7 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
 
 
 
-        pcm2ConsoleLogs(config);
+        pcm2_ConsoleLogs(config);
 
         function pcm2_onDomReady() {
             var checkoutDiv = document.getElementById('checkout');
@@ -20,6 +20,7 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
                     pcm2_getDomElements();
                     pcm2_removeDefaultAddressFields();
                     pcm2_hideForm();
+                    pcm2_addLookup();
                 });
             }
         }
@@ -47,12 +48,211 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
             pcm2_onDomReady();
         }
 
-        function pcm2ConsoleLogs(msg, data) {
+        function pcm2_ConsoleLogs(msg, data) {
             if (debugEnabled) {
                 console.log('PCM2:', msg);
                 if (data) console.dir(data);
             }
         }
+
+        function pcm2_addLookup(oElement) {
+            if (!oElement || !oElement.id) {
+                pcm2_ConsoleLogs('pcm2_addLookup: oElement is undefined or missing id');
+                return;
+            }
+            var sId = oElement.id;
+
+            var aElements = [];
+            var iIndex = 0;
+            var inputs = document.querySelectorAll('#' + sId + ' .pcpostcode_autocomplete_input input');
+            inputs.forEach(function (input) {
+                aElements[iIndex] = input.id;
+                iIndex++;
+            });
+
+            if (aElements.length) {
+                aElements.forEach(function (inputId) {
+                    pcm2_createInteractiveFunctions(inputId);
+                });
+            } else {
+                pcm2_ConsoleLogs('No Elements Found, try again');
+                setTimeout(function () {
+                    pcm2_addLookup(oElement);
+                }, 500);
+            }
+        }
+
+        function pcm2_createInteractiveFunctions(sInputId) {
+            pcm2_addAutocompleteFunctions(sInputId);
+            pcm2_addCountryFunctions(sInputId);
+            pcm2_addDisableManualFunctions(sInputId);
+        }
+
+        function pcm2_addAutocompleteFunctions(sId) {
+            // Add Postcode AutoComplete
+            var oAutoComplete = document.getElementById(sId);
+
+            if (oAutoComplete) {
+                pcm2_ConsoleLogs('oAutoComplete(' + sId + ') *initiated*');
+
+                pcm2_Autocomplete[sId] = new PostcodeNl.AutocompleteAddress(oAutoComplete, {
+                    autocompleteUrl: 'postcodecheckout/proxy/suggestions?type=autocomplete',
+                    addressDetailsUrl: 'postcodecheckout/proxy/details?type=address'
+                });
+
+                oAutoComplete.addEventListener('autocomplete-select', function (event) {
+                    pcm2_fillInFields(pcm2_Autocomplete[sId], oAutoComplete, event);
+                });
+            }
+        }
+
+        function pcm2_addCountryFunctions(sId) {
+            pcm2_ConsoleLogs('pcm2_addCountryFunctions(' + sId + ')');
+            var oParentObject = pcm2_getParentElement(document.getElementById(sId));
+            var oSelectElement = oParentObject ? oParentObject.querySelector('select[name="country_id"]') : null;
+
+            if (oSelectElement) {
+                oSelectElement.addEventListener('change', function () {
+                    pcm2_toggleCountry(this);
+                });
+                pcm2_toggleCountry(oSelectElement);
+            }
+        }
+
+        function pcm2_addDisableManualFunctions(sId) {
+            pcm2_ConsoleLogs('pcm2_addDisableManualFunctions(' + sId + ')');
+            var oParentObject = pcm2_getParentElement(document.getElementById(sId));
+            var oDisableElement = oParentObject ? oParentObject.querySelector('input[name="pcpostcode_autocomplete_disable"]') : null;
+
+            if (oDisableElement) {
+                oDisableElement.addEventListener('change', function () {
+                    pcm2_checkDisable(this);
+                });
+                pcm2_checkDisable(oDisableElement);
+            }
+        }
+
+        function pcm2_checkDisable(oElement) {
+            var sDisabled = oElement.checked;
+
+            if (pcm2_returnCountry(oElement)) {
+                pcm2_ConsoleLogs('pcm2_checkDisable(Country says show.)');
+
+                if (sDisabled === true) {
+                    pcm2_ConsoleLogs('pcm2_checkDisable(not checked)');
+                    pcm2_enableFields(oElement);
+                } else {
+                    pcm2_ConsoleLogs('pcm2_checkDisable(checked)');
+                    pcm2_disableFields(oElement);
+                }
+            } else {
+                pcm2_ConsoleLogs('pcm2_checkDisable(Fields need to be enabled)');
+                pcm2_enableFields(oElement);
+            }
+        }
+
+        function pcm2_disableFields(oElement) {
+            pcm2_ConsoleLogs('pcm2_disableFields()');
+            var oParentObject = pcm2_getParentElement(oElement);
+
+            ['street[0]', 'street[1]', 'street[2]', 'city', 'postcode'].forEach(function (name) {
+                var field = oParentObject ? oParentObject.querySelector('[name="' + name + '"]') : null;
+                if (field) field.setAttribute('readonly', true);
+            });
+        }
+
+        function pcm2_enableFields(oElement) {
+            pcm2_ConsoleLogs('pcm2_enableFields()');
+            var oParentObject = pcm2_getParentElement(oElement);
+
+            ['street[0]', 'street[1]', 'street[2]', 'city', 'postcode'].forEach(function (name) {
+                var field = oParentObject ? oParentObject.querySelector('[name="' + name + '"]') : null;
+                if (field) field.removeAttribute('readonly');
+            });
+        }
+
+        function pcm2_fillInFields(oAutoComplete, oElement, oResults) {
+            pcm2_ConsoleLogs('pcm2_fillInFields()');
+            var oParentObject = pcm2_getParentElement(oElement);
+
+            if (oResults.detail.precision === 'Address') {
+                oAutoComplete.getDetails(oResults.detail.context, function (oResult) {
+                    pcm2_ConsoleLogs(oResult);
+
+                    if (oResult.processed == 'success') {
+                        var oAddress = oResult.matches.address;
+
+                        var sStreet = oAddress.street;
+                        var sHouseNumber = oAddress.buildingNumber;
+                        var sHouseNumberAddition = oAddress.buildingNumberAddition;
+                        var sPostcode = oAddress.postcode;
+                        var sRegion = oAddress.locality;
+                        var sCity = oAddress.locality;
+
+                        var sAddress = '';
+                        var sHouseNumber2 = '';
+
+                        if (sStreet) {
+                            sAddress = sStreet;
+
+                            if (sHouseNumber) {
+                                if (aSettings.useStreet2AsHouseNumber) {
+                                    sHouseNumber2 = sHouseNumber;
+
+                                    if (!aSettings.useStreet3AsHouseNumberAddition && sHouseNumberAddition) {
+                                        sHouseNumber2 += ' ' + sHouseNumberAddition;
+                                    }
+                                } else {
+                                    sAddress += ' ' + sHouseNumber;
+                                }
+
+                                if (sHouseNumberAddition && !aSettings.useStreet3AsHouseNumberAddition && !aSettings.useStreet2AsHouseNumber) {
+                                    sAddress += ' ' + sHouseNumberAddition;
+                                }
+                            }
+                        }
+
+                        var street0 = oParentObject ? oParentObject.querySelector('[name="street[0]"]') : null;
+                        var street1 = oParentObject ? oParentObject.querySelector('[name="street[1]"]') : null;
+                        var street2 = oParentObject ? oParentObject.querySelector('[name="street[2]"]') : null;
+                        var postcode = oParentObject ? oParentObject.querySelector('[name="postcode"]') : null;
+                        var city = oParentObject ? oParentObject.querySelector('[name="city"]') : null;
+
+                        if (street0 && sAddress) {
+                            street0.value = sAddress;
+                            street0.dispatchEvent(new Event('keyup'));
+                        }
+
+                        if (street1 && sHouseNumber2 && aSettings.useStreet2AsHouseNumber) {
+                            street1.value = sHouseNumber2;
+                            street1.dispatchEvent(new Event('keyup'));
+                        }
+
+                        if (street2 && aSettings.useStreet3AsHouseNumberAddition) {
+                            street2.value = sHouseNumberAddition || '';
+                            street2.dispatchEvent(new Event('keyup'));
+                        } else if (street2) {
+                            street2.value = '';
+                            street2.dispatchEvent(new Event('keyup'));
+                        }
+
+                        if (postcode && sPostcode) {
+                            postcode.value = sPostcode;
+                            postcode.dispatchEvent(new Event('keyup'));
+                        }
+
+                        if (city && sCity) {
+                            city.value = sCity;
+                            city.dispatchEvent(new Event('keyup'));
+                        }
+                    } else {
+                        pcm2_ConsoleLogs('Process seems to have failed, object given:');
+                        pcm2_ConsoleLogs(oResult);
+                    }
+                });
+            }
+        }
+
 
         function pcm2_getDomElements() {
 
@@ -69,27 +269,27 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
             return pcm2_oDomElements;
         }
 
-        function pcm2_hideForm(sFormId) {
+        function pcm2_hideForm() {
             var dom = pcm2_getDomElements();
 
             var country = document.querySelector('[name="country_id"]');
             var countryWrapper = country ? country.closest('.field') : null;
 
             // Field wrappers
-            var searchWrapper = document.getElementById('pcm2_' + sFormId + '_search_wrapper');
-            var resultWrapper = document.getElementById('pcm2_' + sFormId + '_result_wrapper');
+            var searchWrapper = document.getElementById('pcm2_autocomplete_search_wrapper');
+            var resultWrapper = document.getElementById('pcm2_autocomplete_result_wrapper');
             if (searchWrapper) searchWrapper.style.display = '';
             if (resultWrapper) resultWrapper.style.display = '';
 
             // Buttons
-            var manualBtn = document.getElementById('pcm2_' + sFormId + '_manualbtn');
-            var autoBtn = document.getElementById('pcm2_' + sFormId + '_autobtn');
+            var manualBtn = document.getElementById('pcm2_autocomplete_manualbtn');
+            var autoBtn = document.getElementById('pcm2_autocomplete_autobtn');
             if (manualBtn) manualBtn.style.display = '';
             if (autoBtn) autoBtn.style.display = 'none';
 
             // Add required property
-            var searchInput = document.getElementById('pcm2_' + sFormId + '_search');
-            var resultDiv = document.getElementById('pcm2_' + sFormId + '_result');
+            var searchInput = document.getElementById('pcm2_autocomplete_search');
+            var resultDiv = document.getElementById('pcm2_autocomplete_result');
             if (searchInput) searchInput.required = true;
             if (resultDiv) resultDiv.required = true;
 
@@ -102,22 +302,22 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
                     enter_automatically: 'Enter automatically'
                 };
                 var sPcex4prestaSearchTemplate =
-                    '<div class="field" id="pcm2_' + sFormId + '_search_wrapper">' +
+                    '<div class="field" id="pcm2_autocomplete_search_wrapper">' +
                     '<label class="form-control-label">' + pcm2_trans.field_label + '</label>' +
                     '<div class="col-md-6">' +
-                    '<input id="pcm2_' + sFormId + '_search" name="pcm2_' + sFormId + '_search" class="form-control" type="text" required>' +
+                    '<input id="pcm2_autocomplete_search" name="pcm2_autocomplete_search" class="form-control" type="text" required>' +
                     '</div>' +
                     '</div>' +
-                    '<div class="field" id="pcm2_' + sFormId + '_result_wrapper">' +
+                    '<div class="field" id="pcm2_autocomplete_result_wrapper">' +
                     '<label class="label"></label>' +
-                    '<div class="col-md-6" id="pcm2_' + sFormId + '_result"></div>' +
+                    '<div class="col-md-6" id="pcm2_autocomplete_result"></div>' +
                     '</div>' +
                     '<div class="required form-group row">' +
                     '<div class="field">' +
-                    '<button type="button" class="btn btn-default button button-small" id="pcm2_' + sFormId + '_manualbtn">' +
+                    '<button type="button" class="btn btn-default button button-small" id="pcm2_autocomplete_manualbtn">' +
                     '<span>' + pcm2_trans.enter_manually + '<i class="icon-chevron-right right"></i></span>' +
                     '</button>' +
-                    '<button type="button" class="btn btn-default button button-small" id="pcm2_' + sFormId + '_autobtn" style="display: none;">' +
+                    '<button type="button" class="btn btn-default button button-small" id="pcm2_autocomplete_autobtn" style="display: none;">' +
                     '<span>' + pcm2_trans.enter_automatically + '<i class="icon-chevron-right right"></i></span>' +
                     '</button>' +
                     '</div>' +
@@ -149,7 +349,7 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
         }
 
 
-        window.pcm2_restoreForm = function (sFormId, bCheckbox) {
+        function pcm2_restoreForm() {
             var dom = pcm2_getDomElements();
 
             if (window.pcm2_config.hide_fields === 'true') {
@@ -163,28 +363,28 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
             }
 
             if (typeof bCheckbox !== 'undefined') {
-                var searchWrapper = document.getElementById('pcm2_' + sFormId + '_search_wrapper');
-                var resultWrapper = document.getElementById('pcm2_' + sFormId + '_result_wrapper');
+                var searchWrapper = document.getElementById('pcm2_autocomplete_search_wrapper');
+                var resultWrapper = document.getElementById('pcm2_autocomplete_result_wrapper');
                 if (searchWrapper) searchWrapper.style.display = 'none';
                 if (resultWrapper) resultWrapper.style.display = 'none';
 
-                var manualBtn = document.getElementById('pcm2_' + sFormId + '_manualbtn');
-                var autoBtn = document.getElementById('pcm2_' + sFormId + '_autobtn');
+                var manualBtn = document.getElementById('pcm2_autocomplete_manualbtn');
+                var autoBtn = document.getElementById('pcm2_autocomplete_autobtn');
                 if (manualBtn) manualBtn.style.display = 'none';
                 if (autoBtn) autoBtn.style.display = '';
 
-                var searchInput = document.getElementById('pcm2_' + sFormId + '_search');
-                var resultDiv = document.getElementById('pcm2_' + sFormId + '_result');
+                var searchInput = document.getElementById('pcm2_autocomplete_search');
+                var resultDiv = document.getElementById('pcm2_autocomplete_result');
                 if (searchInput) searchInput.required = false;
                 if (resultDiv) resultDiv.required = false;
             } else {
-                var searchWrapper = document.getElementById('pcm2_' + sFormId + '_search_wrapper');
-                var resultWrapper = document.getElementById('pcm2_' + sFormId + '_result_wrapper');
+                var searchWrapper = document.getElementById('pcm2_autocomplete_search_wrapper');
+                var resultWrapper = document.getElementById('pcm2_autocomplete_result_wrapper');
                 if (searchWrapper && searchWrapper.parentNode) searchWrapper.parentNode.removeChild(searchWrapper);
                 if (resultWrapper && resultWrapper.parentNode) resultWrapper.parentNode.removeChild(resultWrapper);
 
-                var manualBtn = document.getElementById('pcm2_' + sFormId + '_manualbtn');
-                var autoBtn = document.getElementById('pcm2_' + sFormId + '_autobtn');
+                var manualBtn = document.getElementById('pcm2_autocomplete_manualbtn');
+                var autoBtn = document.getElementById('pcm2_autocomplete_autobtn');
                 if (manualBtn && manualBtn.parentNode) manualBtn.parentNode.removeChild(manualBtn);
                 if (autoBtn && autoBtn.parentNode) autoBtn.parentNode.removeChild(autoBtn);
             }
