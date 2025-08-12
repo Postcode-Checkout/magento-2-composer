@@ -7,6 +7,9 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
         var debugEnabled = window.pcm2_config.debug_mode ? true : false;
         var config = window.pcm2_config;
         var pcm2_oDomElements = {};
+        var oElement;
+        var sId = document.getElementById('pcm2_autocomplete_search');
+        vwindow.pcm2_Autocomplete = window.pcm2_Autocomplete || {};
 
 
 
@@ -20,7 +23,7 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
                     pcm2_getDomElements();
                     pcm2_removeDefaultAddressFields();
                     pcm2_hideForm();
-                    pcm2_addLookup();
+                    pcm2_addLookup(oElement);
                 });
             }
         }
@@ -56,29 +59,39 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
         }
 
         function pcm2_addLookup(oElement) {
-            if (!oElement || !oElement.id) {
-                pcm2_ConsoleLogs('pcm2_addLookup: oElement is undefined or missing id');
+            var root = (function () {
+                if (typeof oElement === 'string') return document.getElementById(oElement);
+                if (oElement && oElement.nodeType === 1) return oElement;
+
+                var candidates = [
+                    'form[data-role="shipping-address-form"]',
+                    '#shipping-new-address-form',
+                    'form[data-role="billing-address-form"]',
+                    '#billing-new-address-form',
+                    '#checkout'
+                ];
+                for (var i = 0; i < candidates.length; i++) {
+                    var el = document.querySelector(candidates[i]);
+                    if (el) return el;
+                }
+                return null;
+            })();
+
+            if (!root) {
+                setTimeout(function () { postcodecheckout_initFunctions(oElement); }, 300);
                 return;
             }
-            var sId = oElement.id;
 
-            var aElements = [];
-            var iIndex = 0;
-            var inputs = document.querySelectorAll('#' + sId + ' .pcpostcode_autocomplete_input input');
-            inputs.forEach(function (input) {
-                aElements[iIndex] = input.id;
-                iIndex++;
-            });
+            var inputs = root.querySelectorAll('.pcpostcode_autocomplete_input input, #pcm2_autocomplete_search');
 
-            if (aElements.length) {
-                aElements.forEach(function (inputId) {
-                    pcm2_createInteractiveFunctions(inputId);
-                });
-            } else {
-                pcm2_ConsoleLogs('No Elements Found, try again');
-                setTimeout(function () {
-                    pcm2_addLookup(oElement);
-                }, 500);
+            if (!inputs.length) {
+                setTimeout(function () { postcodecheckout_initFunctions(root); }, 300);
+                return;
+            }
+
+            for (var i = 0; i < inputs.length; i++) {
+                if (!inputs[i].id) inputs[i].id = 'pcpostcode_input_' + i;
+                pcm2_createInteractiveFunctions(inputs[i].id);
             }
         }
 
@@ -88,23 +101,38 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
             pcm2_addDisableManualFunctions(sInputId);
         }
 
-        function pcm2_addAutocompleteFunctions(sId) {
-            // Add Postcode AutoComplete
-            var oAutoComplete = document.getElementById(sId);
+        function pcm2_addAutocompleteFunctions(inputOrId) {
+            var el = (typeof inputOrId === 'string')
+                ? document.getElementById(inputOrId)
+                : inputOrId;
 
-            if (oAutoComplete) {
-                pcm2_ConsoleLogs('oAutoComplete(' + sId + ') *initiated*');
-
-                pcm2_Autocomplete[sId] = new PostcodeNl.AutocompleteAddress(oAutoComplete, {
-                    autocompleteUrl: 'postcodecheckout/proxy/suggestions?type=autocomplete',
-                    addressDetailsUrl: 'postcodecheckout/proxy/details?type=address'
-                });
-
-                oAutoComplete.addEventListener('autocomplete-select', function (event) {
-                    pcm2_fillInFields(pcm2_Autocomplete[sId], oAutoComplete, event);
-                });
+            if (!el) {
+                pcm2_ConsoleLogs('pcm2_addAutocompleteFunctions: input element not found for', inputOrId);
+                return;
             }
+            if (typeof el.addEventListener !== 'function') {
+                pcm2_ConsoleLogs('pcm2_addAutocompleteFunctions: element has no addEventListener', el);
+                return;
+            }
+
+            if (!window.PostcodeNl || !PostcodeNl.AutocompleteAddress) {
+                pcm2_ConsoleLogs('PostcodeNl.AutocompleteAddress not available yet; retrying…');
+                setTimeout(function () { pcm2_addAutocompleteFunctions(el); }, 300);
+                return;
+            }
+
+            pcm2_ConsoleLogs('oAutoComplete(' + el.id + ') *initiated*');
+
+            pcm2_Autocomplete[el.id] = new PostcodeNl.AutocompleteAddress(el, {
+                autocompleteUrl: 'postcodecheckout/proxy/suggestions?type=autocomplete',
+                addressDetailsUrl: 'postcodecheckout/proxy/details?type=address'
+            });
+
+            el.addEventListener('autocomplete-select', function (event) {
+                pcm2_fillInFields(pcm2_Autocomplete[el.id], el, event);
+            });
         }
+
 
         function pcm2_addCountryFunctions(sId) {
             pcm2_ConsoleLogs('pcm2_addCountryFunctions(' + sId + ')');
@@ -122,7 +150,7 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
         function pcm2_addDisableManualFunctions(sId) {
             pcm2_ConsoleLogs('pcm2_addDisableManualFunctions(' + sId + ')');
             var oParentObject = pcm2_getParentElement(document.getElementById(sId));
-            var oDisableElement = oParentObject ? oParentObject.querySelector('input[name="pcpostcode_autocomplete_disable"]') : null;
+            var oDisableElement = oParentObject ? oParentObject.querySelector('input[id="pcm2_autocomplete_manualbtn"]') : null;
 
             if (oDisableElement) {
                 oDisableElement.addEventListener('change', function () {
