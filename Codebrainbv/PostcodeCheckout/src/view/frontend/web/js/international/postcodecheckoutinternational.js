@@ -1,17 +1,13 @@
 define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternational', [], function () {
     'use strict';
 
-    if (window.pcm2_config.enabled === true) {
-        // Config from global window object
+    if (window.pcm2_config.enabled === true && window.pcm2_config.configured_provider === 'postcodenlext') {
         var pcm2_SupportedCountries = window.pcm2_config.countries;
         var debugEnabled = window.pcm2_config.debug_mode ? true : false;
         var config = window.pcm2_config;
         var pcm2_oDomElements = {};
         var oElement;
         var sId = document.getElementById('pcm2_autocomplete_search');
-        vwindow.pcm2_Autocomplete = window.pcm2_Autocomplete || {};
-
-
 
         pcm2_ConsoleLogs(config);
 
@@ -21,8 +17,8 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
             if (checkoutDiv && isShippingStep) {
                 pcm2_waitForAddressFields(function () {
                     pcm2_getDomElements();
-                    pcm2_removeDefaultAddressFields();
                     pcm2_hideForm();
+                    pcm2_removeDefaultAddressFields();
                     pcm2_addLookup(oElement);
                 });
             }
@@ -78,14 +74,14 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
             })();
 
             if (!root) {
-                setTimeout(function () { postcodecheckout_initFunctions(oElement); }, 300);
+                setTimeout(function () { pcm2_addLookup(oElement); }, 300);
                 return;
             }
 
             var inputs = root.querySelectorAll('.pcpostcode_autocomplete_input input, #pcm2_autocomplete_search');
 
             if (!inputs.length) {
-                setTimeout(function () { postcodecheckout_initFunctions(root); }, 300);
+                setTimeout(function () { pcm2_addLookup(root); }, 300);
                 return;
             }
 
@@ -121,7 +117,7 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
                 return;
             }
 
-            pcm2_ConsoleLogs('oAutoComplete(' + el.id + ') *initiated*');
+            pcm2_ConsoleLogs('fields loaded ready for the call');
 
             pcm2_Autocomplete[el.id] = new PostcodeNl.AutocompleteAddress(el, {
                 autocompleteUrl: 'postcodecheckout/proxy/suggestions?type=autocomplete',
@@ -147,37 +143,32 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
             }
         }
 
-        function pcm2_addDisableManualFunctions(sId) {
-            pcm2_ConsoleLogs('pcm2_addDisableManualFunctions(' + sId + ')');
-            var oParentObject = pcm2_getParentElement(document.getElementById(sId));
-            var oDisableElement = oParentObject ? oParentObject.querySelector('input[id="pcm2_autocomplete_manualbtn"]') : null;
+        function pcm2_addDisableManualFunctions() {
+            var manualBtn = document.getElementById('pcm2_autocomplete_manualbtn');
+            var autoBtn = document.getElementById('pcm2_autocomplete_autobtn');
 
-            if (oDisableElement) {
-                oDisableElement.addEventListener('change', function () {
-                    pcm2_checkDisable(this);
+            if (manualBtn) {
+                manualBtn.addEventListener('click', function () {
+                    pcm2_restoreForm();
+                    var searchWrapper = document.getElementById('pcm2_autocomplete_search_wrapper');
+                    var resultWrapper = document.getElementById('pcm2_autocomplete_result_wrapper');
+                    if (searchWrapper) searchWrapper.style.display = 'none';
+                    if (resultWrapper) resultWrapper.style.display = 'none';
+                    manualBtn.style.display = 'none';
+                    if (autoBtn) autoBtn.style.display = '';
                 });
-                pcm2_checkDisable(oDisableElement);
+            }
+
+            if (autoBtn) {
+                autoBtn.addEventListener('click', function () {
+                    pcm2_hideForm();
+                    if (manualBtn) manualBtn.style.display = '';
+                    autoBtn.style.display = 'none';
+                    pcm2_addLookup(null);
+                });
             }
         }
 
-        function pcm2_checkDisable(oElement) {
-            var sDisabled = oElement.checked;
-
-            if (pcm2_returnCountry(oElement)) {
-                pcm2_ConsoleLogs('pcm2_checkDisable(Country says show.)');
-
-                if (sDisabled === true) {
-                    pcm2_ConsoleLogs('pcm2_checkDisable(not checked)');
-                    pcm2_enableFields(oElement);
-                } else {
-                    pcm2_ConsoleLogs('pcm2_checkDisable(checked)');
-                    pcm2_disableFields(oElement);
-                }
-            } else {
-                pcm2_ConsoleLogs('pcm2_checkDisable(Fields need to be enabled)');
-                pcm2_enableFields(oElement);
-            }
-        }
 
         function pcm2_disableFields(oElement) {
             pcm2_ConsoleLogs('pcm2_disableFields()');
@@ -201,6 +192,7 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
 
         function pcm2_fillInFields(oAutoComplete, oElement, oResults) {
             pcm2_ConsoleLogs('pcm2_fillInFields()');
+            var putAdditionInStreet2 = !!(window.pcm2_config && window.pcm2_config.housenumber_addition_address2);
             var oParentObject = pcm2_getParentElement(oElement);
 
             if (oResults.detail.precision === 'Address') {
@@ -220,25 +212,17 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
                         var sAddress = '';
                         var sHouseNumber2 = '';
 
+                        var street0Val = '';
                         if (sStreet) {
-                            sAddress = sStreet;
-
+                            street0Val = sStreet;
                             if (sHouseNumber) {
-                                if (aSettings.useStreet2AsHouseNumber) {
-                                    sHouseNumber2 = sHouseNumber;
-
-                                    if (!aSettings.useStreet3AsHouseNumberAddition && sHouseNumberAddition) {
-                                        sHouseNumber2 += ' ' + sHouseNumberAddition;
-                                    }
-                                } else {
-                                    sAddress += ' ' + sHouseNumber;
-                                }
-
-                                if (sHouseNumberAddition && !aSettings.useStreet3AsHouseNumberAddition && !aSettings.useStreet2AsHouseNumber) {
-                                    sAddress += ' ' + sHouseNumberAddition;
-                                }
+                                street0Val += ' ' + sHouseNumber;
+                            }
+                            if (!putAdditionInStreet2 && sHouseNumberAddition) {
+                                street0Val += ' ' + sHouseNumberAddition;
                             }
                         }
+
 
                         var street0 = oParentObject ? oParentObject.querySelector('[name="street[0]"]') : null;
                         var street1 = oParentObject ? oParentObject.querySelector('[name="street[1]"]') : null;
@@ -246,36 +230,22 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
                         var postcode = oParentObject ? oParentObject.querySelector('[name="postcode"]') : null;
                         var city = oParentObject ? oParentObject.querySelector('[name="city"]') : null;
 
-                        if (street0 && sAddress) {
-                            street0.value = sAddress;
+                        if (street0 && street0Val) {
+                            street0.value = street0Val;
                             street0.dispatchEvent(new Event('keyup'));
                         }
 
-                        if (street1 && sHouseNumber2 && aSettings.useStreet2AsHouseNumber) {
-                            street1.value = sHouseNumber2;
-                            street1.dispatchEvent(new Event('keyup'));
+                        // toevoeging naar Address 2 of leegmaken
+                        if (putAdditionInStreet2) {
+                            if (street1) { street1.value = sHouseNumberAddition || ''; street1.dispatchEvent(new Event('keyup')); }
+                            if (street2) { street2.value = ''; street2.dispatchEvent(new Event('keyup')); }
+                        } else {
+                            if (street1) { street1.value = ''; street1.dispatchEvent(new Event('keyup')); }
+                            if (street2) { street2.value = ''; street2.dispatchEvent(new Event('keyup')); }
                         }
 
-                        if (street2 && aSettings.useStreet3AsHouseNumberAddition) {
-                            street2.value = sHouseNumberAddition || '';
-                            street2.dispatchEvent(new Event('keyup'));
-                        } else if (street2) {
-                            street2.value = '';
-                            street2.dispatchEvent(new Event('keyup'));
-                        }
-
-                        if (postcode && sPostcode) {
-                            postcode.value = sPostcode;
-                            postcode.dispatchEvent(new Event('keyup'));
-                        }
-
-                        if (city && sCity) {
-                            city.value = sCity;
-                            city.dispatchEvent(new Event('keyup'));
-                        }
-                    } else {
-                        pcm2_ConsoleLogs('Process seems to have failed, object given:');
-                        pcm2_ConsoleLogs(oResult);
+                        if (postcode && sPostcode) { postcode.value = sPostcode; postcode.dispatchEvent(new Event('keyup')); }
+                        if (city && sCity) { city.value = sCity; city.dispatchEvent(new Event('keyup')); }
                     }
                 });
             }
@@ -329,7 +299,7 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
                     enter_manually: 'Enter manually',
                     enter_automatically: 'Enter automatically'
                 };
-                var sPcex4prestaSearchTemplate =
+                var pcm2_SearchTemplate =
                     '<div class="field" id="pcm2_autocomplete_search_wrapper">' +
                     '<label class="form-control-label">' + pcm2_trans.field_label + '</label>' +
                     '<div class="col-md-6">' +
@@ -352,10 +322,10 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
                     '</div>';
 
                 if (countryWrapper) {
-                    countryWrapper.insertAdjacentHTML('afterend', sPcex4prestaSearchTemplate);
+                    countryWrapper.insertAdjacentHTML('afterend', pcm2_SearchTemplate);
                 } else if (dom.country.parentNode) {
                     // fallback: direct onder country input
-                    dom.country.parentNode.insertAdjacentHTML('afterend', sPcex4prestaSearchTemplate);
+                    dom.country.parentNode.insertAdjacentHTML('afterend', pcm2_SearchTemplate);
                 }
             }
 
