@@ -1,4 +1,7 @@
-define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternational', [], function () {
+define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternational', [
+    'autocompleteaddress',
+    'css!Codebrainbv_PostcodeCheckout/css/autocompleteaddress'
+], function () {
     'use strict';
 
     if (window.pcm2_config.enabled === true && window.pcm2_config.configured_provider === 'postcodenlext') {
