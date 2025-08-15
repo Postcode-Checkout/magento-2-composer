@@ -1,17 +1,20 @@
 <?xml version="1.0"?>
-<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+
     <head>
         <css src="Codebrainbv_PostcodeCheckout::css/postcodecheckout.css"/>
     </head>
+
     <body>
         <referenceContainer name="before.body.end">
             <block class="Codebrainbv\PostcodeCheckout\Block\Config"
                    name="postcodecheckout_config"
                    template="Codebrainbv_PostcodeCheckout::config.phtml"/>
-            <block class="Magento\Framework\View\Element\Template"
-                    name="postcodecheckout_init"
-                    template="Codebrainbv_PostcodeCheckout::init.phtml"/>
 
+            <block class="Magento\Framework\View\Element\Template"
+                   name="postcodecheckout_init"
+                   template="Codebrainbv_PostcodeCheckout::init.phtml"/>
         </referenceContainer>
     </body>
 </page>

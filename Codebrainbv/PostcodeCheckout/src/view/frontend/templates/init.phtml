@@ -1,18 +1,27 @@
 <script>
 require(['domReady!'], function () {
-    var cfg = window.pcm2_config || {};
-    var provider = cfg.configured_provider || '';
+  var cfg = window.pcm2_config || {};
+  var provider = cfg.configured_provider || '';
 
-    if (['pro6pp', 'postcodenl', 'postcodeapi'].indexOf(provider) !== -1) {
-        require(['Codebrainbv_PostcodeCheckout/js/national/postcodecheckoutnational']);
-    } else if (provider === 'postcodenlext') {
-        require([
-            'css!Codebrainbv_PostcodeCheckout/css/autocompleteaddress',
-            'autocompleteaddress',
-            'Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternational'
-        ]);
-    } else {
-        console.log('PCM2: no provider found');
+  if (provider === 'postcodenlext') {
+    var id = 'pcm2-autocomplete-css';
+    if (!document.getElementById(id)) {
+      var link = document.createElement('link');
+      link.id = id;
+      link.rel = 'stylesheet';
+      link.href = require.toUrl('Codebrainbv_PostcodeCheckout/css/autocompleteaddress.css');
+      link.media = 'all';
+      document.head.appendChild(link);
     }
+
+    require([
+      'autocompleteaddress',
+      'Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternational'
+    ]);
+  } else if (['pro6pp', 'postcodenl', 'postcodeapi'].indexOf(provider) !== -1) {
+    require(['Codebrainbv_PostcodeCheckout/js/national/postcodecheckoutnational']);
+  } else {
+    console.error('Unsupported provider:', provider);
+  }
 });
 </script>
