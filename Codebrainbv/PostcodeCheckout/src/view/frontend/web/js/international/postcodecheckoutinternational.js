@@ -2,7 +2,7 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
   'autocompleteaddress',
   'uiRegistry',
   'domReady!'
-], function (_vendor, registry) {
+], function (PostcodeNl, registry) {
   'use strict';
 
   var cfg = window.pcm2_config || {};
@@ -17,52 +17,52 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
   var SUPPORTED = (window.pcm2_countries || cfg.countries || []).map(function (c) {
     return typeof c === 'string' ? { iso2: c, iso3: c } : c;
   });
-  function isSupported(iso2){ return !SUPPORTED.length || SUPPORTED.some(function(c){ return c.iso2 === iso2; }); }
-  function iso3FromIso2(iso2){ var m = SUPPORTED.find(function(c){return c.iso2===iso2;}); return m ? m.iso3 : undefined; }
+  function isSupported(iso2) { return !SUPPORTED.length || SUPPORTED.some(function (c) { return c.iso2 === iso2; }); }
+  function iso3FromIso2(iso2) { var m = SUPPORTED.find(function (c) { return c.iso2 === iso2; }); return m ? m.iso3 : undefined; }
 
   var IDS = {
-    searchWrap:'pcm2_autocomplete_search_wrapper',
-    resultWrap:'pcm2_autocomplete_result_wrapper',
-    search:'pcm2_autocomplete_search',
-    result:'pcm2_autocomplete_result',
-    manualBtn:'pcm2_autocomplete_manualbtn',
-    autoBtn:'pcm2_autocomplete_autobtn'
+    searchWrap: 'pcm2_autocomplete_search_wrapper',
+    resultWrap: 'pcm2_autocomplete_result_wrapper',
+    search: 'pcm2_autocomplete_search',
+    result: 'pcm2_autocomplete_result',
+    manualBtn: 'pcm2_autocomplete_manualbtn',
+    autoBtn: 'pcm2_autocomplete_autobtn'
   };
 
-  function byName(root, name){ return root.querySelector('[name="'+name+'"]'); }
-  function trigger(el, t){ if(el) el.dispatchEvent(new Event(t,{bubbles:true})); }
+  function byName(root, name) { return root.querySelector('[name="' + name + '"]'); }
+  function trigger(el, t) { if (el) el.dispatchEvent(new Event(t, { bubbles: true })); }
 
-  function getDom(root){
+  function getDom(root) {
     return {
-      street0: byName(root,'street[0]'),
-      street1: byName(root,'street[1]'),
-      street2: byName(root,'street[2]'),
-      postcode: byName(root,'postcode'),
-      city:     byName(root,'city'),
-      country:  byName(root,'country_id'),
-      region:   byName(root,'region'),
-      regionId: byName(root,'region_id')
+      street0: byName(root, 'street[0]'),
+      street1: byName(root, 'street[1]'),
+      street2: byName(root, 'street[2]'),
+      postcode: byName(root, 'postcode'),
+      city: byName(root, 'city'),
+      country: byName(root, 'country_id'),
+      region: byName(root, 'region'),
+      regionId: byName(root, 'region_id')
     };
   }
 
-  function ensureLookupUI(root){
-    if (root.querySelector('#'+IDS.searchWrap)) return;
+  function ensureLookupUI(root) {
+    if (root.querySelector('#' + IDS.searchWrap)) return;
 
     var dom = getDom(root);
     var anchor = (dom.street0 && dom.street0.closest('.field')) || root;
 
     var html =
-      '<div class="field" id="'+IDS.searchWrap+'">'+
-      '  <label class="label"><span>Address lookup</span></label>'+
-      '  <div class="control"><input id="'+IDS.search+'" name="'+IDS.search+'" type="text" class="input-text" required /></div>'+
-      '</div>'+
-      '<div class="field" id="'+IDS.resultWrap+'">'+
-      '  <label class="label"><span></span></label>'+
-      '  <div class="control" id="'+IDS.result+'"></div>'+
-      '</div>'+
-      '<div class="field"><div class="control">'+
-      '  <button type="button" class="action primary" id="'+IDS.manualBtn+'">Enter manually</button> '+
-      '  <button type="button" class="action secondary" id="'+IDS.autoBtn+'" style="display:none;">Enter automatically</button>'+
+      '<div class="field" id="' + IDS.searchWrap + '">' +
+      '  <label class="label"><span>Address lookup</span></label>' +
+      '  <div class="control"><input id="' + IDS.search + '" name="' + IDS.search + '" type="text" class="input-text" required /></div>' +
+      '</div>' +
+      '<div class="field" id="' + IDS.resultWrap + '">' +
+      '  <label class="label"><span></span></label>' +
+      '  <div class="control" id="' + IDS.result + '"></div>' +
+      '</div>' +
+      '<div class="field"><div class="control">' +
+      '  <button type="button" class="action primary" id="' + IDS.manualBtn + '">Enter manually</button> ' +
+      '  <button type="button" class="action secondary" id="' + IDS.autoBtn + '" style="display:none;">Enter automatically</button>' +
       '</div></div>';
 
     var container = document.createElement('div');
@@ -70,37 +70,37 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
     anchor.parentNode.insertBefore(container, anchor);
   }
 
-  function hideOrDisable(root){
-    var d=getDom(root);
-    [d.street0,d.street1,d.street2,d.postcode,d.city,d.region,d.regionId].forEach(function(el){
-      if(!el) return;
+  function hideOrDisable(root) {
+    var d = getDom(root);
+    [d.street0, d.street1, d.street2, d.postcode, d.city, d.region, d.regionId].forEach(function (el) {
+      if (!el) return;
       if (HIDE_FIELDS) {
         var wrap = el.closest('.field'); if (wrap) wrap.style.display = 'none';
         var fs = el.closest('fieldset.street'); if (fs) fs.style.display = 'none';
       } else {
         el.value = '';
-        el.setAttribute('readonly','readonly');
+        el.setAttribute('readonly', 'readonly');
       }
     });
 
-    var sw = root.querySelector('#'+IDS.searchWrap);
-    var rw = root.querySelector('#'+IDS.resultWrap);
+    var sw = root.querySelector('#' + IDS.searchWrap);
+    var rw = root.querySelector('#' + IDS.resultWrap);
     if (sw) sw.style.display = '';
     if (rw) rw.style.display = '';
 
-    var manual = root.querySelector('#'+IDS.manualBtn);
-    var auto   = root.querySelector('#'+IDS.autoBtn);
+    var manual = root.querySelector('#' + IDS.manualBtn);
+    var auto = root.querySelector('#' + IDS.autoBtn);
     if (manual) manual.style.display = '';
-    if (auto)   auto.style.display   = 'none';
+    if (auto) auto.style.display = 'none';
 
-    var search = root.querySelector('#'+IDS.search);
+    var search = root.querySelector('#' + IDS.search);
     if (search) search.required = true;
   }
 
-  function restore(root, hard){
-    var d=getDom(root);
-    [d.street0,d.street1,d.street2,d.postcode,d.city,d.region,d.regionId].forEach(function(el){
-      if(!el) return;
+  function restore(root, hard) {
+    var d = getDom(root);
+    [d.street0, d.street1, d.street2, d.postcode, d.city, d.region, d.regionId].forEach(function (el) {
+      if (!el) return;
       if (HIDE_FIELDS) {
         var wrap = el.closest('.field'); if (wrap) wrap.style.display = '';
         var fs = el.closest('fieldset.street'); if (fs) fs.style.display = '';
@@ -109,56 +109,56 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
       }
     });
 
-    var manual = root.querySelector('#'+IDS.manualBtn);
-    var auto   = root.querySelector('#'+IDS.autoBtn);
+    var manual = root.querySelector('#' + IDS.manualBtn);
+    var auto = root.querySelector('#' + IDS.autoBtn);
     if (manual) manual.style.display = 'none';
-    if (auto)   auto.style.display   = '';
+    if (auto) auto.style.display = '';
 
-    var sw = root.querySelector('#'+IDS.searchWrap);
-    var rw = root.querySelector('#'+IDS.resultWrap);
+    var sw = root.querySelector('#' + IDS.searchWrap);
+    var rw = root.querySelector('#' + IDS.resultWrap);
 
     if (hard) {
-      [sw, rw, manual, auto].forEach(function(el){ if(el && el.parentNode) el.parentNode.removeChild(el); });
+      [sw, rw, manual, auto].forEach(function (el) { if (el && el.parentNode) el.parentNode.removeChild(el); });
     } else {
       if (sw) sw.style.display = 'none';
       if (rw) rw.style.display = 'none';
-      var search = root.querySelector('#'+IDS.search);
+      var search = root.querySelector('#' + IDS.search);
       if (search) search.required = false;
     }
   }
 
-  function fill(root, addr){
-    var d=getDom(root);
+  function fill(root, addr) {
+    var d = getDom(root);
     var street = addr.street || addr.streetName || '';
-    var nr     = addr.houseNumber || (addr.houseNumberParts && addr.houseNumberParts.houseNumber) || '';
-    var add    = addr.houseNumberAddition || (addr.houseNumberParts && addr.houseNumberParts.addition) || '';
-    var pc     = addr.postcode || addr.postalCode || addr.zipcode || '';
-    var city   = addr.city || addr.town || addr.locality || '';
+    var nr = addr.houseNumber || (addr.houseNumberParts && addr.houseNumberParts.houseNumber) || '';
+    var add = addr.houseNumberAddition || (addr.houseNumberParts && addr.houseNumberParts.addition) || '';
+    var pc = addr.postcode || addr.postalCode || addr.zipcode || '';
+    var city = addr.city || addr.town || addr.locality || '';
 
-    if (d.street0){ d.street0.value=street; trigger(d.street0,'keyup'); trigger(d.street0,'change'); }
-    if (d.street1){ d.street1.value=nr;     trigger(d.street1,'keyup'); trigger(d.street1,'change'); }
-    if (d.street2){ d.street2.value=add;    trigger(d.street2,'keyup'); trigger(d.street2,'change'); }
-    if (d.postcode){ d.postcode.value=pc;   trigger(d.postcode,'keyup'); trigger(d.postcode,'change'); }
-    if (d.city){ d.city.value=city;         trigger(d.city,'keyup'); trigger(d.city,'change'); }
+    if (d.street0) { d.street0.value = street; trigger(d.street0, 'keyup'); trigger(d.street0, 'change'); }
+    if (d.street1) { d.street1.value = nr; trigger(d.street1, 'keyup'); trigger(d.street1, 'change'); }
+    if (d.street2) { d.street2.value = add; trigger(d.street2, 'keyup'); trigger(d.street2, 'change'); }
+    if (d.postcode) { d.postcode.value = pc; trigger(d.postcode, 'keyup'); trigger(d.postcode, 'change'); }
+    if (d.city) { d.city.value = city; trigger(d.city, 'keyup'); trigger(d.city, 'change'); }
 
-    var preview = root.querySelector('#'+IDS.result);
-    if (preview){
-      var l1 = (d.street0?d.street0.value:'')+' '+(d.street1?d.street1.value:'')+' '+(d.street2?d.street2.value:'');
-      var l2 = (d.postcode?d.postcode.value:'')+' '+(d.city?d.city.value:'');
+    var preview = root.querySelector('#' + IDS.result);
+    if (preview) {
+      var l1 = (d.street0 ? d.street0.value : '') + ' ' + (d.street1 ? d.street1.value : '') + ' ' + (d.street2 ? d.street2.value : '');
+      var l2 = (d.postcode ? d.postcode.value : '') + ' ' + (d.city ? d.city.value : '');
       preview.innerHTML = (l1.trim() + '<br>' + l2.trim()).trim();
     }
   }
 
-  function attach(root){
-    var input = root.querySelector('#'+IDS.search);
+  function attach(root) {
+    var input = root.querySelector('#' + IDS.search);
     if (!input) return;
 
-    var d    = getDom(root);
+    var d = getDom(root);
     var iso2 = (d.country && d.country.value) || '';
     if (!iso2 || !isSupported(iso2)) { restore(root, true); return; }
 
     var ac = new PostcodeNl.AutocompleteAddress(input, {
-      autocompleteUrl:   'postcodecheckout/proxy/suggestions?type=autocomplete',
+      autocompleteUrl: 'postcodecheckout/proxy/suggestions?type=autocomplete',
       addressDetailsUrl: 'postcodecheckout/proxy/details?type=address',
       autoFocus: true,
       autoSelect: true,
@@ -184,10 +184,10 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
       ac.on('addressSelected', function (a) { fill(root, a); });
     }
 
-    var manual=root.querySelector('#'+IDS.manualBtn);
-    var auto  =root.querySelector('#'+IDS.autoBtn);
-    if (manual && !manual._pcm2_bound) { manual._pcm2_bound = true; manual.addEventListener('click', function(){ restore(root, false); }); }
-    if (auto   && !auto._pcm2_bound)   { auto._pcm2_bound   = true; auto.addEventListener('click', function(){ hideOrDisable(root); }); }
+    var manual = root.querySelector('#' + IDS.manualBtn);
+    var auto = root.querySelector('#' + IDS.autoBtn);
+    if (manual && !manual._pcm2_bound) { manual._pcm2_bound = true; manual.addEventListener('click', function () { restore(root, false); }); }
+    if (auto && !auto._pcm2_bound) { auto._pcm2_bound = true; auto.addEventListener('click', function () { hideOrDisable(root); }); }
   }
 
   // *** Geen polling: start zodra de Shipping UI component klaar is ***
@@ -208,7 +208,7 @@ define('Codebrainbv_PostcodeCheckout/js/international/postcodecheckoutinternatio
     var country = getDom(root).country;
     if (country && !country._pcm2_bound) {
       country._pcm2_bound = true;
-      country.addEventListener('change', function(){
+      country.addEventListener('change', function () {
         ensureLookupUI(root);
         hideOrDisable(root);
         attach(root);

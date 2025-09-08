@@ -1,8 +1,12 @@
 var config = {
-  paths: {
-    autocompleteaddress: 'Codebrainbv_PostcodeCheckout/js/vendor/autocompleteaddress'
+  map: {
+    '*': {
+      autocompleteaddress: 'Codebrainbv_PostcodeCheckout/js/vendor/autocompleteaddress'
+    }
   },
   shim: {
-    autocompleteaddress: { exports: 'PostcodeNl' }
+    'Codebrainbv_PostcodeCheckout/js/vendor/autocompleteaddress': {
+      exports: 'PostcodeNl'
+    }
   }
 };
