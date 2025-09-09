@@ -1,17 +1,19 @@
 {
   "name": "codebrainbv/postcode_checkout",
-  "description": "Address validation for checkout.",
+  "description": "Address validation for your Magento checkout.",
   "type": "magento2-module",
+  "version": "1.0.1",
+	"keywords": [ "postcode", "validation", "checkout" ],
   "require": {
     "php": "^8.1",
-    "magento/framework": "103.0.*"
+    "magento/module-checkout": "^100.4"
   },
   "autoload": {
     "files": [
       "registration.php"
     ],
     "psr-4": {
-      "Codebrainbv\\PostcodeCheckout\\": "src/"
+      "Codebrainbv\\PostcodeCheckout\\": ""
     }
   }
 }

@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Webapi:etc/webapi.xsd">
+    <!-- International endpoint CSP whitelist -->
+    <route url="/V1/international/autocomplete/:context/:term" method="GET">
+        <service class="Codebrainbv\PostcodeCheckout\Api\PostcodeModelInterface" method="getAddressAutocomplete"/>
+        <resources>
+           <resource ref="anonymous" />
+        </resources>
+    </route>
+
+    <route url="/V1/international/address/:context" method="GET">
+        <service class="Codebrainbv\PostcodeCheckout\Api\PostcodeModelInterface" method="getAddressDetails"/>
+        <resources>
+           <resource ref="anonymous" />
+        </resources>
+    </route>
+
+    <route url="/V1/international/address/:context/:dispatchCountry" method="GET">
+        <service class="Codebrainbv\PostcodeCheckout\Api\PostcodeModelInterface" method="getAddressDetailsCountry"/>
+        <resources>
+           <resource ref="anonymous" />
+        </resources>
+    </route>
+
+    <route url="/V1/international/validate/:country" method="GET">
+        <service class="Codebrainbv\PostcodeCheckout\Api\PostcodeModelInterface" method="validateAddress"/>
+        <resources>
+            <resource ref="anonymous"/>
+        </resources>
+    </route>
+
+    <!-- National endpoint CSP whitelist -->
+    <route url="/V1/nl/address/:zipCode/:houseNumber" method="GET">
+        <service class="Codebrainbv\PostcodeCheckout\Api\PostcodeModelInterface" method="getNlAddress"/>
+        <resources>
+           <resource ref="anonymous" />
+        </resources>
+    </route>
+</routes>

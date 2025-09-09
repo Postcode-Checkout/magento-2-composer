@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Store:etc/config.xsd">
+    <default>
+        <postcodecheckout>
+            <general>
+                <enabled>1</enabled>
+                <hide_address_fields>1</hide_address_fields>
+                <empty_default_address_fields>1</empty_default_address_fields>
+                <housenumber_addition_address2>0</housenumber_addition_address2>
+                <autocomplete_off>1</autocomplete_off>
+                <debug_mode>0</debug_mode>
+                <configured_provider>Enter API and License key first</configured_provider>
+            </general>
+        </postcodecheckout>
+    </default>
+</config>

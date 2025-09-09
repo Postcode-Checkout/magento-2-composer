@@ -1,0 +1,19 @@
+<!-- Used in default checkout -->
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+
+    <head>
+        <!-- Load CSS only on checkout -->
+        <css src="Codebrainbv_PostcodeCheckout::css/postcodecheckout.css"/>
+    </head>
+
+    <body>
+        <!-- For Luma: Inject RequireJS init -->
+        <referenceContainer name="after.body.start">
+            <block class="Magento\Framework\View\Element\Template"
+                   name="vendor_module_checkout"
+                   template="Vendor_Module::checkout.phtml"/>
+        </referenceContainer>
+    </body>
+</page>
