@@ -1,0 +1,22 @@
+<?php
+/** @var \Codebrainbv\PostcodeCheckout\Block\Config $block */
+$configuredProvider = $block->getConfiguredProvider();
+?>
+
+<div style="background:red;color:white;padding:10px;">
+    JS Loader Template Loaded!
+    <br>
+    Block class: <?= get_class($block) ?>
+</div>
+
+
+<!-- 
+    Postcode Checkout Dynamic Loader
+    Supports both Hyvä (Alpine.js) and RequireJS
+-->
+<script>
+    window.postcodeCheckout = {
+        configuredProvider: '<?= $configuredProvider ?>'
+    };
+</script>
+

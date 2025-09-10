@@ -1,0 +1,13 @@
+#pccheckout input[readonly]
+{
+	background-color: #D3D3D3;
+}
+
+.hidden {
+	display: none !important;
+}
+
+.margin_buttons {
+	margin-top: 1rem;
+	margin-bottom: 1rem;
+}
