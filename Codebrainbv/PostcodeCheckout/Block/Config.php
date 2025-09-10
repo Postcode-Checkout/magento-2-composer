@@ -32,4 +32,29 @@ class Config extends Template
         return $this->configHelper->getConfiguredProvider();
     }
 
+
+
+    /**
+     * Get all JS files for the active provider.
+     */
+    public function getJsFilesForProvider(): array
+    {
+        $provider = $this->getConfiguredProvider();
+
+
+        if($provider === '') {
+            return [];
+        }
+
+        if(in_array($provider, ['postcodenlext'])) {
+            // Load postcode EU and vendor-specific files
+        } else {
+            // Load national file
+
+        }
+
+
+        return $files;
+    }
+
 }
