@@ -1,4 +1,5 @@
 <?php
+
 namespace Codebrainbv\PostcodeCheckout\Block;
 
 use Magento\Framework\View\Element\Template;
@@ -20,7 +21,8 @@ class Config extends Template
 
     public function getJsConfig(): array
     {
-        return $this->configHelper->getJsConfig();
+        $config = $this->configHelper->getJsConfig();
+        return $config;
     }
 
     /**
@@ -41,20 +43,25 @@ class Config extends Template
     {
         $provider = $this->getConfiguredProvider();
 
-
-        if($provider === '') {
-            return [];
+        if ($provider === '') {
+            return [
+                'Codebrainbv_PostcodeCheckout/js/empty'
+            ];
         }
 
-        if(in_array($provider, ['postcodenlext'])) {
-            // Load postcode EU and vendor-specific files
+        if (in_array($provider, ['postcodenlext'])) {
+            // Load international file
+            $files = [
+                'Codebrainbv_PostcodeCheckout/js/postcodeeu',
+                'Codebrainbv_PostcodeCheckout/js/vendor/postcode-eu-autocomplete-address'
+            ];
         } else {
             // Load national file
-
+            $files = [
+                'Codebrainbv_PostcodeCheckout/js/national'
+            ];
         }
-
 
         return $files;
     }
-
 }
