@@ -16,35 +16,41 @@ $jsFiles = $block->getJsFilesForProvider();
 -->
 
 <script type="text/javascript">
-    (function() {
-        var hasRequireJS = (typeof require === 'function');
+    addEventListener("DOMContentLoaded", (event) => {
+        setTimeout(function() {
+            (function() {
+                var hasRequireJS = (typeof require === 'function');
 
-        if (hasRequireJS) {
-            console.log('RequireJS detected - loading scripts via RequireJS');
+                if (hasRequireJS) {
+                    console.log('RequireJS detected - loading scripts via RequireJS');
 
-            require(<?= json_encode($jsFiles) ?>, function() {
-                for (var i = 0; i < arguments.length; i++) {
-                    if (typeof arguments[i].pcm2_init === 'function') {
-                        try {
-                            arguments[i].pcm2_init();
-                        } catch (e) {
-                            console.error('Module init failed', e);
+                    require(<?= json_encode($jsFiles) ?>, function() {
+                        for (var i = 0; i < arguments.length; i++) {
+                            if (typeof arguments[i].pcm2_detectSectionFromUrl === 'function') {
+
+                                try {
+                                    arguments[i].pcm2_detectSectionFromUrl();
+                                } catch (e) {
+                                    console.error('Module init failed', e);
+                                }
+
+                            }
                         }
-                    }
+                    })
+                } else {
+                    console.log('Hyvä detected - loading scripts via <script> tags');
+
+                    // Fallback: Directly inject <script> tags for Hyvä
+                    var head = document.head || document.getElementsByTagName('head')[0];
+                    var files = <?= json_encode($jsFiles) ?>;
+
+                    files.forEach(function(path) {
+                        var script = document.createElement('script');
+                        script.src = '<?= $block->getViewFileUrl('') ?>' + path + '.js';
+                        head.appendChild(script);
+                    });
                 }
-            });
-        } else {
-            console.log('Hyvä detected - loading scripts via <script> tags');
-
-            // Fallback: Directly inject <script> tags for Hyvä
-            var head = document.head || document.getElementsByTagName('head')[0];
-            var files = <?= json_encode($jsFiles) ?>;
-
-            files.forEach(function(path) {
-                var script = document.createElement('script');
-                script.src = '<?= $block->getViewFileUrl('') ?>' + path + '.js';
-                head.appendChild(script);
-            });
-        }
-    })();
+            })();
+        }, 1000);
+    });
 </script>
