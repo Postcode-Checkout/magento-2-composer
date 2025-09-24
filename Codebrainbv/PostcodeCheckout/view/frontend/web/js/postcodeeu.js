@@ -1,192 +1,288 @@
-
-define([], function () {
+define([], function() {
     'use strict';
+    
+    var fields, elements, validationFields; // Declare variables at module level
+    
+    function pcm2_addLookup() {
 
-    // Configuration and state variables
-    var pcm2_SupportedCountries = config.pcm2_config.supported_countries;
-    var pcm2_aCeckoutSection = ['shipping', 'billing'];
-    var pcm2_oDomElementsFields = null;
-    var debugEnabled = config.pcm2_config.debug_mode === '1';
-    var randSuffix = Math.random().toString(36).substring(2, 10);
-    var disableAutocomplete = typeof config.pcm2_config !== 'undefined' ? config.pcm2_config.pcm2_autocomplete_off === '1' : false;
+        // Get country value
+        var countryField = document.querySelector('select[name="country_id"]');
 
 
-    // Debug logging function
-    function logDebug(msg, data) {
-        if (debugEnabled) {
-            console.log('pcm2: ', msg);
+        pcm2_log('Country field:', countryField);
+
+        if (!countryField) {
+            pcm2_log('PCM2 country field not found');
+            return;
+        }
+
+        var countryCode = countryField.value;
+        pcm2_log('PCM2 country code:', countryCode);
+
+
+        // Add event listener to country field
+        countryField.addEventListener('change', function(event) {
+            var newCountryCode = event.target.value;
+            pcm2_log('PCM2 country changed to:', newCountryCode);
+            countryCode = newCountryCode;
+
+
+            // Check if country is supported
+            if(pcm2_isSupportedCountry(countryCode)) {
+                pcm2_log('PCM2 country is supported, adding postcode lookup');
+                pcm2_hideForm();
+            } else {
+                pcm2_log('PCM2 country is not supported, no postcode lookup');
+                // Show default fields again
+                pcm2_showForm();
+            }
+        });
+
+        // Check if country is supported
+        if(pcm2_isSupportedCountry(countryCode)) {
+            pcm2_log('PCM2 country is supported, adding postcode lookup');
+
+            // Add postcode lookup
+            pcm2_hideForm();
+        } else {
+            pcm2_log('PCM2 country is not supported, no postcode lookup');
+            return;
+        }
+
+
+        // Add event listener to pcm2 buttons
+        document.addEventListener('click', function(event) {
+            if (event.target && event.target.id === 'pcm2_autocomplete_manualbtn') {
+                pcm2_log('PCM2 manual button clicked, showing default fields');
+                pcm2_showForm(true);
+            }
+
+            if (event.target && event.target.id === 'pcm2_autocomplete_autobtn') {
+                pcm2_log('PCM2 auto button clicked, showing postcode lookup fields');
+                pcm2_hideForm(true);
+            }
+        });
+
+        var iso3 = pcm2_convertIso2ToIso3(countryCode);
+
+        // Load the postcodeeu script
+        const searchId = document.querySelector('#pcm2_autocomplete_search');
+
+        // Set postcode EU object, from the loaded script        
+        pcm2_Autocomplete = new PostcodeNl.AutocompleteAddress(searchId, {
+            autocompleteUrl: config.pcm2_config.api_urls.international_suggest,
+            addressDetailsUrl: config.pcm2_config.api_urls.international_details,
+            autoFocus: true,
+            autoSelect: true,
+            context: sIso3Code
+        });
+
+        
+        pcm2_Autocomplete.getSuggestions = function (context, term, response) {
+
+        }
+
+
+        pcm2_Autocomplete.getDetails = function (addressId, response) {
+
+        };
+
+        searchId.addEventListener('autocomplete-select', function (event) {
+
+            
+        });
+
+    }
+
+
+    function pcm2_hideForm(defaultForm = false) {
+        // Add param to find out if its the shipping or billing form
+        fields = pcm2_getFields();
+        elements = pcm2_getElements();
+
+        pcm2_log('PCM2 fields:', fields);
+        pcm2_log('PCM2 elements:', elements);
+
+        validationFields = pcm2_getValidationFields();
+
+        // If checkbox, hide our fields and show default fields
+		if (defaultForm) {
+            pcm2_log('PCM2 checkbox is checked, hiding PCM2 fields and showing default fields');
+
+            var domKeys = Object.keys(validationFields);
+
+            for (var iDom = 0; iDom < domKeys.length; iDom++) {
+                // Hide all fields, except the autoBtn
+                if (domKeys[iDom] != 'autoBtn') {
+                    validationFields[domKeys[iDom]].style.display = 'block';
+                } else {
+                    // Display the other button
+                    validationFields[domKeys[iDom]].style.display = 'none';
+                }
+            }
+        } else {
+            // Hide address fields
+            var html =
+            '<div class="field" id="pcm2_autocomplete_search_wrapper">' +
+            '  <label class="label"><span>Address lookup</span></label>' +
+            '  <div class="control"><input id="pcm2_autocomplete_search" name="pcm2_autocomplete_search" type="text" class="input-text" required /></div>' +
+            '</div>' +
+            '<div class="field" id="pcm2_autocomplete_result_wrapper">' +
+            '  <label class="label"><span></span></label>' +
+            '  <div class="control" id="pcm2_autocomplete_result"></div>' +
+            '</div>' +
+            '<div class="field"><div class="control">' +
+            '  <button type="button" class="action secondary" id="pcm2_autocomplete_manualbtn">Enter manually</button> ' +
+            '  <button type="button" class="action secondary" id="pcm2_autocomplete_autobtn" style="display:none;">Enter automatically</button>' +
+            '</div></div>';
+
+            elements.country.insertAdjacentHTML('beforebegin', html); 
+        }
+
+        // Hide address fields
+        var domKeys = Object.keys(fields);
+
+        for (var iDom = 0; iDom < domKeys.length; iDom++) {
+
+            // Hide the element, and empty the value, except for country
+            if (domKeys[iDom] != 'country') {
+
+                fields[domKeys[iDom]].value = '';
+
+                // If its address_2 or address_3 we skip this step
+                if (domKeys[iDom] != 'address_2' && domKeys[iDom] != 'address_3') {
+                    elements[domKeys[iDom]].style.display = 'none';
+                }
+            }
+        }
+    }
+
+    function pcm2_showForm(defaultForm = false) {
+        fields = pcm2_getFields();
+        elements = pcm2_getElements();
+
+
+        var domKeys = Object.keys(fields);
+
+        for (var iDom = 0; iDom < domKeys.length; iDom++) {
+
+            // Hide the element, and empty the value, except for country
+            if (domKeys[iDom] != 'country') {
+
+                // If its address_2 or address_3 we skip this step
+                if (domKeys[iDom] != 'address_2' && domKeys[iDom] != 'address_3') {
+                    elements[domKeys[iDom]].style.display = 'block';
+                }
+            }
+        }
+
+        validationFields = pcm2_getValidationFields();
+
+        // Checkbox to show default form
+        if ( defaultForm ) {
+
+            var domKeys = Object.keys(validationFields);
+
+            for (var iDom = 0; iDom < domKeys.length; iDom++) {
+                // Hide all fields, except the autoBtn
+                if (domKeys[iDom] != 'autoBtn') {
+                    validationFields[domKeys[iDom]].style.display = 'none';
+                } else {
+                    // Display the other button
+                    validationFields[domKeys[iDom]].style.display = 'block';
+                }
+            }
+        } else {
+            // Remove postcode lookup fields
+            var domKeys = Object.keys(validationFields);
+
+            for (var iDom = 0; iDom < domKeys.length; iDom++) {
+                validationFields[domKeys[iDom]].remove();
+            }
+        }
+
+    }
+
+    function pcm2_getFields() {
+
+        fields = {
+            address_1: document.querySelector('input[name="street[0]"]'),
+            address_2: document.querySelector('input[name="street[1]"]'),
+            address_3: document.querySelector('input[name="street[2]"]'),
+            postcode: document.querySelector('input[name="postcode"]'),
+            city: document.querySelector('input[name="city"]'),
+            region: document.querySelector('input[name="region"]'),
+        };
+
+        return fields;
+    }
+
+    function pcm2_getElements() {
+
+        elements = {
+            // Since street 0,1,2 have a single parent fieldset, we need to get the parent element once
+            address_1: document.querySelector('input[name="street[0]"]').closest('fieldset.street'),
+            postcode : document.querySelector('input[name="postcode"]').closest('div.field'),
+            city : document.querySelector('input[name="city"]').closest('div.field'),
+            region : document.querySelector('input[name="region"]').closest('div.field'),
+            country : document.querySelector('select[name="country_id"]').closest('div.field'),
+        };
+
+        return elements;
+    }
+
+    function pcm2_getValidationFields() {
+        var validationFields = {
+            searchWrapper: document.getElementById('pcm2_autocomplete_search_wrapper'),
+            resultWrapper: document.getElementById('pcm2_autocomplete_result_wrapper'),
+            manualBtn: document.getElementById('pcm2_autocomplete_manualbtn'),
+            autoBtn: document.getElementById('pcm2_autocomplete_autobtn')
+        };
+
+        return validationFields;
+    }
+
+    function pcm2_isSupportedCountry(countryCode) {
+        if (typeof config.pcm2_config.supported_countries === 'undefined') {
+            pcm2_log('PCM2 supported countries not defined in config');
+            return false;
+        }
+
+        return config.pcm2_config.supported_countries.find(country => country.iso2 === countryCode);
+    }
+
+    function pcm2_convertIso2ToIso3(iso2Code) {
+        
+	    return config.pcm2_config.supported_countries.find(country => country.iso2 === iso2Code).iso3;
+    }
+
+    function pcm2_log(msg, data) {
+        if (config.pcm2_config.debug_mode == 1) {
+            console.log('PCM2:', msg);
             if (data) console.dir(data);
         }
     }
 
-    function pcm2_init(pcm2_sSection) {
-        if (typeof config.pcm2_config !== 'undefined' && config.pcm2_config.enabled === true) {
-            if (pcm2_isSupportedCountry(pcm2_sSection)) {
-                setTimeout(function () {
-                    pcm2_showForm(pcm2_sSection);
-                    pcm2_addLookup(pcm2_sSection);
-                    logDebug(config.pcm2_config);
-                }, 100);
-            } else {
-                pcm2_restoreForm(pcm2_sSection);
-            }
-        }
-    }
-
-    // Show the postcode form
-    function pcm2_showForm() {
-        logDebug('place our form');
-
-        var IDS = {
-            searchWrap: 'pcm2_autocomplete_search_wrapper',
-            resultWrap: 'pcm2_autocomplete_result_wrapper',
-            search: 'pcm2_autocomplete_search',
-            result: 'pcm2_autocomplete_result',
-            manualBtn: 'pcm2_autocomplete_manualbtn',
-            autoBtn: 'pcm2_autocomplete_autobtn'
-        };
-
-        var html =
-            '<div class="field" id="' + IDS.searchWrap + '">' +
-            '  <label class="label"><span>Address lookup</span></label>' +
-            '  <div class="control"><input id="' + IDS.search + '" name="' + IDS.search + '" type="text" class="input-text" required /></div>' +
-            '</div>' +
-            '<div class="field" id="' + IDS.resultWrap + '">' +
-            '  <label class="label"><span></span></label>' +
-            '  <div class="control" id="' + IDS.result + '"></div>' +
-            '</div>' +
-            '<div class="field"><div class="control">' +
-            '  <button type="button" class="action primary" id="' + IDS.manualBtn + '">Enter manually</button> ' +
-            '  <button type="button" class="action secondary" id="' + IDS.autoBtn + '" style="display:none;">Enter automatically</button>' +
-            '</div></div>';
-
-        // Check if the original fields are hidden; if they are, place the var html above the element with the name country_id
-        var countryElement = document.querySelector('[name="country_id"]');
-        if (countryElement) {
-            countryElement.insertAdjacentHTML('beforebegin', html);
-        }
-    }
-
-
-    // Restore the original form
-    function pcm2_restoreForm() {
-        logDebug('restore original form');
-    }
-
-    // Add address lookup functionality
-    function pcm2_addLookup() {
-        oElements = pcm2_getElements();
-        var sIso3Code = pcm2_convertIso2ToIso3(pcm2_getCountryCode());
-
-        logDebug('Country code ' + sIso3Code);
-        logDebug('add lookup functionality');
-    }
-
-    function pcm2_updatePreview(pcm2_sSection) {
-        var resultElem = document.getElementById('pcm2_' + pcm2_sSection + '_result');
-        if (!resultElem || !pcm2_oDomElements) return;
-
-        var address1 = pcm2_oDomElements.address_1 ? pcm2_oDomElements.address_1.value : '';
-        var address2 = pcm2_oDomElements.address_2 ? pcm2_oDomElements.address_2.value : '';
-        var postcode = pcm2_oDomElements.postcode ? pcm2_oDomElements.postcode.value : '';
-        var city = pcm2_oDomElements.city ? pcm2_oDomElements.city.value : '';
-
-        if (pcm2_config.pcm2_housenumber_and_addition_line_2 > 1) {
-            resultElem.innerHTML = address1 + ' ' + address2 + '<br>' + postcode + ' ' + city;
-        } else {
-            resultElem.innerHTML = address1 + address2 + '<br>' + postcode + ' ' + city;
-        }
-    }
-
-    function pcm2_getDomElementsFields(pcm2_sSection) {
-        pcm2_oDomElementsFields = {
-            address_1: document.getElementById(pcm2_sSection + '_address_1_field'),
-            address_2: document.getElementById(pcm2_sSection + '_address_2_field'),
-            postcode: document.getElementById(pcm2_sSection + '_postcode_field'),
-            city: document.getElementById(pcm2_sSection + '_city_field'),
-            state: document.getElementById(pcm2_sSection + '_state_field'),
-            country: document.getElementById(pcm2_sSection + '_country_field')
-        };
-
-        return pcm2_oDomElementsFields;
-    }
-
-    function pcm2_getElements(pcm2_sSection) {
-        pcm2_oDomElements =
-        {
-            'postcode': document.querySelector('input[name="postcode"]'),
-            'city': document.querySelector('input[name="city"]'),
-            'street': document.querySelector('input[name="street[0]"]'),
-            'street_number': document.querySelector('input[name="street[1]"]'),
-            'addition': document.querySelector('input[name="street[2]"]'),
-            'region': document.querySelector('input[name="region"]')
-        };
-
-        return pcm2_oDomElements;
-    }
-
-    function pcm2_getCountryCode(pcm2_sSection) {
-        let sCountryCode = pcm2_aCeckoutSection[pcm2_sSection];
-
-        console.log('Country code is ' + sCountryCode);
-        return sCountryCode;
-    }
-
-    function pcm2_convertIso2ToIso3(sIso2Code) {
-        console.log('iso 3 is: ' + $country);
-        // Find country by ISO2 and return ISO3
-        return pcm2_SupportedCountries.find(country => country.iso2 === sIso2Code).iso3;
-
-    }
-
-    function pcm2_isSupportedCountry(pcm2_sSection) {
-        let sCountryCode = pcm2_getCountryCode(pcm2_sSection);
-
-        console.log('Checking if ' + sCountryCode + ' is supported');
-
-        if (pcm2_SupportedCountries.find(country => country.iso2 === sCountryCode)) {
-            return true;
-        }
-
-        return false;
-    }
-
-    function pcm2_setCountryCode(countyElement, pcm2_sSection) {
-        let sCountryCode = countyElement && countyElement.value ? countyElement.value : '';
-        pcm2_aCeckoutSection[pcm2_sSection] = sCountryCode;
-
-        return sCountryCode;
-    }
-
-
     // Public API
     return {
-        pcm2_detectSectionFromUrl: function (pcm2_sSection) {
-            var countyElement = null;
-            var selectedCountry = null;
+        pcm2_init: function () {
+            // Check if dom is ready
+            if (typeof config.pcm2_config !== 'undefined' && config.pcm2_config.enabled === true) {
 
-            if (window.location.hash.indexOf('shipping') !== -1) {
-                pcm2_sSection = 'shipping';
-                countyElement = document.getElementsByName('country_id');
+                // Add check if it is the checkout shipping form or the address form
+                // var isCheckoutAddress = document.getElementById('#shipping-new-address-form');
 
-                if (countyElement && countyElement.length && countyElement[0].tagName === 'SELECT') {
-                    var selectedCountry = countyElement[0].options[countyElement[0].selectedIndex].value;
-                }
+                // if ( isCheckoutAddress ) {
 
-                pcm2_setCountryCode(selectedCountry);
-                pcm2_init(pcm2_sSection);
+                    console.log('PCM2 postcodeeu.js init');
 
-            } else if (window.location.hash.indexOf('billing') !== -1) {
-                pcm2_sSection = 'billing';
-                countyElement = document.getElementsByName('country_id');
-                if (countyElement && countyElement.length && countyElement[0].tagName === 'SELECT') {
-                    var selectedCountry = countyElement[0].options[countyElement[0].selectedIndex].value;
-                }
-
-                pcm2_setCountryCode(selectedCountry);
-                pcm2_init(pcm2_sSection);
+                    pcm2_addLookup();
+                // }
+            
+            } else {
+                console.log('PCM2 postcodeeu.js not enabled');
             }
-            return pcm2_sSection;
         }
+
     };
 });

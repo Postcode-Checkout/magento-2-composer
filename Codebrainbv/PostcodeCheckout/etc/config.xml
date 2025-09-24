@@ -4,7 +4,6 @@
         <postcodecheckout>
             <general>
                 <enabled>1</enabled>
-                <hide_address_fields>1</hide_address_fields>
                 <empty_default_address_fields>1</empty_default_address_fields>
                 <housenumber_addition_address2>0</housenumber_addition_address2>
                 <autocomplete_off>1</autocomplete_off>

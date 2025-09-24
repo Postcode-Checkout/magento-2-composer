@@ -26,10 +26,10 @@ $jsFiles = $block->getJsFilesForProvider();
 
                     require(<?= json_encode($jsFiles) ?>, function() {
                         for (var i = 0; i < arguments.length; i++) {
-                            if (typeof arguments[i].pcm2_detectSectionFromUrl === 'function') {
+                            if (typeof arguments[i].pcm2_init === 'function') {
 
                                 try {
-                                    arguments[i].pcm2_detectSectionFromUrl();
+                                    arguments[i].pcm2_init();
                                 } catch (e) {
                                     console.error('Module init failed', e);
                                 }

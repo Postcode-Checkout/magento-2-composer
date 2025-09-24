@@ -71,7 +71,6 @@ class ConfigHelper extends AbstractHelper
 
         $config = [
             'enabled' => $this->isEnabled(),
-            'hide_address_fields' => $this->getConfigValue('postcodecheckout_section/general/hide_address_fields'),
             'empty_default_address_fields' => $this->getConfigValue('postcodecheckout_section/general/empty_default_address_fields'),
             'housenumber_addition_address2' => $this->getConfigValue('postcodecheckout_section/general/housenumber_addition_address2'),
             'autocomplete_off' => $this->getConfigValue('postcodecheckout_section/general/autocomplete_off'),
