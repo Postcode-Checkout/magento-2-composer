@@ -8,10 +8,10 @@
  * https://www.tldrlegal.com/license/apple-mit-license-aml
  *
  * @author Postcode.nl
- * @version 1.4.1
+ * @version 1.4.2
  */
 
-(function (global, factory) {
+(function (root, factory) {
 	'use strict';
 
 	// eslint-disable-next-line no-undef
@@ -22,8 +22,8 @@
 	}
 	else
 	{
-		global.PostcodeNl = global.PostcodeNl || {};
-		global.PostcodeNl.AutocompleteAddress = factory(global);
+		root.PostcodeNl = root.PostcodeNl || {};
+		root.PostcodeNl.AutocompleteAddress = factory();
 	}
 }(typeof self !== 'undefined' ? self : this, function () {
 	'use strict';
@@ -31,7 +31,7 @@
 	const document = window.document,
 		$ = function (selector) { return document.querySelectorAll(selector); },
 		elementData = new WeakMap(),
-		VERSION = '1.4.1',
+		VERSION = '1.4.2',
 		EVENT_NAMESPACE = 'autocomplete-',
 		PRECISION_ADDRESS = 'Address',
 		KEY_ESC = 'Escape',
@@ -150,6 +150,15 @@
 			},
 
 			/**
+			 * Show the Postcode logo on the input
+			 * @type {boolean}
+			 */
+			showLogo: {
+				value: true,
+				writable: true,
+			},
+
+			/**
 			 * Get screen reader text for a successful response with at least one match.
 			 * Override this function to translate the message.
 			 * @type {Function}
@@ -223,6 +232,7 @@
 			classNames = {
 				menuOpen: options.cssPrefix + 'menu-open',
 				itemFocus: options.cssPrefix + 'item-focus',
+				logo: options.cssPrefix + 'logo',
 			},
 
 			/**
@@ -415,6 +425,8 @@
 		});
 
 		wrapper.classList.add(options.cssPrefix + 'menu');
+		wrapper.classList.toggle(classNames.logo, options.showLogo);
+
 		ul.classList.add(options.cssPrefix + 'menu-items');
 		wrapper.appendChild(ul);
 
@@ -452,7 +464,7 @@
 		});
 
 		// Add the menu to the page.
-		if (HTMLElement.prototype.isPrototypeOf(options.appendTo))
+		if (Object.prototype.isPrototypeOf.call(HTMLElement.prototype, options.appendTo))
 		{
 			options.appendTo.appendChild(wrapper);
 		}
@@ -728,10 +740,10 @@
 		{
 			if (arguments.length > 1)
 			{
-				return (this[arguments[1]? 'add' : 'remove'](value), !!arguments[1]);
+				return (this[arguments[1] ? 'add' : 'remove'](value), !!arguments[1]);
 			}
 
-			return (this[this.contains(value)? 'remove' : 'add'](value), this.contains(value));
+			return (this[this.contains(value) ? 'remove' : 'add'](value), this.contains(value));
 		}
 	}
 
@@ -748,11 +760,11 @@
 		{
 			inputElements = $(elementsOrSelector);
 		}
-		else if (HTMLElement.prototype.isPrototypeOf(elementsOrSelector))
+		else if (Object.prototype.isPrototypeOf.call(HTMLElement.prototype, elementsOrSelector))
 		{
 			inputElements = [elementsOrSelector];
 		}
-		else if (NodeList.prototype.isPrototypeOf(elementsOrSelector))
+		else if (Object.prototype.isPrototypeOf.call(NodeList.prototype, elementsOrSelector))
 		{
 			inputElements = elementsOrSelector;
 		}
@@ -796,7 +808,7 @@
 		const liveRegion = document.createElement('div'),
 			liveRegionId = 'aria-live-region';
 		liveRegion.id = getUniqueId(liveRegionId);
-		liveRegion.setAttribute('aria-role', 'status');
+		liveRegion.setAttribute('role', 'status');
 		liveRegion.setAttribute('aria-live', 'assertive');
 		liveRegion.classList.add(options.cssPrefix + liveRegionId);
 		document.body.appendChild(liveRegion);
@@ -1154,7 +1166,12 @@
 				}
 
 				elementData.delete(element);
-				element.classList.remove(options.cssPrefix + 'address-input', options.cssPrefix + 'loading', inputBlankClassName);
+				element.classList.remove(
+					options.cssPrefix + 'address-input',
+					options.cssPrefix + 'loading',
+					inputBlankClassName,
+					options.cssPrefix + 'logo'
+				);
 			}
 		}
 
@@ -1184,6 +1201,7 @@
 			element.setAttribute('aria-controls', liveRegion.id);
 			element.classList.add(options.cssPrefix + 'address-input');
 			element.classList.toggle(inputBlankClassName, element.value === '');
+			element.classList.toggle(options.cssPrefix + 'logo', options.showLogo);
 
 			element.addEventListener('keydown', eventHandlers.keydown = function (e) {
 				isKeyEvent = true;

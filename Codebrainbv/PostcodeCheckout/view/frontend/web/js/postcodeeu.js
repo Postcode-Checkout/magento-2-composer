@@ -8,7 +8,6 @@ define([], function() {
         // Get country value
         var countryField = document.querySelector('select[name="country_id"]');
 
-
         pcm2_log('Country field:', countryField);
 
         if (!countryField) {
@@ -49,7 +48,6 @@ define([], function() {
             return;
         }
 
-
         // Add event listener to pcm2 buttons
         document.addEventListener('click', function(event) {
             if (event.target && event.target.id === 'pcm2_autocomplete_manualbtn') {
@@ -76,12 +74,10 @@ define([], function() {
             autoSelect: true,
             context: sIso3Code
         });
-
         
         pcm2_Autocomplete.getSuggestions = function (context, term, response) {
 
         }
-
 
         pcm2_Autocomplete.getDetails = function (addressId, response) {
 
@@ -91,18 +87,12 @@ define([], function() {
 
             
         });
-
     }
-
 
     function pcm2_hideForm(defaultForm = false) {
         // Add param to find out if its the shipping or billing form
         fields = pcm2_getFields();
         elements = pcm2_getElements();
-
-        pcm2_log('PCM2 fields:', fields);
-        pcm2_log('PCM2 elements:', elements);
-
         validationFields = pcm2_getValidationFields();
 
         // If checkbox, hide our fields and show default fields
@@ -160,7 +150,6 @@ define([], function() {
     function pcm2_showForm(defaultForm = false) {
         fields = pcm2_getFields();
         elements = pcm2_getElements();
-
 
         var domKeys = Object.keys(fields);
 

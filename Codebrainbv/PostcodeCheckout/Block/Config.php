@@ -52,8 +52,8 @@ class Config extends Template
         if (in_array($provider, ['postcodenlext'])) {
             // Load international file
             $files = [
-                'Codebrainbv_PostcodeCheckout/js/postcodeeu',
-                'Codebrainbv_PostcodeCheckout/js/vendor/postcode-eu-autocomplete-address'
+                'Codebrainbv_PostcodeCheckout/js/vendor/autocompleteaddress',
+                'Codebrainbv_PostcodeCheckout/js/postcodeeu'
             ];
         } else {
             // Load national file
