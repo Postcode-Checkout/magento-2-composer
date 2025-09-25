@@ -37,12 +37,29 @@ class ConfigHelper extends AbstractHelper
     }
 
     /**
+     * Get shop URL
+     * @return string
+     */
+    public function getShopUrl(): string
+    {
+        $store = $this->_storeManager->getStore();
+        // $baseUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB);
+        $baseUrl = $this->_urlBuilder->getBaseUrl(['_store' => $store->getCode()]);
+        return rtrim($baseUrl, '/');
+    }
+
+    /**
      * Is module enabled
      * @return bool
      */
     public function isEnabled(): bool
     {
         return $this->getConfigValue('postcodecheckout_section/general/enabled') == 1;
+    }
+
+    public function getApiKey(): string
+    {
+        return $this->getConfigValue('postcodecheckout_section/general/api_key') ?? '';
     }
 
     /**
@@ -61,10 +78,10 @@ class ConfigHelper extends AbstractHelper
     public function getJsConfig(): array
     {
         $store = $this->_storeManager->getStore();
-        $baseUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB);
-        // $baseUrl = $this->_urlBuilder->getBaseUrl(['_store' => $currentStore->getCode()]);
+        // $baseUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB);
+        $baseUrl = $this->_urlBuilder->getBaseUrl(['_store' => $store->getCode()]);
 
-        $apiUrl = $baseUrl . 'postcodecheckout/v1/';
+        $apiUrl = $baseUrl . 'rest/V1/codebrainbv_postcodecheckout/';
 
         // Check provider
         $configuredProvider = $this->getConfigValue('postcodecheckout_section/general/configured_provider');

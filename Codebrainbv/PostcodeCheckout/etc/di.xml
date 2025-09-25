@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="Codebrainbv\PostcodeCheckout\Api\ValidationInterface" type="Codebrainbv\PostcodeCheckout\Model\Api\ValidationModel" />
+
+
+    <type name="Codebrainbv\PostcodeCheckout\Model\Api\Data\AddressResponse">
+        <arguments>
+            <argument name="data" xsi:type="array">{}</argument>
+        </arguments>
+    </type>
+
+</config>

@@ -72,7 +72,7 @@ define([], function() {
                 var housenumber = document.getElementById('pcm2_autocomplete_housenumber').value;
 
                 // If both fields are filled, do the lookup
-                if (postcode.length > 6 && housenumber.length > 0) {
+                if (postcode.length >= 6 && housenumber.length != 0) {
                     pcm2_log('PCM2 postcode and housenumber filled, doing lookup:', {postcode: postcode, housenumber: housenumber});
 
                     // Do the lookup with ajax call to our controller
@@ -85,18 +85,18 @@ define([], function() {
                                 try {
                                     var response = JSON.parse(this.responseText);
                                     pcm2_log('PCM2 lookup response:', response);
+
+                                    pcm2_log('Street found:', response.street);
                                     
                                     // Handle the successful response
                                     if (response && response.street) {
                                         // pcm2_fillAddressFields(response);
                                     }
                                 } catch (e) {
-                                    console.error('PCM2 Error parsing response:', e);
-                                    pcm2_log('PCM2 Invalid JSON response');
+                                    pcm2_log('PCM2 Invalid JSON response', e);
                                 }
                             } else {
-                                console.error('PCM2 Request failed with status:', this.status);
-                                pcm2_log('PCM2 Request failed:', this.status, this.statusText);
+                                pcm2_log('PCM2 Request failed:', this);
                             }
                         }
                     };
@@ -113,6 +113,7 @@ define([], function() {
                     };
 
                     xhr.open('GET', url, true);
+                    xhr.setRequestHeader('Content-Type', 'application/json');
                     xhr.send();
 
 

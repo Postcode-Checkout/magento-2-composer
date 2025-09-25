@@ -2,24 +2,24 @@
 <routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Webapi:etc/webapi.xsd">
 
     <!-- International suggest -->
-    <route url="/v1/international/suggest/:context/:term" method="GET">
-        <service class="Codebrainbv\PostcodeCheckout\Api\Validation" method="getAddressAutocomplete"/>
+    <route url="/V1/codebrainbv_postcodecheckout/international/suggest/:context/:term" method="GET">
+        <service class="Codebrainbv\PostcodeCheckout\Api\ValidationInterface" method="getAddressAutocomplete"/>
         <resources>
            <resource ref="anonymous" />
         </resources>
     </route>
 
     <!-- International details -->
-    <route url="/v1/international/details/:context" method="GET">
-        <service class="Codebrainbv\PostcodeCheckout\Api\Validation" method="getAddressDetails"/>
+    <route url="/V1/codebrainbv_postcodecheckout/international/details/:context" method="GET">
+        <service class="Codebrainbv\PostcodeCheckout\Api\ValidationInterface" method="getAddressDetails"/>
         <resources>
            <resource ref="anonymous" />
         </resources>
     </route>
 
-    <!-- National endpoint CSP whitelist -->
-    <route url="/v1/national/address/:zipCode/:houseNumber" method="GET">
-        <service class="Codebrainbv\PostcodeCheckout\Api\Validation" method="getNationalAddress"/>
+    <!-- National endpoint -->
+    <route url="/V1/codebrainbv_postcodecheckout/national/address/:zipCode/:houseNumber" method="GET">
+        <service class="Codebrainbv\PostcodeCheckout\Api\ValidationInterface" method="getNationalAddress"/>
         <resources>
            <resource ref="anonymous" />
         </resources>
