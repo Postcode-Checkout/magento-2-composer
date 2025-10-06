@@ -5,6 +5,7 @@ namespace Codebrainbv\PostcodeCheckout\Model\Api;
 use Codebrainbv\PostcodeCheckout\Api\ValidationInterface;
 use Codebrainbv\PostcodeCheckout\Helper\ConfigHelper;
 use Codebrainbv\PostcodeCheckout\Model\Api\Data\AddressResponseFactory;
+use Codebrainbv\PostcodeCheckout\Model\Api\Data\AddressResultFactory;
 
 class ValidationModel implements ValidationInterface
 {
@@ -15,25 +16,22 @@ class ValidationModel implements ValidationInterface
 
     private $responseFactory;
 
+    private $resultFactory;
+
     public function __construct(
         ConfigHelper $configHelper,
-        AddressResponseFactory $responseFactory
+        AddressResponseFactory $responseFactory,
+        AddressResultFactory $resultFactory,
     ) {
         $this->configHelper = $configHelper;
         $this->responseFactory = $responseFactory;
+        $this->resultFactory = $resultFactory;
     }
 
-    public function getAddressAutocomplete($context, $term)
-    {
-        // Implementation for getting address autocomplete suggestions
-    }
-
-    public function getAddressDetails($context)
-    {
-        // Implementation for getting address details
-    }
-
-    public function getNationalAddress($zipCode, $houseNumber)
+    /**
+     * @inheritdoc
+     */
+    public function getNationalAddress($zipCode, $houseNumber): \Codebrainbv\PostcodeCheckout\Model\Api\Data\AddressResponse
     {
         $response = $this->responseFactory->create();
 
@@ -64,10 +62,18 @@ class ValidationModel implements ValidationInterface
                 ->setResult(null);
         }
 
+        $result = $this->resultFactory->create();
+        $result->setStreet($rawResponse['result']['street'] ?? null)
+            ->setHousenumber($rawResponse['result']['housenumber'] ?? null)
+            ->setAddition($rawResponse['result']['addition'] ?? null)
+            ->setPostcode($rawResponse['result']['postcode'] ?? null)
+            ->setCity($rawResponse['result']['city'] ?? null)
+            ->setProvince($rawResponse['result']['province'] ?? null);
+
         return $response
             ->setStatus(true)
             ->setMessage(null)
-            ->setResult($rawResponse['result']);
+            ->setResult($result);
     }
 
     private function callApi(string $url, string $apiKey): array

@@ -60,16 +60,39 @@ define([], function() {
                 pcm2_hideForm(true);
             }
         });
+        
+        // Initialize lookup functionality
+        pcm2_initLookup();
+    }
+
+
+    function pcm2_initLookup() {
+
+        var postcode = document.getElementById('pcm2_autocomplete_postcode');
+        var housenumber = document.getElementById('pcm2_autocomplete_housenumber');
+        
+        // Add event listeners to our fields with debounce
+        const debouncedHandleInput = debounce(handleInput, 400);
+
+        postcode.addEventListener('input', debouncedHandleInput);
+        housenumber.addEventListener('input', debouncedHandleInput);
 
 
         // Check for input on our fields
-        document.addEventListener('input', function(event) {
+        function handleInput(event) {
 
             pcm2_log('PCM2 input event:', event);
 
             if (event.target && event.target.id === 'pcm2_autocomplete_postcode' || event.target.id === 'pcm2_autocomplete_housenumber') {
-                var postcode = document.getElementById('pcm2_autocomplete_postcode').value;
-                var housenumber = document.getElementById('pcm2_autocomplete_housenumber').value;
+                // Get values from our 2 validation fields
+    
+                validationFields = pcm2_getValidationFields();
+
+                // Clear previous results
+                validationFields.resultWrapper.innerHTML = '';
+
+                var postcode = document.getElementById('pcm2_autocomplete_postcode').value.trim().toUpperCase().replace(/\s+/g, '');
+                var housenumber = document.getElementById('pcm2_autocomplete_housenumber').value.trim();
 
                 // If both fields are filled, do the lookup
                 if (postcode.length >= 6 && housenumber.length != 0) {
@@ -85,25 +108,32 @@ define([], function() {
                                 try {
                                     var response = JSON.parse(this.responseText);
                                     pcm2_log('PCM2 lookup response:', response);
-
-                                    pcm2_log('Street found:', response.street);
-                                    
+                                   
                                     // Handle the successful response
-                                    if (response && response.street) {
-                                        // pcm2_fillAddressFields(response);
+                                    if (response && response.status === true && response.result.street) {
+                                        pcm2_fillAddressFields(response.result);
+                                    } else {
+                                        pcm2_log('PCM2 No address found for the given postcode and housenumber');
+                                        pcm2_updatePreview(true);
                                     }
                                 } catch (e) {
                                     pcm2_log('PCM2 Invalid JSON response', e);
+
+                                    // Update preview with error message
+                                    pcm2_updatePreview(true);
                                 }
                             } else {
                                 pcm2_log('PCM2 Request failed:', this);
+                                pcm2_updatePreview(true);
                             }
                         }
                     };
 
                     xhr.onerror = function() {
-                        console.error('PCM2 Network error occurred');
                         pcm2_log('PCM2 Network error');
+
+                        pcm2_updatePreview(true);
+
                     };
 
                     xhr.timeout = 10000; // 10 second timeout
@@ -119,12 +149,64 @@ define([], function() {
 
                 }
             }
-        });
+        }
     }
 
-    function pcm2_fillAddressFields(data) {
+    function debounce(func, delay) {
+        let timeoutId;
+        return function (...args) {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => {
+            func.apply(this, args);
+            }, delay);
+        };
+    }
+
+    function pcm2_fillAddressFields(result) {
         fields = pcm2_getFields();
 
+        pcm2_log('PCM2 filling address fields with result:', result);
+
+
+        // Check if we have a result, empty array?
+        if (!result || Object.keys(result).length === 0) {
+            pcm2_log('PCM2 no result found');
+
+            pcm2_updatePreview(true);
+        } else {
+
+            fields.address_1.value = result.street;
+
+            if (result.addition) {
+                fields.address_1.value += ' ' + result.housenumber + ' ' + result.addition;
+            } else {
+                fields.address_1.value += ' ' + result.housenumber;
+            }
+
+
+            fields.postcode.value = result.postcode;
+            fields.city.value = result.city;
+
+            pcm2_updatePreview();
+            
+        }
+    }
+
+    function pcm2_updatePreview(errorMsg = false) {
+
+        if(errorMsg) {
+            validationFields.resultWrapper.innerHTML = '<p style="color:red;">Adres kon niet worden gevonden, controleer Postcode en Huisnummer of voer handmatig in.</p>';
+            return;
+        }
+
+        validationFields = pcm2_getValidationFields();
+
+        var html = '';
+
+        html += '<p>' + fields.address_1.value + '</p>';
+        html += '<p>' + fields.postcode.value + ' ' + fields.city.value + '</p>';
+
+        validationFields.resultWrapper.innerHTML = html;
     }
 
     function pcm2_hideForm(defaultForm = false) {
@@ -152,11 +234,11 @@ define([], function() {
             // Hide address fields
             var html =
             '<div class="field" id="pcm2_autocomplete_postcode_wrapper">' +
-            '  <label class="label"><span>Postcode</span></label>' +
+            '  <label class="label" for="pcm2_autocomplete_postcode"><span>Postcode</span></label>' +
             '  <div class="control"><input id="pcm2_autocomplete_postcode" name="pcm2_autocomplete_postcode" type="text" class="input-text" required /></div>' +
             '</div>' +
             '<div class="field" id="pcm2_autocomplete_housenumber_wrapper">' +
-            '  <label class="label"><span>Huisnummer</span></label>' +
+            '  <label class="label" for="pcm2_autocomplete_housenumber"><span>Huisnummer</span></label>' +
             '  <div class="control"><input id="pcm2_autocomplete_housenumber" name="pcm2_autocomplete_housenumber" type="text" class="input-text" required /></div>' +
             '</div>' +
             '<div class="field" id="pcm2_autocomplete_result_wrapper">' +
