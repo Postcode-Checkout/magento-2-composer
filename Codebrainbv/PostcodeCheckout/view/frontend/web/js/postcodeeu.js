@@ -1,7 +1,14 @@
-define([], function() {
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define(['PostcodeNl'], factory);
+    } else {
+        root.PCM2_PostcodeEU = factory(root.PostcodeNl);
+    }
+}(this, function (PostcodeNl) {
     'use strict';
+
     
-    var fields, elements, validationFields; // Declare variables at module level
+    var fields, elements, validationFields, pcm2_Autocomplete; // Declare variables at module level
     
     function pcm2_addLookup() {
 
@@ -274,4 +281,4 @@ define([], function() {
         }
 
     };
-});
+}));

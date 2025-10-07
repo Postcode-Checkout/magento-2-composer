@@ -1,4 +1,10 @@
-define([], function() {
+(function (root, factory) {
+    if (typeof define === 'function' && define.amd) {
+        define([], factory);
+    } else {
+        root.PCM2_National = factory();
+    }
+}(this, function () {
     'use strict';
     
     var fields, elements, validationFields; // Declare variables at module level
@@ -60,97 +66,129 @@ define([], function() {
                 pcm2_hideForm(true);
             }
         });
-        
+
         // Initialize lookup functionality
         pcm2_initLookup();
+        
     }
-
-
+    
     function pcm2_initLookup() {
-
+        pcm2_log('PCM2 initializing lookup functionality with event delegation');
+        
+        // Remove existing event delegation listener if it exists
+        if (window.pcm2GlobalInputHandler) {
+            document.removeEventListener('input', window.pcm2GlobalInputHandler);
+            pcm2_log('PCM2 removed existing global input handler');
+        }
+        
+        // Create debounced handler
+        const debouncedHandleInput = debounce(pcm2_doLookup, 400);
+        
+        // Create global input handler using event delegation
+        window.pcm2GlobalInputHandler = function(event) {
+            if (event.target && (event.target.id === 'pcm2_autocomplete_postcode' || event.target.id === 'pcm2_autocomplete_housenumber')) {
+                pcm2_log('PCM2 input detected on:', event.target.id, 'value:', event.target.value);
+                debouncedHandleInput();
+            }
+        };
+        
+        // Add global event listener using delegation
+        document.addEventListener('input', window.pcm2GlobalInputHandler);
+        
+        pcm2_log('PCM2 global event delegation setup complete');
+        
+        // Test if fields exist
         var postcode = document.getElementById('pcm2_autocomplete_postcode');
         var housenumber = document.getElementById('pcm2_autocomplete_housenumber');
         
-        // Add event listeners to our fields with debounce
-        const debouncedHandleInput = debounce(handleInput, 400);
-
-        postcode.addEventListener('input', debouncedHandleInput);
-        housenumber.addEventListener('input', debouncedHandleInput);
-
-
-        // Check for input on our fields
-        function handleInput(event) {
-
-            pcm2_log('PCM2 input event:', event);
-
-            if (event.target && event.target.id === 'pcm2_autocomplete_postcode' || event.target.id === 'pcm2_autocomplete_housenumber') {
-                // Get values from our 2 validation fields
-    
-                validationFields = pcm2_getValidationFields();
-
-                // Clear previous results
-                validationFields.resultWrapper.innerHTML = '';
-
-                var postcode = document.getElementById('pcm2_autocomplete_postcode').value.trim().toUpperCase().replace(/\s+/g, '');
-                var housenumber = document.getElementById('pcm2_autocomplete_housenumber').value.trim();
-
-                // If both fields are filled, do the lookup
-                if (postcode.length >= 6 && housenumber.length != 0) {
-                    pcm2_log('PCM2 postcode and housenumber filled, doing lookup:', {postcode: postcode, housenumber: housenumber});
-
-                    // Do the lookup with ajax call to our controller
-                    var xhr = new XMLHttpRequest();
-                    var url = config.pcm2_config.api_urls.national + '/' + encodeURIComponent(postcode) + '/' + encodeURIComponent(housenumber);
-
-                    xhr.onreadystatechange = function() {
-                        if (this.readyState === 4) {
-                            if (this.status === 200) {
-                                try {
-                                    var response = JSON.parse(this.responseText);
-                                    pcm2_log('PCM2 lookup response:', response);
-                                   
-                                    // Handle the successful response
-                                    if (response && response.status === true && response.result.street) {
-                                        pcm2_fillAddressFields(response.result);
-                                    } else {
-                                        pcm2_log('PCM2 No address found for the given postcode and housenumber');
-                                        pcm2_updatePreview(true);
-                                    }
-                                } catch (e) {
-                                    pcm2_log('PCM2 Invalid JSON response', e);
-
-                                    // Update preview with error message
-                                    pcm2_updatePreview(true);
-                                }
-                            } else {
-                                pcm2_log('PCM2 Request failed:', this);
-                                pcm2_updatePreview(true);
-                            }
-                        }
-                    };
-
-                    xhr.onerror = function() {
-                        pcm2_log('PCM2 Network error');
-
-                        pcm2_updatePreview(true);
-
-                    };
-
-                    xhr.timeout = 10000; // 10 second timeout
-                    xhr.ontimeout = function() {
-                        console.error('PCM2 Request timed out');
-                        pcm2_log('PCM2 Request timeout');
-                    };
-
-                    xhr.open('GET', url, true);
-                    xhr.setRequestHeader('Content-Type', 'application/json');
-                    xhr.send();
-
-
-                }
-            }
+        if (postcode && housenumber) {
+            pcm2_log('PCM2 fields found - postcode:', postcode.value, 'housenumber:', housenumber.value);
+        } else {
+            pcm2_log('PCM2 fields not found yet - will work when created');
         }
     }
+
+    // Check for input on our fields
+    function pcm2_doLookup() {
+        pcm2_log('PCM2 lookup triggered');
+
+        // Get our input fields
+        var postcodeField = document.getElementById('pcm2_autocomplete_postcode');
+        var housenumberField = document.getElementById('pcm2_autocomplete_housenumber');
+        
+        // Exit if fields don't exist
+        if (!postcodeField || !housenumberField) {
+            pcm2_log('PCM2 fields not found, aborting lookup');
+            return;
+        }
+
+        // Get values from our 2 validation fields
+        validationFields = pcm2_getValidationFields();
+
+        // Clear previous results
+        if (validationFields.resultWrapper) {
+            validationFields.resultWrapper.innerHTML = '';
+        }
+
+        var postcode = postcodeField.value.trim().toUpperCase().replace(/\s+/g, '');
+        var housenumber = housenumberField.value.trim();
+
+            // If both fields are filled, do the lookup
+            if (postcode.length >= 6 && housenumber.length != 0) {
+                pcm2_log('PCM2 postcode and housenumber filled, doing lookup:', {postcode: postcode, housenumber: housenumber});
+
+                // Do the lookup with ajax call to our controller
+                var xhr = new XMLHttpRequest();
+                var url = config.pcm2_config.api_urls.national + '/' + encodeURIComponent(postcode) + '/' + encodeURIComponent(housenumber);
+
+                xhr.onreadystatechange = function() {
+                    if (this.readyState === 4) {
+                        if (this.status === 200) {
+                            try {
+                                var response = JSON.parse(this.responseText);
+                                pcm2_log('PCM2 lookup response:', response);
+                                
+                                // Handle the successful response
+                                if (response && response.status === true && response.result.street) {
+                                    pcm2_fillAddressFields(response.result);
+                                } else {
+                                    pcm2_log('PCM2 No address found for the given postcode and housenumber');
+                                    pcm2_updatePreview(true);
+                                }
+                            } catch (e) {
+                                pcm2_log('PCM2 Invalid JSON response', e);
+
+                                // Update preview with error message
+                                pcm2_updatePreview(true);
+                            }
+                        } else {
+                            pcm2_log('PCM2 Request failed:', this);
+                            pcm2_updatePreview(true);
+                        }
+                    }
+                };
+
+                xhr.onerror = function() {
+                    pcm2_log('PCM2 Network error');
+
+                    pcm2_updatePreview(true);
+
+                };
+
+                xhr.timeout = 10000; // 10 second timeout
+                xhr.ontimeout = function() {
+                    console.error('PCM2 Request timed out');
+                    pcm2_log('PCM2 Request timeout');
+                };
+
+                xhr.open('GET', url, true);
+                xhr.setRequestHeader('Content-Type', 'application/json');
+                xhr.send();
+
+
+            }
+        }
+
 
     function debounce(func, delay) {
         let timeoutId;
@@ -161,6 +199,7 @@ define([], function() {
             }, delay);
         };
     }
+
 
     function pcm2_fillAddressFields(result) {
         fields = pcm2_getFields();
@@ -230,6 +269,10 @@ define([], function() {
                     validationFields[domKeys[iDom]].style.display = 'none';
                 }
             }
+
+            // Re-initialize event listeners after showing elements
+            pcm2_initLookup();
+
         } else {
             // Hide address fields
             var html =
@@ -391,4 +434,4 @@ define([], function() {
         }
 
     };
-});
+}));
