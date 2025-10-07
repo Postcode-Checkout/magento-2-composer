@@ -63,6 +63,7 @@ class ValidationModel implements ValidationInterface
         }
 
         $result = $this->resultFactory->create();
+
         $result->setStreet($rawResponse['result']['street'] ?? null)
             ->setHousenumber($rawResponse['result']['housenumber'] ?? null)
             ->setAddition($rawResponse['result']['addition'] ?? null)

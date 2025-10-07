@@ -30,12 +30,12 @@ class AddressResult extends DataObject implements AddressResultInterface
     /**
      * @inheritdoc
      */
-    public function getAddition(): ?string { return $this->getData('addition'); }
+    public function getAddition(): ?array { return $this->getData('addition'); }
     
     /**
      * @inheritdoc
      */
-    public function setAddition(?string $addition) { return $this->setData('addition', $addition); }
+    public function setAddition(?array $addition) { return $this->setData('addition', $addition); }
     
     /**
      * @inheritdoc

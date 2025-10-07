@@ -133,62 +133,59 @@
         var postcode = postcodeField.value.trim().toUpperCase().replace(/\s+/g, '');
         var housenumber = housenumberField.value.trim();
 
-            // If both fields are filled, do the lookup
-            if (postcode.length >= 6 && housenumber.length != 0) {
-                pcm2_log('PCM2 postcode and housenumber filled, doing lookup:', {postcode: postcode, housenumber: housenumber});
+        // If both fields are filled, do the lookup
+        if (postcode.length >= 6 && housenumber.length != 0) {
+            pcm2_log('PCM2 postcode and housenumber filled, doing lookup:', {postcode: postcode, housenumber: housenumber});
 
-                // Do the lookup with ajax call to our controller
-                var xhr = new XMLHttpRequest();
-                var url = config.pcm2_config.api_urls.national + '/' + encodeURIComponent(postcode) + '/' + encodeURIComponent(housenumber);
+            // Do the lookup with ajax call to our controller
+            var xhr = new XMLHttpRequest();
+            var url = config.pcm2_config.api_urls.national + '/' + encodeURIComponent(postcode) + '/' + encodeURIComponent(housenumber);
 
-                xhr.onreadystatechange = function() {
-                    if (this.readyState === 4) {
-                        if (this.status === 200) {
-                            try {
-                                var response = JSON.parse(this.responseText);
-                                pcm2_log('PCM2 lookup response:', response);
-                                
-                                // Handle the successful response
-                                if (response && response.status === true && response.result.street) {
-                                    pcm2_fillAddressFields(response.result);
-                                } else {
-                                    pcm2_log('PCM2 No address found for the given postcode and housenumber');
-                                    pcm2_updatePreview(true);
-                                }
-                            } catch (e) {
-                                pcm2_log('PCM2 Invalid JSON response', e);
-
-                                // Update preview with error message
+            xhr.onreadystatechange = function() {
+                if (this.readyState === 4) {
+                    if (this.status === 200) {
+                        try {
+                            var response = JSON.parse(this.responseText);
+                            pcm2_log('PCM2 lookup response:', response);
+                            
+                            // Handle the successful response
+                            if (response && response.status === true && response.result.street) {
+                                pcm2_fillAddressFields(response.result);
+                            } else {
+                                pcm2_log('PCM2 No address found for the given postcode and housenumber');
                                 pcm2_updatePreview(true);
                             }
-                        } else {
-                            pcm2_log('PCM2 Request failed:', this);
+                        } catch (e) {
+                            pcm2_log('PCM2 Invalid JSON response', e);
+
+                            // Update preview with error message
                             pcm2_updatePreview(true);
                         }
+                    } else {
+                        pcm2_log('PCM2 Request failed:', this);
+                        pcm2_updatePreview(true);
                     }
-                };
+                }
+            };
 
-                xhr.onerror = function() {
-                    pcm2_log('PCM2 Network error');
+            xhr.onerror = function() {
+                pcm2_log('PCM2 Network error');
 
-                    pcm2_updatePreview(true);
+                pcm2_updatePreview(true);
 
-                };
+            };
 
-                xhr.timeout = 10000; // 10 second timeout
-                xhr.ontimeout = function() {
-                    console.error('PCM2 Request timed out');
-                    pcm2_log('PCM2 Request timeout');
-                };
+            xhr.timeout = 10000; // 10 second timeout
+            xhr.ontimeout = function() {
+                console.error('PCM2 Request timed out');
+                pcm2_log('PCM2 Request timeout');
+            };
 
-                xhr.open('GET', url, true);
-                xhr.setRequestHeader('Content-Type', 'application/json');
-                xhr.send();
-
-
-            }
+            xhr.open('GET', url, true);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.send();
         }
-
+    }
 
     function debounce(func, delay) {
         let timeoutId;
@@ -199,7 +196,6 @@
             }, delay);
         };
     }
-
 
     function pcm2_fillAddressFields(result) {
         fields = pcm2_getFields();
@@ -214,20 +210,29 @@
             pcm2_updatePreview(true);
         } else {
 
-            fields.address_1.value = result.street;
-
-            if (result.addition) {
-                fields.address_1.value += ' ' + result.housenumber + ' ' + result.addition;
-            } else {
+            if(config.pcm2_config.housenumber_addition_address2 == 0) {
+                // Everything on street 1 field
+                fields.address_1.value = result.street;
                 fields.address_1.value += ' ' + result.housenumber;
             }
+            else { 
+                // Street on field 1, rest on field 2
+                fields.address_1.value = result.street;
+                fields.address_2.value = result.housenumber;
+            }
 
+            // Check additions
+            if (result.addition && Array.isArray(result.addition) && result.addition.length > 0) {
+				pcm2_setHouseNumberAdditions(data.result.addition);
+            } else {
+                pcm2_changeHousenumberAddition(data.result.addition);
+                validationFields.housenumberAddition.style.display = 'none';
+            }
 
             fields.postcode.value = result.postcode;
             fields.city.value = result.city;
 
             pcm2_updatePreview();
-            
         }
     }
 
@@ -238,14 +243,43 @@
             return;
         }
 
-        validationFields = pcm2_getValidationFields();
-
         var html = '';
 
         html += '<p>' + fields.address_1.value + '</p>';
         html += '<p>' + fields.postcode.value + ' ' + fields.city.value + '</p>';
 
         validationFields.resultWrapper.innerHTML = html;
+    }
+
+    function pcm2_setHouseNumberAdditions(additions) {
+        // Clear existing options
+        validationFields.housenumberAddition.innerHTML = '';
+
+        // Show the wrapper
+        validationFields.housenumberAdditionWrapper.style.display = 'block';
+
+        // Loop through additions and create options
+        additions.forEach(function(addition) {
+            var option = document.createElement('option');
+            option.value = addition;
+            option.text = addition;
+            validationFields.housenumberAddition.appendChild(option);
+        });
+
+        
+		var defaultOption = additions.find(function (v, i) { return i > 0 && v !== ""; }) || additions[0] || "";
+        // Set the first option as selected
+        
+        validationFields.housenumberAddition.value = defaultOption;
+
+        // Change housenumber addition in form
+        pcm2_changeHousenumberAddition(defaultOption);
+
+    }
+
+    function pcm2_changeHousenumberAddition(value) {
+
+
     }
 
     function pcm2_hideForm(defaultForm = false) {
@@ -283,6 +317,14 @@
             '<div class="field" id="pcm2_autocomplete_housenumber_wrapper">' +
             '  <label class="label" for="pcm2_autocomplete_housenumber"><span>Huisnummer</span></label>' +
             '  <div class="control"><input id="pcm2_autocomplete_housenumber" name="pcm2_autocomplete_housenumber" type="text" class="input-text" required /></div>' +
+            '</div>' +
+            '<div class="field" id="pcm2_autocomplete_housenumber_addition_wrapper" style="display: none;">' +
+            '   <label class="label">Toevoeging</label>' +
+            '   <div class="control"><select class="form-control form-control-select" type="select" class="input-text" name="pcm2_autocomplete_housenumber_addition" id="pcm2_autocomplete_housenumber_addition" value=""></select></div>' +
+            '</div>' +
+            '<div class="field" id="pcm2_autocomplete_free_addition_wrapper" style="display: none;">' +
+            '   <label class="col-md-3 form-control-label">Toevoeging</label>' +
+            '   <div class="control"><input id="pcm2_autocomplete_free_addition" name="pcm2_autocomplete__free_addition" class="form-control" type="text" placeholder="AB"></div>' +
             '</div>' +
             '<div class="field" id="pcm2_autocomplete_result_wrapper">' +
             '  <label class="label"><span></span></label>' +
@@ -391,6 +433,10 @@
         var validationFields = {
             postcodeWrapper: document.getElementById('pcm2_autocomplete_postcode_wrapper'),
             housenumberWrapper: document.getElementById('pcm2_autocomplete_housenumber_wrapper'),
+            housenumberAdditionWrapper: document.getElementById('pcm2_autocomplete_housenumber_addition_wrapper'),
+            housenumberAddition: document.getElementById('pcm2_autocomplete_housenumber_addition'),
+            freeAdditionWrapper: document.getElementById('pcm2_autocomplete_free_addition_wrapper'),
+            freeAddition: document.getElementById('pcm2_autocomplete_free_addition'),
             resultWrapper: document.getElementById('pcm2_autocomplete_result_wrapper'),
             manualBtn: document.getElementById('pcm2_autocomplete_manualbtn'),
             autoBtn: document.getElementById('pcm2_autocomplete_autobtn')
