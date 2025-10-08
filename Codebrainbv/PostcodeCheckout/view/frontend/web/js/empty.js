@@ -1,1 +1,0 @@
-console.log('No JS provider selected.');

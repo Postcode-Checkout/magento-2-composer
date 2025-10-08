@@ -1,0 +1,75 @@
+<?php
+
+/** @var \Codebrainbv\PostcodeCheckout\Block\Config $block */
+$configuredProvider = $block->getConfiguredProvider();
+$jsFiles = $block->getCheckoutJsFilesForProvider();
+?>
+
+<script>
+    window.config = window.config || {};
+    window.config.pcm2_config = <?= /* veilig json_encode */ json_encode($block->getJsConfig(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+</script>
+
+<!-- 
+    Postcode Checkout Dynamic Loader
+    Supports both Hyvä (Alpine.js) and RequireJS
+-->
+
+<script type="text/javascript">
+    addEventListener("DOMContentLoaded", (event) => {
+        setTimeout(function() {
+            (function() {
+                var hasRequireJS = (typeof require === 'function');
+
+                if (hasRequireJS) {
+                    console.log('RequireJS detected - loading scripts via RequireJS');
+
+                    var jsFilesArray = <?= json_encode($jsFiles) ?>;
+                    
+                    require(jsFilesArray, function() {
+                        for (var i = 0; i < arguments.length; i++) {
+                            var currentFilePath = jsFilesArray[i];
+                            var isVendorScript = currentFilePath.includes('/vendor/');
+                            
+                            console.log('Processing module:', currentFilePath, 'isVendor:', isVendorScript);
+                            
+                            // Skip init for vendor scripts
+                            if (isVendorScript) {
+                                console.log('Skipping init for vendor module:', currentFilePath);
+                                continue;
+                            }
+                            
+                            if (typeof arguments[i].pcm2_init === 'function') {
+                                try {
+                                    arguments[i].pcm2_init();
+                                } catch (e) {
+                                    console.error('Module init failed for:', currentFilePath, e);
+                                }
+                            } else {
+                                console.log('No pcm2_init function found for:', currentFilePath);
+                            }
+                        }
+                    })
+                } else {
+                    console.log('Hyvä detected - loading scripts via <script> tags');
+                    var head = document.head || document.getElementsByTagName('head')[0];
+                    (async function() {
+                        const files = <?= json_encode($jsFiles) ?>;
+                        for (const path of files) {
+                            const script = document.createElement('script');
+                            script.src = '<?= $block->getViewFileUrl('') ?>' + path + '.js';
+                            if (path.includes('/vendor/')) {
+                                await new Promise(resolve => {
+                                    script.onload = resolve;
+                                    head.appendChild(script);
+                                });
+                            } else {
+                                head.appendChild(script);
+                            }
+                        }
+                    })();
+                }
+            })();
+        }, 1500);
+    });
+</script>

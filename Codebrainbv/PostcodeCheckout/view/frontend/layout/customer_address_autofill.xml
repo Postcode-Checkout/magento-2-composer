@@ -12,7 +12,7 @@
         <referenceContainer name="after.body.start">
             <block class="Codebrainbv\PostcodeCheckout\Block\Config"
                     name="postcode_checkout_config"
-                    template="Codebrainbv_PostcodeCheckout::checkout_loader.phtml"
+                    template="Codebrainbv_PostcodeCheckout::account_loader.phtml"
                     after="-" />
         </referenceContainer>
     </body>
