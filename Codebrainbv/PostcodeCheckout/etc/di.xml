@@ -9,4 +9,11 @@
         </arguments>
     </type>
 
+    <type name="Codebrainbv\PostcodeCheckout\Model\Api\Data\SuggestionResult">
+        <arguments>
+            <argument name="data" xsi:type="array">{}</argument>
+        </arguments>
+    </type>
+
+    
 </config>

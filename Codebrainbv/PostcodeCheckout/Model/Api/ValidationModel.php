@@ -32,7 +32,7 @@ class ValidationModel implements ValidationInterface
     /**
      * @inheritdoc
      */
-    public function getInternationalSuggestion($context, $term): array
+    public function getInternationalSuggestion($context, $term): \Codebrainbv\PostcodeCheckout\Model\Api\Data\SuggestionResult
     {
         echo '<br>' . 'DEBUG: ' . __FILE__ . ' : ' . __LINE__ . '<br>';
         print_R($context);
@@ -68,6 +68,19 @@ class ValidationModel implements ValidationInterface
         print_r($rawResponse);
         echo '<br>' . 'DEBUG: ' . __FILE__ . ' : ' . __LINE__ . '<br>';
         exit;
+
+        if ($rawResponse['error']) {
+            return $response
+                ->setStatus(false)
+                ->setMessage($rawResponse['message'])
+                ->setResult(null);
+        }
+
+        $result = $this->resultFactory->create();
+
+
+
+
 
     }
 

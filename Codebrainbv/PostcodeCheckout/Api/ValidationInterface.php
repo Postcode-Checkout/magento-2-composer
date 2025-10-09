@@ -3,6 +3,7 @@
 namespace Codebrainbv\PostcodeCheckout\Api;
 
 use Codebrainbv\PostcodeCheckout\Api\Data\AddressResponseInterface;
+use Codebrainbv\PostcodeCheckout\Api\Data\SuggestionResultInterface;
 
 interface ValidationInterface
 {
@@ -13,7 +14,7 @@ interface ValidationInterface
      * @param string $context
      * @param string $term
      */
-    public function getInternationalSuggestion($context, $term): array;
+    public function getInternationalSuggestion($context, $term): SuggestionResultInterface;
 
 
     /**
