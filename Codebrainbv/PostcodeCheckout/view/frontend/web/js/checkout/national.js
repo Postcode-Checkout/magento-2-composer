@@ -937,24 +937,9 @@
         }
     }
 
-    function pcm2_reinitialize() {
-        pcm2_log('PCM2 reinitializing postcode lookup');
-        
-        // Clean up existing event listeners
-        if (window.pcm2GlobalInputHandler) {
-            document.removeEventListener('input', window.pcm2GlobalInputHandler);
-            pcm2_log('PCM2 cleaned up existing handlers');
-        }
-        
-        // Re-run the lookup initialization
-        pcm2_addLookup();
-    }
-
     function pcm2_detectPageContext() {
         var context = {
             isCheckout: false,
-            isAccount: false,
-            isAddressForm: false
         };
         
         // Detect checkout page
@@ -963,16 +948,6 @@
             document.querySelector('.checkout-container') ||
             document.querySelector('[data-role="checkout"]')) {
             context.isCheckout = true;
-        }
-        
-        // Detect customer account pages
-        if (document.body.classList.contains('customer-address-form') ||
-            document.body.classList.contains('customer-address-new') ||
-            document.body.classList.contains('customer-address-edit') ||
-            document.body.classList.contains('customer-account-create') ||
-            document.querySelector('.customer-address-form')) {
-            context.isAccount = true;
-            context.isAddressForm = true;
         }
         
         pcm2_log('PCM2 detected page context:', context);

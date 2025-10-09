@@ -8,6 +8,24 @@ interface ValidationInterface
 {
 
     /**
+     * Get international address suggestion based on country ISO3 and search query
+     * 
+     * @param string $context
+     * @param string $term
+     */
+    public function getInternationalSuggestion($context, $term): array;
+
+
+    /**
+     * Get international address details based on country ISO3 and id
+     * 
+     * @param string $countryIso3
+     * @param string $id
+     */
+    public function getInternationalDetails($context): AddressResponseInterface;
+
+
+    /**
      * Get national address based on zip code and house number
      * 
      * @param string $zipCode
