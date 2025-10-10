@@ -92,33 +92,38 @@
 
         pcm2_Autocomplete.getSuggestions = function (context, term, response) {
 
+            console.log('PCM2 Autocomplete getSuggestions called with context:', context, 'term:', term);
+
             // Encode the term to binary to preserve whitespace
             // and then encode it to base64 for the URL.
             const encodedTerm = new TextEncoder().encode(term),
                 binaryTerm = Array.from(encodedTerm, (byte) => String.fromCodePoint(byte)).join(''),
                 url = this.options.autocompleteUrl.replace('${context}', encodeURIComponent(context)).replace('${term}', encodeURIComponent(btoa(binaryTerm)));
 
+
+            console.log('PCM2 Autocomplete getSuggestions URL:', url);
+
             return this.xhrGet(url, response);
         }
 
-        pcm2_Autocomplete.getDetails = function (addressId, response) {
-            const url = this.options.addressDetailsUrl.replace('${context}', encodeURIComponent(addressId));
-            return this.xhrGet(url, response);
-        };
+        // pcm2_Autocomplete.getDetails = function (addressId, response) {
+        //     const url = this.options.addressDetailsUrl.replace('${context}', encodeURIComponent(addressId));
+        //     return this.xhrGet(url, response);
+        // };
 
 
-        searchField.addEventListener('autocomplete-select', function (event) {
+        // searchField.addEventListener('autocomplete-select', function (event) {
 
-            // Set value of the search field to the selected address
-            searchField.value = event.detail.label;
-            logDebug('Autocomplete-select event: ', event);
+        //     // Set value of the search field to the selected address
+        //     searchField.value = event.detail.label;
+        //     logDebug('Autocomplete-select event: ', event);
 
-            if (event.detail.precision === 'Address') {
+        //     if (event.detail.precision === 'Address') {
 
-                logDebug('Autocomplete-select: ', event.detail);
-                pcm2_fillAddressFields(event.detail);
-            }
-        });
+        //         logDebug('Autocomplete-select: ', event.detail);
+        //         pcm2_fillAddressFields(event.detail);
+        //     }
+        // });
 
     }
     

@@ -3,9 +3,12 @@
 namespace Codebrainbv\PostcodeCheckout\Model\Api;
 
 use Codebrainbv\PostcodeCheckout\Api\ValidationInterface;
+use Codebrainbv\PostcodeCheckout\Api\Data\SuggestionResultInterface;
+use Codebrainbv\PostcodeCheckout\Api\Data\AddressResponseInterface;
 use Codebrainbv\PostcodeCheckout\Helper\ConfigHelper;
 use Codebrainbv\PostcodeCheckout\Model\Api\Data\AddressResponseFactory;
 use Codebrainbv\PostcodeCheckout\Model\Api\Data\AddressResultFactory;
+use Codebrainbv\PostcodeCheckout\Model\Api\Data\SuggestionResultFactory;
 
 class ValidationModel implements ValidationInterface
 {
@@ -14,80 +17,74 @@ class ValidationModel implements ValidationInterface
      */
     private $configHelper;
 
+    /**
+     * @var AddressResponseFactory
+     */
     private $responseFactory;
-
+    
+    /**
+     * @var AddressResultFactory
+     */
     private $resultFactory;
+
+    /**
+     * @var SuggestionResultFactory
+     */
+    private $suggestionResultFactory;
 
     public function __construct(
         ConfigHelper $configHelper,
         AddressResponseFactory $responseFactory,
         AddressResultFactory $resultFactory,
+        SuggestionResultFactory $suggestionResultFactory,
     ) {
         $this->configHelper = $configHelper;
         $this->responseFactory = $responseFactory;
         $this->resultFactory = $resultFactory;
+        $this->suggestionResultFactory = $suggestionResultFactory;
     }
 
 
     /**
      * @inheritdoc
      */
-    public function getInternationalSuggestion($context, $term): \Codebrainbv\PostcodeCheckout\Model\Api\Data\SuggestionResult
+    public function getInternationalSuggestion($context, $term): SuggestionResultInterface
     {
-        echo '<br>' . 'DEBUG: ' . __FILE__ . ' : ' . __LINE__ . '<br>';
-        print_R($context);
-        echo '<br>' . 'DEBUG: ' . __FILE__ . ' : ' . __LINE__ . '<br>';
-        print_R($term);
+        $response = $this->suggestionResultFactory->create();
 
-        $response = $this->responseFactory->create();
-
-        
         if (empty($context) || empty($term)) {
             return $response
-                ->setStatus(false)
-                ->setMessage('Context and Term are required')
-                ->setResult(null);
+                ->setError('Context and Term are required');
         }
 
         $apiKey = $this->configHelper->getApiKey();
         if (empty($apiKey)) {
             return $response
-                ->setStatus(false)
-                ->setMessage('Module is not yet configured (no API key)')
-                ->setResult(null);
+                ->setError('Module is not yet configured (no API key)');
         }
 
         $url = 'https://dashboard.postcode-checkout.nl/api/international/v2/suggestions?country=' . rawurlencode($context) . '&query=' . rawurlencode($term);
 
-        echo '<br>' . 'DEBUG: ' . __FILE__ . ' : ' . __LINE__ . '<br>';
-        print_R($url);
-
         $rawResponse = $this->callInternationalApi($url, $apiKey);
-
-        echo '<br>' . 'DEBUG: ' . __FILE__ . ' : ' . __LINE__ . '<br>';
-        print_r($rawResponse);
-        echo '<br>' . 'DEBUG: ' . __FILE__ . ' : ' . __LINE__ . '<br>';
-        exit;
 
         if ($rawResponse['error']) {
             return $response
-                ->setStatus(false)
-                ->setMessage($rawResponse['message'])
-                ->setResult(null);
+                ->setError($rawResponse['message']);
         }
 
-        $result = $this->resultFactory->create();
-
-
-
-
+        // Process the successful response
+        $matches = $rawResponse['result'] ?? [];
+        
+        return $response
+            ->setMatches($matches)
+            ->setMessage('Success');
 
     }
 
     /**
      * @inheritdoc
      */
-    public function getInternationalDetails($context): \Codebrainbv\PostcodeCheckout\Model\Api\Data\AddressResponse
+    public function getInternationalDetails($context): AddressResponseInterface
     {
 
     }
@@ -97,7 +94,7 @@ class ValidationModel implements ValidationInterface
     /**
      * @inheritdoc
      */
-    public function getNationalAddress($zipCode, $houseNumber): \Codebrainbv\PostcodeCheckout\Model\Api\Data\AddressResponse
+    public function getNationalAddress($zipCode, $houseNumber): AddressResponseInterface
     {
         $response = $this->responseFactory->create();
 

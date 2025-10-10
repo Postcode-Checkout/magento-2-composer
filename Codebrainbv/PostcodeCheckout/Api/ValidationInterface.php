@@ -13,6 +13,7 @@ interface ValidationInterface
      * 
      * @param string $context
      * @param string $term
+     * @return \Codebrainbv\PostcodeCheckout\Api\Data\SuggestionResultInterface
      */
     public function getInternationalSuggestion($context, $term): SuggestionResultInterface;
 
@@ -22,6 +23,7 @@ interface ValidationInterface
      * 
      * @param string $countryIso3
      * @param string $id
+     * @return \Codebrainbv\PostcodeCheckout\Api\Data\AddressResponseInterface
      */
     public function getInternationalDetails($context): AddressResponseInterface;
 

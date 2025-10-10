@@ -95,7 +95,7 @@ class ConfigHelper extends AbstractHelper
             'provider' => $configuredProvider,
             'api_urls' => [
                 'national' => $apiUrl . 'national/address',
-                'international_suggest' => $apiUrl . 'international/suggest',
+                'international_suggest' => $apiUrl . 'international/suggest/{$context}/{$term}',
                 'international_details' => $apiUrl . 'international/details',
             ],
         ];
