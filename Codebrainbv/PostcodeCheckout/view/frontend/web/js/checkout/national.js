@@ -1024,10 +1024,6 @@
                             consecutiveEmptyChecks++;
                         }
                         
-                        // Stop checking if:
-                        // 1. We've reached max attempts, OR
-                        // 2. No new forms found for several consecutive checks, OR
-                        // 3. We've done enough initial checks and haven't found anything recently
                         if (checkAttempts >= maxCheckAttempts || 
                             consecutiveEmptyChecks >= maxConsecutiveEmpty ||
                             (checkAttempts > 10 && consecutiveEmptyChecks >= 3)) {

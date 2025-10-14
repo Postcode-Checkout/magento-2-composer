@@ -8,7 +8,7 @@
     'use strict';
 
         
-    var fields, elements, validationFields, pcm2_Autocomplete; // Declare variables at module level
+    var fields, elements, validationFields, pcm2_Autocomplete, countryCode; // Declare variables at module level
     
 
     function pcm2_addLookup() {
@@ -23,9 +23,8 @@
             return;
         }
 
-        var countryCode = countryField.value;
+        countryCode = countryField.value;
         pcm2_log('PCM2 country code:', countryCode);
-
 
         // Add event listener to country field
         countryField.addEventListener('change', function(event) {
@@ -55,7 +54,6 @@
             return;
         }
 
-
         // Add event listener to pcm2 buttons
         document.addEventListener('click', function(event) {
             if (event.target && event.target.id === 'pcm2_autocomplete_manualbtn') {
@@ -69,10 +67,16 @@
             }
         });
 
+        // Initialize lookup functionality
+        pcm2_initLookup();
+
+    }
+
+    function pcm2_initLookup() {
+
         var iso3Code = pcm2_convertIso2ToIso3(countryCode);
         
         pcm2_log('Converted country code to ISO3:', iso3Code);
-
 
         // Initialize autocomplete
         const searchField = document.getElementById('pcm2_autocomplete_search');
@@ -123,8 +127,8 @@
 
                 pcm2_Autocomplete.getDetails(event.detail.context, function(response) {
 
-                    if (response && response.address) {
-                        var addressData = response.address;
+                    if (response) {
+                        var addressData = response.result;
 
                         pcm2_log('Address to be entered: ', addressData);
                         pcm2_fillAddressFields(addressData);
@@ -137,23 +141,11 @@
         });
 
     }
-    
-
-    function debounce(func, delay) {
-        let timeoutId;
-        return function (...args) {
-            clearTimeout(timeoutId);
-            timeoutId = setTimeout(() => {
-            func.apply(this, args);
-            }, delay);
-        };
-    }
 
     function pcm2_fillAddressFields(result) {
         fields = pcm2_getFields();
-
+        
         pcm2_log('PCM2 filling address fields with result:', result);
-
 
         // Check if we have a result, empty array?
         if (!result || Object.keys(result).length === 0) {
@@ -174,12 +166,14 @@
             }
 
             // Check additions
-            if (result.addition && Array.isArray(result.addition) && result.addition.length > 0) {
-                pcm2_log('Found additions to place in the select:', result.addition);
-				pcm2_setHouseNumberAdditions(result.addition);
-            } else {
-                pcm2_changeHousenumberAddition(result.addition);
-                validationFields.housenumberAddition.style.display = 'none';
+            if (result.addition) {
+                if(Array.isArray(result.addition) && result.addition.length > 0) {
+                    pcm2_log('Found additions to place in the select:', result.addition);
+                    pcm2_setHouseNumberAdditions(result.addition);
+                } else {
+                    pcm2_changeHousenumberAddition(result.addition);
+                    validationFields.housenumberAddition.style.display = 'none';
+                }
             }
 
             fields.postcode.value = result.postcode;
@@ -190,6 +184,9 @@
     }
 
     function pcm2_updatePreview(errorMsg = false) {
+
+        fields = pcm2_getFields();
+        validationFields = pcm2_getValidationFields();
 
         if(errorMsg) {
             validationFields.resultWrapper.innerHTML = '<p style="color:red;">Adres kon niet worden gevonden, controleer Postcode en Huisnummer of voer handmatig in.</p>';
@@ -234,10 +231,6 @@
                     validationFields[domKeys[iDom]].style.display = 'none';
                 }
             }
-
-            // Re-initialize event listeners after showing elements
-            pcm2_initLookup();
-
         } else {
             // Hide address fields
             var html =
@@ -246,8 +239,6 @@
             '  <div class="control"><input id="pcm2_autocomplete_search" name="pcm2_autocomplete_search" type="text" class="input-text" required /></div>' +
             '</div>' +
             '<div class="field" id="pcm2_autocomplete_result_wrapper">' +
-            '  <label class="label"><span></span></label>' +
-            '  <div class="control" id="pcm2_autocomplete_result"></div>' +
             '</div>' +
             '<div class="field"><div class="control">' +
             '  <button type="button" class="action secondary" id="pcm2_autocomplete_manualbtn">Enter manually</button> ' +
@@ -278,6 +269,8 @@
                 }
             }
         }
+        
+        pcm2_initLookup();
     }
 
     function pcm2_showForm(defaultForm = false) {
@@ -354,7 +347,7 @@
     }
 
     function pcm2_getValidationFields() {
-        var validationFields = {
+        validationFields = {
             searchWrapper: document.getElementById('pcm2_autocomplete_search_wrapper'),
             resultWrapper: document.getElementById('pcm2_autocomplete_result_wrapper'),
             manualBtn: document.getElementById('pcm2_autocomplete_manualbtn'),

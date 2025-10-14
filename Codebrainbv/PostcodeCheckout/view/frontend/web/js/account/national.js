@@ -387,8 +387,6 @@
             '   <div class="control"><input id="pcm2_autocomplete_free_addition" name="pcm2_autocomplete__free_addition" class="form-control" type="text" placeholder="AB"></div>' +
             '</div>' +
             '<div class="field" id="pcm2_autocomplete_result_wrapper">' +
-            '  <label class="label"><span></span></label>' +
-            '  <div class="control" id="pcm2_autocomplete_result"></div>' +
             '</div>' +
             '<div class="field"><div class="control">' +
             '  <button type="button" class="action secondary" id="pcm2_autocomplete_manualbtn">Enter manually</button> ' +

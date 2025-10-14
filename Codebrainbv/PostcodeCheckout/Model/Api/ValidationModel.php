@@ -118,13 +118,13 @@ class ValidationModel implements ValidationInterface
         $result = $this->resultFactory->create();
 
         // Map the international response to the result object
-        $addressData = $rawResponse['result'] ?? [];
+        $addressData = $rawResponse['result']['address'] ?? [];
         
         $result->setStreet($addressData['street'] ?? null)
-            ->setHousenumber($addressData['housenumber'] ?? null)
-            ->setAddition($addressData['addition'] ?? null)
+            ->setHousenumber($addressData['buildingNumber'] ?? null)
+            ->setAddition($addressData['buildingNumberAddition'] ?? null)
             ->setPostcode($addressData['postcode'] ?? null)
-            ->setCity($addressData['city'] ?? null)
+            ->setCity($addressData['locality'] ?? null)
             ->setProvince($addressData['province'] ?? null);
 
         return $response
