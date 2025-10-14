@@ -19,10 +19,9 @@ interface ValidationInterface
 
 
     /**
-     * Get international address details based on country ISO3 and id
+     * Get international address details based on provided context/addressId
      * 
-     * @param string $countryIso3
-     * @param string $id
+     * @param string $context
      * @return \Codebrainbv\PostcodeCheckout\Api\Data\AddressResponseInterface
      */
     public function getInternationalDetails($context): AddressResponseInterface;

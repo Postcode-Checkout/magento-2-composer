@@ -16,6 +16,10 @@
                     <comment>Enable address lookup on the checkout and account pages</comment>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
+                <field id="configured_provider" translate="label" type="text" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>Configured Provider</label>
+                    <frontend_model>Codebrainbv\PostcodeCheckout\Block\System\Config\Form\Field\Disable</frontend_model> 
+                </field>
                 <field id="api_key" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>API Key</label>
                 </field>
@@ -38,10 +42,6 @@
                     <label>Debug mode</label>
                     <comment>Enable debug mode to get console logs in the frontend</comment>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
-                <field id="configured_provider" translate="label" type="text" sortOrder="90" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Configured Provider</label>
-                    <frontend_model>Codebrainbv\PostcodeCheckout\Block\System\Config\Form\Field\Disable</frontend_model> 
                 </field>
             </group>
 

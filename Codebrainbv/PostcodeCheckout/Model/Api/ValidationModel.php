@@ -63,7 +63,7 @@ class ValidationModel implements ValidationInterface
                 ->setError('Module is not yet configured (no API key)');
         }
 
-        $url = 'https://dashboard.postcode-checkout.nl/api/international/v2/suggestions?country=' . rawurlencode($context) . '&query=' . rawurlencode($term);
+        $url = 'https://dashboard.postcode-checkout.nl/api/international/v2/suggestions?country=' . rawurlencode($context) . '&query=' . rawurlencode(base64_decode($term));
 
         $rawResponse = $this->callInternationalApi($url, $apiKey);
 
@@ -73,9 +73,10 @@ class ValidationModel implements ValidationInterface
         }
 
         // Process the successful response
-        $matches = $rawResponse['result'] ?? [];
-        
-        return $response
+        $matches = $rawResponse['result']['matches'] ?? [];
+        $newContext = $rawResponse['result']['newContext'] ?? null;
+
+        return $response->setNewContext($newContext)
             ->setMatches($matches)
             ->setMessage('Success');
 
@@ -86,7 +87,50 @@ class ValidationModel implements ValidationInterface
      */
     public function getInternationalDetails($context): AddressResponseInterface
     {
+        $response = $this->responseFactory->create();
 
+        if (empty($context)) {
+            return $response
+                ->setStatus(false)
+                ->setMessage('Context is required')
+                ->setResult(null);
+        }
+
+        $apiKey = $this->configHelper->getApiKey();
+        if (empty($apiKey)) {
+            return $response
+                ->setStatus(false)
+                ->setMessage('Module is not yet configured (no API key)')
+                ->setResult(null);
+        }
+
+        $url = 'https://dashboard.postcode-checkout.nl/api/international/v2/details?query=' . rawurlencode($context);
+
+        $rawResponse = $this->callInternationalApi($url, $apiKey);
+
+        if ($rawResponse['error']) {
+            return $response
+                ->setStatus(false)
+                ->setMessage($rawResponse['message'])
+                ->setResult(null);
+        }
+
+        $result = $this->resultFactory->create();
+
+        // Map the international response to the result object
+        $addressData = $rawResponse['result'] ?? [];
+        
+        $result->setStreet($addressData['street'] ?? null)
+            ->setHousenumber($addressData['housenumber'] ?? null)
+            ->setAddition($addressData['addition'] ?? null)
+            ->setPostcode($addressData['postcode'] ?? null)
+            ->setCity($addressData['city'] ?? null)
+            ->setProvince($addressData['province'] ?? null);
+
+        return $response
+            ->setStatus(true)
+            ->setMessage(null)
+            ->setResult($result);
     }
 
 

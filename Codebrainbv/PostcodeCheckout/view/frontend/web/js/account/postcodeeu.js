@@ -87,12 +87,14 @@
             addressDetailsUrl: config.pcm2_config.api_urls.international_details,
             autoFocus: true,
             autoSelect: true,
+            showLogo: false,
             context: iso3Code
         });
 
         pcm2_Autocomplete.getSuggestions = function (context, term, response) {
 
-            console.log('PCM2 Autocomplete getSuggestions called with context:', context, 'term:', term);
+            pcm2_log('PCM2 Autocomplete getSuggestions called with context:', context);
+            pcm2_log('PCM2 Autocomplete getSuggestions called with term:', term);
 
             // Encode the term to binary to preserve whitespace
             // and then encode it to base64 for the URL.
@@ -100,30 +102,39 @@
                 binaryTerm = Array.from(encodedTerm, (byte) => String.fromCodePoint(byte)).join(''),
                 url = this.options.autocompleteUrl.replace('${context}', encodeURIComponent(context)).replace('${term}', encodeURIComponent(btoa(binaryTerm)));
 
-
-            console.log('PCM2 Autocomplete getSuggestions URL:', url);
-
             return this.xhrGet(url, response);
         }
 
-        // pcm2_Autocomplete.getDetails = function (addressId, response) {
-        //     const url = this.options.addressDetailsUrl.replace('${context}', encodeURIComponent(addressId));
-        //     return this.xhrGet(url, response);
-        // };
+        pcm2_Autocomplete.getDetails = function (addressId, response) {
+            pcm2_log('PCM2 Autocomplete getDetails called with addressId:', addressId);
+
+            const url = this.options.addressDetailsUrl.replace('${context}', encodeURIComponent(addressId));
+            return this.xhrGet(url, response);
+        };
 
 
-        // searchField.addEventListener('autocomplete-select', function (event) {
+        searchField.addEventListener('autocomplete-select', function (event) {
 
-        //     // Set value of the search field to the selected address
-        //     searchField.value = event.detail.label;
-        //     logDebug('Autocomplete-select event: ', event);
+            // Set value of the search field to the selected address
+            searchField.value = event.detail.label;
+            pcm2_log('Autocomplete-select event: ', event);
 
-        //     if (event.detail.precision === 'Address') {
+            if (event.detail.precision === 'Address') {
 
-        //         logDebug('Autocomplete-select: ', event.detail);
-        //         pcm2_fillAddressFields(event.detail);
-        //     }
-        // });
+                pcm2_Autocomplete.getDetails(event.detail.context, function(response) {
+
+                    if (response && response.address) {
+                        var addressData = response.address;
+
+                        pcm2_log('Address to be entered: ', addressData);
+                        pcm2_fillAddressFields(addressData);
+                    } else {
+                        pcm2_log('No address data found in response:', response);
+                        pcm2_updatePreview(true);
+                    }
+                });
+            }
+        });
 
     }
     

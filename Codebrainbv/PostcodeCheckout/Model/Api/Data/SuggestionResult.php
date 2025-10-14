@@ -7,6 +7,24 @@ use Codebrainbv\PostcodeCheckout\Api\Data\SuggestionResultInterface;
 
 class SuggestionResult extends DataObject implements SuggestionResultInterface
 {
+
+
+    /**
+     * @inheritdoc
+     */
+    public function getNewContext(): ?string
+    {
+        return $this->getData('newContext');
+    }
+
+    /**
+     * @inheritdoc
+     */
+    public function setNewContext(?string $newContext)
+    {
+        return $this->setData('newContext', $newContext);
+    }
+
     /**
      * @inheritdoc
      */
