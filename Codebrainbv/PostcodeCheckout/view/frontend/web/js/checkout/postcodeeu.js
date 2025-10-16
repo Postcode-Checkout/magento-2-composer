@@ -257,19 +257,6 @@
                 fields.address_2.value = result.housenumber;
             }
 
-            // Check additions
-            if (result.addition) {
-                if (Array.isArray(result.addition) && result.addition.length > 0) {
-                    pcm2_log('Found additions to place in the select:', result.addition);
-                    pcm2_setHouseNumberAdditions(result.addition, contextCountryField);
-                } else {
-                    pcm2_changeHousenumberAddition(result.addition, contextCountryField);
-                    if (validationFields.housenumberAddition) {
-                        validationFields.housenumberAddition.style.display = 'none';
-                    }
-                }
-            }
-
             fields.postcode.value = result.postcode;
             fields.city.value = result.city;
 
@@ -332,20 +319,6 @@
                 // Street on field 1, rest on field 2
                 fields.address_1.value = result.street;
                 fields.address_2.value = result.housenumber;
-            }
-
-            oldAddition = null;
-
-            // Check additions
-            if (result.addition) {
-                if (Array.isArray(result.addition) && result.addition.length > 0) {
-                    pcm2_setHouseNumberAdditions(result.addition, contextCountryField);
-                } else {
-                    pcm2_changeHousenumberAddition(result.addition, contextCountryField);
-                    if (validationFields.housenumberAddition) {
-                        validationFields.housenumberAddition.style.display = 'none';
-                    }
-                }
             }
 
             if (fields.postcode) {

@@ -21,7 +21,7 @@ class ValidationModel implements ValidationInterface
      * @var AddressResponseFactory
      */
     private $responseFactory;
-    
+
     /**
      * @var AddressResultFactory
      */
@@ -79,7 +79,6 @@ class ValidationModel implements ValidationInterface
         return $response->setNewContext($newContext)
             ->setMatches($matches)
             ->setMessage('Success');
-
     }
 
     /**
@@ -105,7 +104,6 @@ class ValidationModel implements ValidationInterface
         }
 
         $url = 'https://dashboard.postcode-checkout.nl/api/international/v2/details?query=' . rawurlencode($context);
-
         $rawResponse = $this->callInternationalApi($url, $apiKey);
 
         if ($rawResponse['error']) {
@@ -122,18 +120,16 @@ class ValidationModel implements ValidationInterface
         
         $result->setStreet($addressData['street'] ?? null)
             ->setHousenumber($addressData['buildingNumber'] ?? null)
-            ->setAddition($addressData['buildingNumberAddition'] ?? null)
             ->setPostcode($addressData['postcode'] ?? null)
             ->setCity($addressData['locality'] ?? null)
-            ->setProvince($addressData['province'] ?? null);
+            ->setProvince($addressData['province'] ?? null)
+            ->setAddition($addressData['buildingNumberAddition'] ?? null);
 
         return $response
             ->setStatus(true)
             ->setMessage(null)
             ->setResult($result);
     }
-
-
 
     /**
      * @inheritdoc
