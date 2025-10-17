@@ -10,7 +10,7 @@
     var fields, elements, validationFields, countryCode; // Declare variables at module level
     var initializedForms = []; // Track initialized forms to prevent duplicates
     var autocompleteInstances = {};
-    
+
     var placementHousenumberAdditions;// Track autocomplete instances per form
 
     function pcm2_addLookup() {
@@ -84,12 +84,22 @@
             if (event.target && event.target.id.startsWith('pcm2_autocomplete_manualbtn')) {
                 var suffix = event.target.id.replace('pcm2_autocomplete_manualbtn', '');
                 var relatedCountryField = pcm2_findCountryFieldBySuffix(suffix);
+
+                if (config.pcm2_config.empty_default_address_fields == '1') {
+                    pcm2_clearAllAddressFields(relatedCountryField);
+                }
+
                 pcm2_showForm(relatedCountryField, true);
             }
 
             if (event.target && event.target.id.startsWith('pcm2_autocomplete_autobtn')) {
                 var suffix = event.target.id.replace('pcm2_autocomplete_autobtn', '');
                 var relatedCountryField = pcm2_findCountryFieldBySuffix(suffix);
+
+                if (config.pcm2_config.empty_default_address_fields == '1') {
+                    pcm2_clearAllAddressFields(relatedCountryField);
+                }
+
                 pcm2_hideForm(relatedCountryField, false);
                 pcm2_initLookup(relatedCountryField);
             }
@@ -221,8 +231,8 @@
             var k = keys[i];
             if (k === 'country') continue;
             if (k === 'address_2' || k === 'address_3') continue;
-            var el = elements[k];
-            if (el) el.style.display = 'none';
+            var form = elements[k];
+            if (form) form.style.display = 'none';
         }
 
         if (!autocompleteInstances[formId]) {
@@ -230,6 +240,46 @@
         }
     }
 
+    function pcm2_clearAllAddressFields(contextCountryField) {
+        const suffix = pcm2_getSuffix(contextCountryField);
+        const fields = pcm2_getFields(contextCountryField);
+
+        const dispatchInputAndChange = (addressfield) => {
+            // alleen als er echt een element is met een value-achtige eigenschap
+            if (!addressfield) return;
+            addressfield.dispatchEvent(new Event('input', { bubbles: true }));
+            addressfield.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+
+        // zoekveld leegmaken
+        const searchField = document.getElementById(`pcm2_autocomplete_search${suffix}`);
+        if (searchField) {
+            searchField.value = '';
+            dispatchInputAndChange(searchField);
+        }
+
+        // resultaten leegmaken
+        const resultElement = document.getElementById(`pcm2_autocomplete_result${suffix}`);
+        if (resultElement) {
+            resultElement.innerHTML = '';
+        }
+
+        // adresvelden leegmaken
+        const keysToClear = ['address_1', 'address_2', 'address_3', 'postcode', 'city', 'region'];
+        for (const key of keysToClear) {
+            const addressfield = fields?.[key];
+            if (addressfield) {
+                addressfield.value = '';
+                dispatchInputAndChange(addressfield);
+            }
+        }
+
+        // logging
+        const countryEl = fields?.country || contextCountryField;
+        pcm2_log(
+            `PCM2 cleared all address fields for form: ${pcm2_getFormIdentifier(countryEl)}`
+        );
+    }
 
     function pcm2_getSuffix(contextCountryField) {
         var formId = pcm2_getFormIdentifier(contextCountryField);
@@ -251,18 +301,18 @@
             // Fill address fields based on configuration
             if (placementHousenumberAdditions == 0) {
                 fields.address_1.value = result.street;
-                fields.address_1.value += ' ' + result.housenumber + ' ' + result.addition;
+                fields.address_1.value += ' ' + result.housenumber + (result.addition ? ' ' + result.addition : '');
             } else if (placementHousenumberAdditions == 1) {
                 fields.address_1.value = result.street + ' ' + result.housenumber;
-                fields.address_2.value = result.addition;
+                fields.address_2.value = (result.addition ? ' ' + result.addition : '');
 
             } else if (placementHousenumberAdditions == 2) {
                 fields.address_1.value = result.street;
-                fields.address_2.value = result.housenumber + ' ' + result.addition ;
+                fields.address_2.value = result.housenumber + (result.addition ? ' ' + result.addition : '');
             } else if (placementHousenumberAdditions == 3) {
                 fields.address_1.value = result.street;
                 fields.address_2.value = result.housenumber;
-                fields.address_3.value = result.addition;
+                fields.address_3.value = (result.addition ? ' ' + result.addition : '');
             }
 
             fields.postcode.value = result.postcode;
@@ -305,39 +355,6 @@
         resultElement.innerHTML = html;
     }
 
-    function pcm2_updatePreview(errorMsg = false, contextCountryField = null) {
-
-        var contextFields = pcm2_getFields(contextCountryField);
-        var contextValidationFields = pcm2_getValidationFields(contextCountryField);
-
-        if (errorMsg) {
-            if (contextValidationFields.resultWrapper) {
-                contextValidationFields.resultWrapper.innerHTML = '<p style="color:red;">Adres kon niet worden gevonden, controleer Postcode en Huisnummer of voer handmatig in.</p>';
-            }
-            return;
-        }
-
-        if (!contextFields.address_1 || !contextValidationFields.resultWrapper) {
-            pcm2_log('PCM2 updatePreview: missing fields for context');
-            return;
-        }
-
-        var html = '';
-
-        html += '<p>' + contextFields.address_1.value;
-        if (contextFields.address_2 && contextFields.address_2.value) {
-            html += ' ' + contextFields.address_2.value;
-        }
-
-        if (contextFields.address_3 && contextFields.address_3.value) {
-            html += ' ' + contextFields.address_3.value;
-        }
-        html += '</p>';
-        html += '<p>' + contextFields.postcode.value + ' ' + contextFields.city.value + '</p>';
-
-        contextValidationFields.resultWrapper.innerHTML = html;
-    }
-
     function pcm2_showForm(contextCountryField, defaultForm = false) {
         if (typeof contextCountryField === 'boolean') {
             defaultForm = contextCountryField;
@@ -353,15 +370,14 @@
             var k = keys[i];
             if (k === 'country') continue;
             if (k === 'address_2' || k === 'address_3') continue;
-            var el = elements[k];
-            if (el) el.style.display = 'block';
+            var form = elements[k];
+            if (form) form.style.display = 'block';
         }
 
         if (validationFields.searchWrapper) validationFields.searchWrapper.style.display = 'none';
         if (validationFields.resultWrapper) validationFields.resultWrapper.style.display = 'none';
         if (validationFields.manualBtn) validationFields.manualBtn.style.display = 'none';
         if (validationFields.autoBtn) validationFields.autoBtn.style.display = 'inline-block';
-
     }
 
 
@@ -725,6 +741,8 @@
         pcm2_init: function () {
             // Check if dom is ready
             if (typeof config.pcm2_config !== 'undefined' && config.pcm2_config.enabled === true) {
+
+                pcm2_log(config.pcm2_config);
 
                 placementHousenumberAdditions = config.pcm2_config.housenumber_addition_address2;
 
