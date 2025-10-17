@@ -11,3 +11,7 @@
 	margin-top: 1rem;
 	margin-bottom: 1rem;
 }
+
+.postcodenl-autocomplete-menu {
+	z-index: 1000 !important;
+}

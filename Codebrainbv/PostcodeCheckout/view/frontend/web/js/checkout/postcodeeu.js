@@ -9,7 +9,9 @@
 
     var fields, elements, validationFields, countryCode; // Declare variables at module level
     var initializedForms = []; // Track initialized forms to prevent duplicates
-    var autocompleteInstances = {}; // Track autocomplete instances per form
+    var autocompleteInstances = {};
+    
+    var placementHousenumberAdditions;// Track autocomplete instances per form
 
     function pcm2_addLookup() {
 
@@ -188,7 +190,6 @@
         var formId = pcm2_getFormIdentifier(contextCountryField);
         var suffix = formId !== 'default' ? '_' + formId.replace(/[^a-zA-Z0-9]/g, '') : '';
 
-        // 1) Zorg dat autocomplete UI bestaat (eenmalig aanmaken)
         validationFields = pcm2_getValidationFields(contextCountryField);
         if (!validationFields.searchWrapper) {
             var html =
@@ -246,15 +247,22 @@
             pcm2_log('PCM2 no result found');
             pcm2_updatePreview(true, contextCountryField);
         } else {
+
             // Fill address fields based on configuration
-            if (config.pcm2_config.housenumber_addition_address2 == 0) {
-                // Everything on street 1 field
+            if (placementHousenumberAdditions == 0) {
                 fields.address_1.value = result.street;
-                fields.address_1.value += ' ' + result.housenumber;
-            } else {
-                // Street on field 1, rest on field 2
+                fields.address_1.value += ' ' + result.housenumber + ' ' + result.addition;
+            } else if (placementHousenumberAdditions == 1) {
+                fields.address_1.value = result.street + ' ' + result.housenumber;
+                fields.address_2.value = result.addition;
+
+            } else if (placementHousenumberAdditions == 2) {
+                fields.address_1.value = result.street;
+                fields.address_2.value = result.housenumber + ' ' + result.addition ;
+            } else if (placementHousenumberAdditions == 3) {
                 fields.address_1.value = result.street;
                 fields.address_2.value = result.housenumber;
+                fields.address_3.value = result.addition;
             }
 
             fields.postcode.value = result.postcode;
@@ -297,61 +305,6 @@
         resultElement.innerHTML = html;
     }
 
-
-    function pcm2_fillAddressFields(result, contextCountryField) {
-        fields = pcm2_getFields(contextCountryField);
-        validationFields = pcm2_getValidationFields(contextCountryField);
-
-        pcm2_log('PCM2 filling address fields with result:', result);
-
-
-        // Check if we have a result, empty array?
-        if (!result || Object.keys(result).length === 0) {
-            pcm2_log('PCM2 no result found');
-
-            pcm2_updatePreview(true, contextCountryField);
-        } else {
-
-            if (config.pcm2_config.housenumber_addition_address2 < 2) {
-                // Everything on street 1 field
-                fields.address_1.value = result.street + ' ' + result.housenumber;
-            } else {
-                // Street on field 1, rest on field 2
-                fields.address_1.value = result.street;
-                fields.address_2.value = result.housenumber;
-            }
-
-            if (fields.postcode) {
-                fields.postcode.value = result.postcode;
-                pcm2_log('PCM2 set postcode to:', result.postcode, 'for form');
-            } else {
-                pcm2_log('PCM2 postcode field not found');
-            }
-
-            if (fields.city) {
-                fields.city.value = result.city;
-                pcm2_log('PCM2 set city to:', result.city, 'for form');
-            } else {
-                pcm2_log('PCM2 city field not found');
-            }
-
-            if (fields.region && result.province) {
-                fields.region.value = result.province;
-                pcm2_log('PCM2 set region to:', result.province, 'for form');
-            }
-
-            // Trigger change events in case there are any listeners
-            ['address_1', 'address_2', 'address_3', 'postcode', 'city', 'region'].forEach(function (fieldName) {
-                if (fields[fieldName]) {
-                    var event = new Event('change', { bubbles: true });
-                    fields[fieldName].dispatchEvent(event);
-                }
-            });
-
-            pcm2_updatePreview(false, contextCountryField);
-        }
-    }
-
     function pcm2_updatePreview(errorMsg = false, contextCountryField = null) {
 
         var contextFields = pcm2_getFields(contextCountryField);
@@ -384,6 +337,7 @@
 
         contextValidationFields.resultWrapper.innerHTML = html;
     }
+
     function pcm2_showForm(contextCountryField, defaultForm = false) {
         if (typeof contextCountryField === 'boolean') {
             defaultForm = contextCountryField;
@@ -771,6 +725,8 @@
         pcm2_init: function () {
             // Check if dom is ready
             if (typeof config.pcm2_config !== 'undefined' && config.pcm2_config.enabled === true) {
+
+                placementHousenumberAdditions = config.pcm2_config.housenumber_addition_address2;
 
                 pcm2_log("DOM fully loaded and parsed");
 

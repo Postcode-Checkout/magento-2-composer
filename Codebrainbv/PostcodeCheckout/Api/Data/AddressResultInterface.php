@@ -32,16 +32,16 @@ interface AddressResultInterface
 
     /**
      * Get the addition to the house number
-     * @return array|null
+     * @return array|string|null
      */
-    public function getAddition(): ?array;
+    public function getAddition(): array|string|null;
 
     /**
      * Set the addition to the house number
-     * @param array|null $addition
+     * @param array|string|null $addition
      * @return $this
      */
-    public function setAddition(?array $addition);
+    public function setAddition(array|string|null $addition);
 
     /**
      * Get the postcode
