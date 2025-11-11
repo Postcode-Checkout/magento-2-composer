@@ -23,6 +23,12 @@
             return;
         }
 
+        
+        if (config.pcm2_config.empty_default_address_fields == '1') {
+            pcm2_clearAllAddressFields();
+        }
+
+
         countryCode = countryField.value;
         pcm2_log('PCM2 country code:', countryCode);
 
@@ -59,19 +65,11 @@
             if (event.target && event.target.id === 'pcm2_autocomplete_manualbtn') {
                 pcm2_log('PCM2 manual button clicked, showing default fields');
 
-                if (config.pcm2_config.empty_default_address_fields == '1') {
-                    pcm2_clearAllAddressFields();
-                }
-
                 pcm2_showForm(true);
             }
 
             if (event.target && event.target.id === 'pcm2_autocomplete_autobtn') {
                 pcm2_log('PCM2 auto button clicked, showing postcode lookup fields');
-
-                if (config.pcm2_config.empty_default_address_fields == '1') {
-                    pcm2_clearAllAddressFields();
-                }
 
                 pcm2_hideForm(true);
             }
@@ -152,45 +150,45 @@
     }
 
     function pcm2_clearAllAddressFields() {
-    // haal velden en validatie-elementen op
-    fields = pcm2_getFields();
-    validationFields = pcm2_getValidationFields();
+        // haal velden en validatie-elementen op
+        fields = pcm2_getFields();
+        validationFields = pcm2_getValidationFields();
 
-    // kleine helper om events te versturen
-    const fireUpdates = (el) => {
-        if (!el) return;
-        el.dispatchEvent(new Event('input', { bubbles: true }));
-        el.dispatchEvent(new Event('change', { bubbles: true }));
-    };
+        // kleine helper om events te versturen
+        const fireUpdates = (el) => {
+            if (!el) return;
+            el.dispatchEvent(new Event('input', { bubbles: true }));
+            el.dispatchEvent(new Event('change', { bubbles: true }));
+        };
 
-    // zoekveld (autocomplete) leegmaken
-    const searchField = document.getElementById('pcm2_autocomplete_search');
-    if (searchField) {
-        searchField.value = '';
-        fireUpdates(searchField);
-    }
-
-    // resultaatweergave leegmaken
-    if (validationFields && validationFields.resultWrapper) {
-        validationFields.resultWrapper.innerHTML = '';
-    } else {
-        // fallback op id, voor het geval validationFields nog niet klaar staat
-        const resultWrapper = document.getElementById('pcm2_autocomplete_result_wrapper');
-        if (resultWrapper) resultWrapper.innerHTML = '';
-    }
-
-    // adresvelden leegmaken
-    const keysToClear = ['address_1', 'address_2', 'address_3', 'postcode', 'city', 'region'];
-    keysToClear.forEach((key) => {
-        const el = fields && fields[key];
-        if (el) {
-            el.value = '';
-            fireUpdates(el);
+        // zoekveld (autocomplete) leegmaken
+        const searchField = document.getElementById('pcm2_autocomplete_search');
+        if (searchField) {
+            searchField.value = '';
+            fireUpdates(searchField);
         }
-    });
 
-    pcm2_log('PCM2 cleared all address fields');
-}
+        // resultaatweergave leegmaken
+        if (validationFields && validationFields.resultWrapper) {
+            validationFields.resultWrapper.innerHTML = '';
+        } else {
+            // fallback op id, voor het geval validationFields nog niet klaar staat
+            const resultWrapper = document.getElementById('pcm2_autocomplete_result_wrapper');
+            if (resultWrapper) resultWrapper.innerHTML = '';
+        }
+
+        // adresvelden leegmaken
+        const keysToClear = ['address_1', 'address_2', 'address_3', 'postcode', 'city', 'region'];
+        keysToClear.forEach((key) => {
+            const el = fields && fields[key];
+            if (el) {
+                el.value = '';
+                fireUpdates(el);
+            }
+        });
+
+        pcm2_log('PCM2 cleared all address fields');
+    }
 
     function pcm2_fillAddressFields(result) {
         fields = pcm2_getFields();

@@ -85,20 +85,12 @@
                 var suffix = event.target.id.replace('pcm2_autocomplete_manualbtn', '');
                 var relatedCountryField = pcm2_findCountryFieldBySuffix(suffix);
 
-                if (config.pcm2_config.empty_default_address_fields == '1') {
-                    pcm2_clearAllAddressFields(relatedCountryField);
-                }
-
                 pcm2_showForm(relatedCountryField, true);
             }
 
             if (event.target && event.target.id.startsWith('pcm2_autocomplete_autobtn')) {
                 var suffix = event.target.id.replace('pcm2_autocomplete_autobtn', '');
                 var relatedCountryField = pcm2_findCountryFieldBySuffix(suffix);
-
-                if (config.pcm2_config.empty_default_address_fields == '1') {
-                    pcm2_clearAllAddressFields(relatedCountryField);
-                }
 
                 pcm2_hideForm(relatedCountryField, false);
                 pcm2_initLookup(relatedCountryField);
@@ -168,6 +160,7 @@
         searchField.addEventListener('autocomplete-select', function (event) {
             // Set value of the search field to the selected address
             searchField.value = event.detail.label;
+
             pcm2_log('Autocomplete-select event: ', event);
 
             if (event.detail.precision === 'Address') {
@@ -317,6 +310,15 @@
 
             fields.postcode.value = result.postcode;
             fields.city.value = result.city;
+
+
+            // Trigger change events in case there are any listeners
+            ['address_1', 'address_2', 'address_3', 'postcode', 'city', 'region'].forEach(function(fieldName) {
+                if (fields[fieldName]) {
+                    var event = new Event('change', { bubbles: true });
+                    fields[fieldName].dispatchEvent(event);
+                }   
+            });
 
             pcm2_updatePreview(false, contextCountryField);
         }
@@ -798,7 +800,7 @@
                     var checkAttempts = 0;
                     var consecutiveEmptyChecks = 0;
                     var maxCheckAttempts = 30; // Stop after 1 minute (30 * 2 seconds)
-                    var maxConsecutiveEmpty = 5; // Stop after 5 consecutive empty checks
+                    var maxConsecutiveEmpty = 1; // Stop after 5 consecutive empty checks
 
                     var formCheckInterval = setInterval(function () {
                         checkAttempts++;
