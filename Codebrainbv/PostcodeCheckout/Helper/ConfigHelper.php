@@ -43,9 +43,11 @@ class ConfigHelper extends AbstractHelper
     public function getShopUrl(): string
     {
         $store = $this->_storeManager->getStore();
-        // $baseUrl = $store->getBaseUrl(\Magento\Framework\UrlInterface::URL_TYPE_WEB);
         $baseUrl = $this->_urlBuilder->getBaseUrl(['_store' => $store->getCode()]);
-        return rtrim($baseUrl, '/');
+        $parts = parse_url($baseUrl);
+
+        $shopUrl = $parts['scheme'] . '://' . $parts['host'];
+        return rtrim($shopUrl, '/');
     }
 
     /**
@@ -95,8 +97,8 @@ class ConfigHelper extends AbstractHelper
             'provider' => $configuredProvider,
             'api_urls' => [
                 'national' => $apiUrl . 'national/address',
-                'international_suggest' => $apiUrl . 'international/suggest',
-                'international_details' => $apiUrl . 'international/details',
+                'international_suggest' => $apiUrl . 'international/suggest/${context}/${term}',
+                'international_details' => $apiUrl . 'international/details/${context}',
             ],
         ];
 

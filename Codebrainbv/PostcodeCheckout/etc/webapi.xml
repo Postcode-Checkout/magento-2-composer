@@ -3,7 +3,7 @@
 
     <!-- International suggest -->
     <route url="/V1/codebrainbv_postcodecheckout/international/suggest/:context/:term" method="GET">
-        <service class="Codebrainbv\PostcodeCheckout\Api\ValidationInterface" method="getAddressAutocomplete"/>
+        <service class="Codebrainbv\PostcodeCheckout\Api\ValidationInterface" method="getInternationalSuggestion"/>
         <resources>
            <resource ref="anonymous" />
         </resources>
@@ -11,7 +11,7 @@
 
     <!-- International details -->
     <route url="/V1/codebrainbv_postcodecheckout/international/details/:context" method="GET">
-        <service class="Codebrainbv\PostcodeCheckout\Api\ValidationInterface" method="getAddressDetails"/>
+        <service class="Codebrainbv\PostcodeCheckout\Api\ValidationInterface" method="getInternationalDetails"/>
         <resources>
            <resource ref="anonymous" />
         </resources>

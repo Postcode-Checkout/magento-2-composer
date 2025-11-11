@@ -37,9 +37,9 @@ class Config extends Template
 
 
     /**
-     * Get all JS files for the active provider.
+     * Get all Checkout JS files for the active provider.
      */
-    public function getJsFilesForProvider(): array
+    public function getCheckoutJsFilesForProvider(): array
     {
         $provider = $this->getConfiguredProvider();
 
@@ -53,12 +53,41 @@ class Config extends Template
             // Load international file
             $files = [
                 'Codebrainbv_PostcodeCheckout/js/vendor/autocompleteaddress',
-                'Codebrainbv_PostcodeCheckout/js/postcodeeu'
+                'Codebrainbv_PostcodeCheckout/js/checkout/postcodeeu'
             ];
         } else {
             // Load national file
             $files = [
-                'Codebrainbv_PostcodeCheckout/js/national'
+                'Codebrainbv_PostcodeCheckout/js/checkout/national'
+            ];
+        }
+
+        return $files;
+    }
+
+    /**
+     * Get all Account JS files for the active provider.
+     */
+    public function getAccountJsFilesForProvider(): array
+    {
+        $provider = $this->getConfiguredProvider();
+
+        if ($provider === '') {
+            return [
+                'Codebrainbv_PostcodeCheckout/js/empty'
+            ];
+        }
+
+        if (in_array($provider, ['postcodenlext'])) {
+            // Load international file
+            $files = [
+                'Codebrainbv_PostcodeCheckout/js/vendor/autocompleteaddress',
+                'Codebrainbv_PostcodeCheckout/js/account/postcodeeu'
+            ];
+        } else {
+            // Load national file
+            $files = [
+                'Codebrainbv_PostcodeCheckout/js/account/national'
             ];
         }
 

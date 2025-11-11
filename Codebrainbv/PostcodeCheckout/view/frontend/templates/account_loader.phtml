@@ -2,7 +2,7 @@
 
 /** @var \Codebrainbv\PostcodeCheckout\Block\Config $block */
 $configuredProvider = $block->getConfiguredProvider();
-$jsFiles = $block->getJsFilesForProvider();
+$jsFiles = $block->getAccountJsFilesForProvider();
 ?>
 
 <script>
@@ -70,6 +70,6 @@ $jsFiles = $block->getJsFilesForProvider();
                     })();
                 }
             })();
-        }, 1000);
+        }, 500);
     });
 </script>
