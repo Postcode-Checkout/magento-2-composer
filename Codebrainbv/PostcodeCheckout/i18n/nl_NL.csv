@@ -1,0 +1,13 @@
+Configuration, Configuratie
+"Configure your module", "Configureer uw module"
+"Enable/Disable address validation", "Adresvalidate in-/uitschakelen"
+"API Key", "API-sleutel"
+"API Key", "API-sleutel"
+"API Key", "API-sleutel"
+"Empty default address fields", "Lege standaardadresvelden"
+"Placement Housenumber + Addition", "Plaatsing huisnummer + toevoeging"
+"Browser autocomplete off", "Browser-autocomplete uitschakelen"
+
+
+
+enable_helper, "Schakel adresvalidatie in op de Afreken- en Accountpagina’s <br/> Als het vakje is aangevinkt, wordt adresvalidatie gebruikt op die pagina’s."
