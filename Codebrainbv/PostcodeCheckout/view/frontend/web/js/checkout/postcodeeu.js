@@ -197,9 +197,9 @@
         if (!validationFields.searchWrapper) {
             var html =
                 '<div class="field" id="pcm2_autocomplete_search_wrapper' + suffix + '">' +
-                '  <label class="label" for="pcm2_autocomplete_search' + suffix + '"><span>Search address</span></label>' +
+                '  <label class="label" for="pcm2_autocomplete_search' + suffix + '"><span>' + translate.pcm2_translations.search +'</span></label>' +
                 '  <div class="control">' +
-                '    <input id="pcm2_autocomplete_search' + suffix + '" name="pcm2_autocomplete_search' + suffix + '" type="text" class="input-text" placeholder="Start typing an address..." required />' +
+                '    <input id="pcm2_autocomplete_search' + suffix + '" name="pcm2_autocomplete_search' + suffix + '" type="text" class="input-text" placeholder="' + translate.pcm2_translations.placeholder_search +'" required />' +
                 '  </div>' +
                 '</div>' +
                 '<div class="field" id="pcm2_autocomplete_result_wrapper' + suffix + '">' +
@@ -207,11 +207,11 @@
                 '  <div class="control" id="pcm2_autocomplete_result' + suffix + '"></div>' +
                 '</div>' +
                 '<div class="field"><div class="control">' +
-                '  <button type="button" class="action secondary" id="pcm2_autocomplete_manualbtn' + suffix + '">Enter manually</button> ' +
-                '  <button type="button" class="action secondary" id="pcm2_autocomplete_autobtn' + suffix + '" style="display:none;">Enter automatically</button>' +
+                '  <button type="button" class="action secondary" id="pcm2_autocomplete_manualbtn' + suffix + '"> ' + translate.pcm2_translations.manual + ' </button> ' +
+                '  <button type="button" class="action secondary" id="pcm2_autocomplete_autobtn' + suffix + '" style="display:none;"> ' + translate.pcm2_translations.automatic + ' </button>' +
                 '</div></div>';
             elements.country.insertAdjacentHTML('beforebegin', html);
-            validationFields = pcm2_getValidationFields(contextCountryField); // refresh
+            validationFields = pcm2_getValidationFields(contextCountryField); 
         }
 
         if (validationFields.searchWrapper) validationFields.searchWrapper.style.display = 'block';

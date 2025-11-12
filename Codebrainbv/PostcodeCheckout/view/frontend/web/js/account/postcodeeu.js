@@ -283,14 +283,14 @@
             // Hide address fields
             var html =
             '<div class="field" id="pcm2_autocomplete_search_wrapper">' +
-            '  <label class="label" for="pcm2_autocomplete_search"><span>Complete your address</span></label>' +
+            '  <label class="label" for="pcm2_autocomplete_search"><span> '+ translate.pcm2_translations.search_address + ' </span></label>' +
             '  <div class="control"><input id="pcm2_autocomplete_search" name="pcm2_autocomplete_search" type="text" class="input-text" required /></div>' +
             '</div>' +
             '<div class="field" id="pcm2_autocomplete_result_wrapper">' +
             '</div>' +
             '<div class="field"><div class="control">' +
-            '  <button type="button" class="action secondary" id="pcm2_autocomplete_manualbtn">Enter manually</button> ' +
-            '  <button type="button" class="action secondary" id="pcm2_autocomplete_autobtn" style="display:none;">Enter automatically</button>' +
+            '  <button type="button" class="action secondary" id="pcm2_autocomplete_manualbtn">' + translate.pcm2_translations.manual + '</button> ' +
+            '  <button type="button" class="action secondary" id="pcm2_autocomplete_autobtn" style="display:none;">' + translate.pcm2_translations.automatic + '</button>' +
             '</div></div>';
 
             // Check if it doesnt already exists

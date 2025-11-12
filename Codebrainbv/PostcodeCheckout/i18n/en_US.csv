@@ -1,0 +1,43 @@
+codebrain, "Codebrain BV"
+postcode_checkout, "Postcode Checkout"
+configure_module, "Postcode Checkout plugin settings"
+enable_disable, "Enable/disable address validation"
+api_key, "API key"
+license_key, "License key"
+configured_provider, "Configured data provider"
+debug_mode, "Debug mode"
+field_settings, "Default settings for address fields"
+empty_fields, "Empty address fields"
+placement_housenumber_addition, "House number & addition in Address field 2"
+autocomplete_off, "Browser auto-complete"
+everything_street_1, "Everything in Address field 1"
+street_and_housenumber_field_1_addition_field_2, "Street & house number in Address field 1, addition in Address field 2"
+street_field_1_housenumber_addition_field_2, "Street in Address field 1, house number & addition in Address field 2"
+street_field_1_housenumber_field_2_addition_field_3, "Street in Address field 1, house number in Address field 2, addition in Address field 3"
+search_address, "Complete your address"
+placeholder_search, "postalcode, street name or city"
+automatic, "Fill in automatically"
+manual, "Fill in manually"
+extra_settings, "Extra Settings"
+
+main_settings_helper, "Here you can find the main settings for the operation of the Postcode Checkout plugin."
+
+enable_helper, "Enable address validation on the Checkout and Account pages. <br> If the box is checked, address validation is used on those pages."
+
+api_key_helper, "You can find this information in your Postcode Checkout Dashboard, under the '<a href='https://dashboard.postcode-checkout.nl/domains' target='_blank'>Domains</a>' tab. <br> Click the eye icon for the correct store. There, under 'Domain', you will see the API key."
+
+license_key_helper, "You can find this in your Postcode Checkout Dashboard, under the '<a href='https://dashboard.postcode-checkout.nl/dashboard' target='_blank'>Dashboard</a>' tab. <br> On the right, under 'License information', you will find your license key."
+
+configured_provider_helper, "This is the provider of the postcode data currently configured in your Postcode Checkout. Not correct?<br> Log in to your dashboard and change the provider there. You can log in via <a href='https://dashboard.postcode-checkout.nl/domains' target='_blank'>this page</a>."
+
+debug_mode_helper, "Enable debug mode to get console logs in the frontend. <br><br> This option helps check if something goes wrong in the integration.<br> When enabled, additional information is shown to help trace the root cause of the issue."
+
+field_settings_helper, "Automatically manage the visibility and input of address fields according to the selected store preferences."
+
+"empty_fields_helper", "Yes: when the page loads or refreshes, the following fields are automatically cleared: address, address 2, postalcode and city <br> No: when the page loads or refreshes, the entered data remains in the following fields: address, address 2, postalcode and city.<br><br> ⚠️ Our advice is to keep this setting set to Yes."
+
+placement_housenumber_addition_helper, "Choose where you want to show the house number and the addition: <br><br> No: House number and addition are in Address field 1 (Address) <br> Addition: Only the addition is in Address field 2 (Apartment & Suite) <br> House number and addition: Both are in Address field 2 (Apartment & Suite)"
+
+autocomplete_off_helper, "The address fields are filled by our integration — not by your browser’s auto-complete."
+
+extra_settings_helper, "Here you can find additional settings for the Postcode Checkout plugin."

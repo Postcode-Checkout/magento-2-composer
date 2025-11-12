@@ -1,50 +1,60 @@
 <?xml version="1.0"?>
-<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-        xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Config:etc/system_file.xsd">
     <system>
-        <tab id="postcodecheckout" translate="label" sortOrder="150">
-            <label>Postcode Checkout</label>
+        <tab class="codebrain" id="codebrain" translate="label" sortOrder="150">
+            <label>codebrain</label>
         </tab>
         <section id="postcodecheckout_section" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
-            <label>Configuration</label>
-            <tab>postcodecheckout</tab>
+            <label>postcode_checkout</label>
+            <tab>codebrain</tab>
             <resource>Codebrainbv_PostcodeCheckout::config</resource>
             <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label>Configure your module</label>
+                <label>configure_module</label>
+                <comment>main_settings_helper</comment>
                 <field id="enabled" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Enable/Disable address validation</label>
+                    <label>enable_disable</label>
                     <comment>enable_helper</comment>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="api_key" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>API Key</label>
+                <field id="api_key" translate="label" type="textarea" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>api_key</label>
+                    <comment>api_key_helper</comment>
                 </field>
                 <field id="license_key" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>License Key</label>
+                    <label>license_key</label>
+                    <comment>license_key_helper</comment>
                 </field>
                 <field id="configured_provider" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Configured Provider</label>
-                    <frontend_model>Codebrainbv\PostcodeCheckout\Block\System\Config\Form\Field\Disable</frontend_model> 
-                </field>
-                <field id="debug_mode" translate="label comment" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Debug mode</label>
-                    <comment>Enable debug mode to get console logs in the frontend</comment>
-                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                    <label>configured_provider</label>
+                    <comment>configured_provider_helper</comment>
+                    <frontend_model>Codebrainbv\PostcodeCheckout\Block\System\Config\Form\Field\Disable</frontend_model>
                 </field>
             </group>
-            <group id="extra_settings" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
-                <label>Settings on the fields</label>
-                <expanded>1</expanded>
+            <group id="address_settings" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>field_settings</label>
+                <comment>field_settings_helper</comment>
                 <field id="empty_default_address_fields" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Empty default address fields</label>
+                    <label>empty_fields</label>
+                    <comment>empty_fields_helper</comment>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
                 <field id="housenumber_addition_address2" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Placement Housenumber + Addition</label>
+                    <label>placement_housenumber_addition</label>
+                    <comment>placement_housenumber_addition_helper</comment>
                     <source_model>Codebrainbv\PostcodeCheckout\Model\Config\Source\HousenumberAddition</source_model>
                 </field>
+            </group>
+            <group id="extra_settings" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                <label>extra_settings</label>
+                <comment>extra_settings_helper</comment>
                 <field id="autocomplete_off" translate="label" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="1">
-                    <label>Browser autocomplete off</label>
+                    <label>autocomplete_off</label>
+                    <comment>autocomplete_off_helper</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="debug_mode" translate="label comment" type="select" sortOrder="50" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>debug_mode</label>
+                    <comment>debug_mode_helper</comment>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
             </group>

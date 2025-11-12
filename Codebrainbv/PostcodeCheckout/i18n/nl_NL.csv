@@ -1,13 +1,43 @@
-Configuration, Configuratie
-"Configure your module", "Configureer uw module"
-"Enable/Disable address validation", "Adresvalidate in-/uitschakelen"
-"API Key", "API-sleutel"
-"API Key", "API-sleutel"
-"API Key", "API-sleutel"
-"Empty default address fields", "Lege standaardadresvelden"
-"Placement Housenumber + Addition", "Plaatsing huisnummer + toevoeging"
-"Browser autocomplete off", "Browser-autocomplete uitschakelen"
+codebrain, "Codebrain BV"
+postcode_checkout, "Postcode Checkout"
+configure_module, "Instellingen Postcode Checkout plugin"
+enable_disable, "Adresvalidate in-/uitschakelen"
+api_key, "API Sleutel"
+license_key, "Licentiesleutel"
+configured_provider, "Ingestelde Dataprovider"
+debug_mode, Debug-modus
+field_settings, "Standaard instellingen voor adresvelden"
+empty_fields, "Adresvelden Legen"
+placement_housenumber_addition, "Huisnummer & toevoeging Adresveld 2"
+autocomplete_off, "Browser auto aanvullen"
+everything_street_1, "Alles in Adresveld 1"
+street_and_housenumber_field_1_addition_field_2, "Straat & Huisnummer in Adresveld 1 & toevoeging in Adresveld 2"
+street_field_1_housenumber_addition_field_2, "Straat in Adresveld 1, Huisnummer & toevoeging in Adresveld 2"
+street_field_1_housenumber_field_2_addition_field_3, "Straat in Adresveld 1, Huisnummer in Adresveld 2, Toevoeging in Adresveld 3"
+search_address, "Adres aanvullen"
+placeholder_search, "Postcode, straatnaam of stad"
+automatic, "Automatisch invullen"
+manual, "Handmatig invullen"
+extra_settings, "Extra instellingen"
 
+main_settings_helper, "Hier vind je de belangrijkste instellingen voor de werking van de Postcode Checkout plugin."
 
+enable_helper, "Schakel adresvalidatie in op de Afreken- en Accountpagina’s. <br> Als het vakje is aangevinkt, wordt adresvalidatie gebruikt op die pagina’s."
 
-enable_helper, "Schakel adresvalidatie in op de Afreken- en Accountpagina’s <br/> Als het vakje is aangevinkt, wordt adresvalidatie gebruikt op die pagina’s."
+api_key_helper, "Je vindt deze informatie in je Postcode Checkout Dashboard, onder het tabblad ‘<a href='https://dashboard.postcode-checkout.nl/domains' target='_blank'>Domeinen</a>’. <br> Klik op het oog-icoon bij de juiste webshop. Daar zie je onder ‘Domein’ de API-sleutel staan."
+
+license_key_helper, "Je vindt deze in je Postcode Checkout Dashboard, onder het tabblad ‘<a href='https://dashboard.postcode-checkout.nl/dashboard' target='_blank'>Dashboard</a>’. <br> Rechts, onder ‘Licentie informatie’, staat je licentiesleutel."
+
+configured_provider_helper, "Dit is de aanbieder van de postcodegegevens die nu in jouw Postcode Checkout is ingesteld. Klopt dit niet?<br> Log dan in op je dashboard en wijzig de aanbieder daar. Je kunt inloggen via <a href='https://dashboard.postcode-checkout.nl/domains' target='_blank'>deze pagina</a>."
+
+debug_mode_helper, "Schakel de debugmodus in om console logs in de frontend te krijgen <br> <br> Dit is een optie om te controleren of er iets misgaat in de integratie.<br> Wanneer je deze inschakelt, wordt extra informatie getoond die helpt bij het opsporen van de oorzaak van het probleem."
+
+field_settings_helper, "Beheer de zichtbaarheid en invoer van adresvelden automatisch volgens de gekozen webshop-voorkeuren."
+
+"empty_fields_helper", "Ja: wanneer de pagina wordt geladen of vernieuwd worden de volgende velden automatisch leeggemaakt: adres, adres 2, postcode en stad <br> Nee: wanneer de pagina wordt geladen of vernieuwd, blijft ingevulde data in de volgende velden aanwezig: adres, adres 2, postcode en stad.<br> <br> ⚠️ *Ons advies is om deze instelling op Ja te laten staan."
+
+placement_housenumber_addition_helper, "Kies waar je het huisnummer en de toevoeging wilt tonen: <br><br> Nee: Huisnummer en toevoeging staan in Adresveld 1 (Adress) <br> Toevoeging: Alleen de toevoeging staat in Adresveld 2 (Appartement & Suite) <br>Huisnummer en toevoeging: Beide staan in Adresveld 2 (Appartement & Suite)"
+
+autocomplete_off_helper, "De adresvelden worden ingevuld door onze integratie — niet door de automatische aanvulfunctie van je browser."
+
+extra_settings_helper, "Hier vind je aanvullende instellingen voor de Postcode Checkout plugin."

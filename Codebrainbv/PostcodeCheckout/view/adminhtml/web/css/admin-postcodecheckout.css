@@ -1,0 +1,11 @@
+.codebrain > .admin__page-nav-title::before {
+  content: "";
+  display: inline-block;
+  height: 2rem;
+  width: 2rem;
+  padding-top: .2rem;
+  margin-right: 6px;
+  background-size: contain;
+  vertical-align: middle;
+  background: url(../images/codebrain_logo_black_white.png) no-repeat center;
+}

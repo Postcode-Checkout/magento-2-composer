@@ -25,6 +25,12 @@ class Config extends Template
         return $config;
     }
 
+    public function getTranslations(): array
+    {
+        $translate = $this->configHelper->getTranslations();
+        return $translate;
+    }
+
     /**
      * Returns configured provider, to be used in JS
      * @return string

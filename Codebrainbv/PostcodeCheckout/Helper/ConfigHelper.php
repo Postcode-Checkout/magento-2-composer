@@ -110,6 +110,18 @@ class ConfigHelper extends AbstractHelper
         return $config;
     }
 
+    public function getTranslations(): array
+    {
+        $translate = [
+            'search' => __('search_address'),
+            'placeholder_search' => __('placeholder_search'),
+            'automatic' => __('automatic'),
+            'manual' => __('manual'),
+        ];
+
+        return $translate;
+    }
+
     private function getCountries(): array
     {
         $cacheDir = __DIR__ . '/cache/';

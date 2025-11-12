@@ -528,8 +528,8 @@
             '  <div class="control" id="pcm2_autocomplete_result' + suffix + '"></div>' +
             '</div>' +
             '<div class="field"><div class="control">' +
-            '  <button type="button" class="action secondary" id="pcm2_autocomplete_manualbtn' + suffix + '">Enter manually</button> ' +
-            '  <button type="button" class="action secondary" id="pcm2_autocomplete_autobtn' + suffix + '" style="display:none;">Enter automatically</button>' +
+            '  <button type="button" class="action secondary" id="pcm2_autocomplete_manualbtn' + suffix + '">handmatig invoeren</button> ' +
+            '  <button type="button" class="action secondary" id="pcm2_autocomplete_autobtn' + suffix + '" style="display:none;">Automatisch invoeren</button>' +
             '</div></div>';
 
             elements.country.insertAdjacentHTML('beforebegin', html); 

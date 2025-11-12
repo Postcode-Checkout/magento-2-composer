@@ -7,7 +7,9 @@ $jsFiles = $block->getAccountJsFilesForProvider();
 
 <script>
     window.config = window.config || {};
-    window.config.pcm2_config = <?= /* veilig json_encode */ json_encode($block->getJsConfig(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+    window.translate = window.translate || {};
+    window.config.pcm2_config = <?= json_encode($block->getJsConfig(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+    window.translate.pcm2_translations = <?= json_encode($block->getTranslations(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
 </script>
 
 <!-- 

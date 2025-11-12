@@ -18,19 +18,19 @@ class HousenumberAddition implements \Magento\Framework\Data\OptionSourceInterfa
         return [
             [
                 'value' => 0,
-                'label' => __('Everything on street 1 field')
+                'label' => __('everything_street_1')
             ],
             [
                 'value' => 1,
-                'label' => __('Street and housenumber on field 1, addition on field 2')
+                'label' => __('street_and_housenumber_field_1_addition_field_2')
             ],
             [
                 'value' => 2,
-                'label' => __('Street on field 1, housenumber and addition on field 2')
+                'label' => __('street_field_1_housenumber_addition_field_2')
             ],
             [
                 'value' => 3,
-                'label' => __('Street on field 1, housenumber on field 2, addition on field 3')
+                'label' => __('street_field_1_housenumber_field_2_addition_field_3')
             ],
         ];
     }
