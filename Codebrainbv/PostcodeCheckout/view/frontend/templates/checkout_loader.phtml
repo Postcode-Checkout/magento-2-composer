@@ -6,7 +6,6 @@ $jsFiles = $block->getCheckoutJsFilesForProvider();
 $hyvaJsFiles = $block->getHyvaCheckoutJsFilesForProvider();
 ?>
 
-
 <script>
     window.config = window.config || {};
     window.translate = window.translate || {};
@@ -20,28 +19,28 @@ $hyvaJsFiles = $block->getHyvaCheckoutJsFilesForProvider();
 
 <script type="text/javascript">
     addEventListener("DOMContentLoaded", (event) => {
-        setTimeout(function() {
-            (function() {
-                var hasRequireJS = (typeof require === 'function');
+                setTimeout(function() {
+                            (function() {
+                                    var hasRequireJS = (typeof require === 'function');
 
-                if (hasRequireJS) {
-                    console.log('RequireJS detected - loading scripts via RequireJS');
+                                    if (hasRequireJS) {
+                                        console.log('RequireJS detected - loading scripts via RequireJS');
 
                     var jsFilesArray = <?= json_encode($jsFiles) ?>;
-
+                    
                     require(jsFilesArray, function() {
                         for (var i = 0; i < arguments.length; i++) {
                             var currentFilePath = jsFilesArray[i];
                             var isVendorScript = currentFilePath.includes('/vendor/');
-
+                            
                             console.log('Processing module:', currentFilePath, 'isVendor:', isVendorScript);
-
+                            
                             // Skip init for vendor scripts
                             if (isVendorScript) {
                                 console.log('Skipping init for vendor module:', currentFilePath);
                                 continue;
                             }
-
+                            
                             if (typeof arguments[i].pcm2_init === 'function') {
                                 try {
                                     arguments[i].pcm2_init();
@@ -55,12 +54,24 @@ $hyvaJsFiles = $block->getHyvaCheckoutJsFilesForProvider();
                     })
                 } else {
                     console.log('Hyvä detected - loading scripts via <script> tags');
+                    var head = document.head || document.getElementsByTagName('head')[0];
+                    (async function() {
+                        const files = <?= json_encode($jsFiles) ?>;
+                        for (const path of files) {
+                            const script = document.createElement('script');
+                            script.src = '<?= $block->getViewFileUrl('') ?>' + path + '.js';
+                            if (path.includes('/vendor/')) {
+                                await new Promise(resolve => {
+                                    script.onload = resolve;
+                                    head.appendChild(script);
+                                });
+                            } else {
+                                head.appendChild(script);
+                            }
+                        }
+                    })();
                 }
             })();
         }, 1500);
     });
 </script>
-
-<?php foreach ($jsFiles as $path): ?>
-    <script src="<?= $block->getViewFileUrl($path . '.js') ?>"></script>
-<?php endforeach; ?>
