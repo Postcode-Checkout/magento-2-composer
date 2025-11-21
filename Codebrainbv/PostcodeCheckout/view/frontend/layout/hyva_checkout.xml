@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+
+    <head>
+        <!-- Load CSS globally -->
+        <css src="Codebrainbv_PostcodeCheckout::css/vendor/autocompleteaddress.css"/>
+        <css src="Codebrainbv_PostcodeCheckout::css/postcode-checkout.css"/>
+    </head>
+    <body>
+        <referenceContainer name="magewire.plugin.scripts">
+            <block class="Codebrainbv\PostcodeCheckout\Block\Config"
+                    name="postcode_checkout_config"
+                    template="Codebrainbv_PostcodeCheckout::checkout_loader.phtml"
+                    after="-" />
+        </referenceContainer>
+    </body>
+</page>

@@ -99,4 +99,30 @@ class Config extends Template
 
         return $files;
     }
+
+    public function getHyvaCheckoutJsFiles(): array
+    {
+        $provider = $this->getConfiguredProvider();
+
+        if ($provider === '') {
+            return [
+                'Codebrainbv_PostcodeCheckout/js/empty'
+            ];
+        }
+
+        if (in_array($provider, ['postcodenlext'])) {
+            // Load international file
+            $files = [
+                'Codebrainbv_PostcodeCheckout/js/vendor/autocompleteaddress',
+                'Codebrainbv_PostcodeCheckout/js/hyva/postcodeeu'
+            ];
+        } else {
+            // Load national file
+            $files = [
+                'Codebrainbv_PostcodeCheckout/js/hyva/national'
+            ];
+        }
+
+        return $files;
+    }
 }
