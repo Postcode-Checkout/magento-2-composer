@@ -4,19 +4,26 @@ namespace Codebrainbv\PostcodeCheckout\Block;
 
 use Magento\Framework\View\Element\Template;
 use Codebrainbv\PostcodeCheckout\Helper\ConfigHelper;
+use Magento\Csp\Helper\CspNonceProvider;
 
 class Config extends Template
 {
     protected $scopeConfig;
     protected $configHelper;
+    /**
+     * @var CspNonceProvider
+     */
+    private $cspNonceProvider;
 
     public function __construct(
         Template\Context $context,
         ConfigHelper $configHelper,
+        CspNonceProvider $cspNonceProvider,
         array $data = []
     ) {
         parent::__construct($context, $data);
         $this->configHelper = $configHelper;
+        $this->cspNonceProvider = $cspNonceProvider;
     }
 
     public function getJsConfig(): array
@@ -124,5 +131,15 @@ class Config extends Template
         }
 
         return $files;
+    }
+ 
+    /**
+     * Get CSP Nonce
+     *
+     * @return String
+     */
+    public function getNonce(): string
+    {
+        return $this->cspNonceProvider->generateNonce();
     }
 }

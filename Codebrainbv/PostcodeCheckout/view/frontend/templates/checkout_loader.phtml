@@ -3,10 +3,11 @@
 /** @var \Codebrainbv\PostcodeCheckout\Block\Config $block */
 $configuredProvider = $block->getConfiguredProvider();
 $jsFiles = $block->getCheckoutJsFilesForProvider();
-$hyvaJsFiles = $block->getHyvaCheckoutJsFilesForProvider();
+$hyvaJsFiles = $block->getHyvaCheckoutJsFiles();
+$nonce = $block->getNonce();
 ?>
 
-<script>
+<script nonce="<?= $nonce ?>">
     window.config = window.config || {};
     window.translate = window.translate || {};
     window.config.pcm2_config = <?= json_encode($block->getJsConfig(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
@@ -17,30 +18,30 @@ $hyvaJsFiles = $block->getHyvaCheckoutJsFilesForProvider();
     Supports both Hyvä (Alpine.js) and RequireJS
 -->
 
-<script type="text/javascript">
+<script type="text/javascript" nonce="<?= $nonce ?>">
     addEventListener("DOMContentLoaded", (event) => {
-                setTimeout(function() {
-                            (function() {
-                                    var hasRequireJS = (typeof require === 'function');
+        setTimeout(function() {
+            (function() {
+                var hasRequireJS = (typeof require === 'function');
 
-                                    if (hasRequireJS) {
-                                        console.log('RequireJS detected - loading scripts via RequireJS');
+                if (hasRequireJS) {
+                    console.log('RequireJS detected - loading scripts via RequireJS');
 
                     var jsFilesArray = <?= json_encode($jsFiles) ?>;
-                    
+
                     require(jsFilesArray, function() {
                         for (var i = 0; i < arguments.length; i++) {
                             var currentFilePath = jsFilesArray[i];
                             var isVendorScript = currentFilePath.includes('/vendor/');
-                            
+
                             console.log('Processing module:', currentFilePath, 'isVendor:', isVendorScript);
-                            
+
                             // Skip init for vendor scripts
                             if (isVendorScript) {
                                 console.log('Skipping init for vendor module:', currentFilePath);
                                 continue;
                             }
-                            
+
                             if (typeof arguments[i].pcm2_init === 'function') {
                                 try {
                                     arguments[i].pcm2_init();
@@ -56,10 +57,10 @@ $hyvaJsFiles = $block->getHyvaCheckoutJsFilesForProvider();
                     console.log('Hyvä detected - loading scripts via <script> tags');
                     var head = document.head || document.getElementsByTagName('head')[0];
                     (async function() {
-                        const files = <?= json_encode($jsFiles) ?>;
+                        const files = <?= json_encode($hyvaJsFiles) ?>;
                         for (const path of files) {
                             const script = document.createElement('script');
-                            script.src = '<?= $block->getViewFileUrl('') ?>' + path + '.js';
+                            script.src = '<?= $block->getViewFileUrl('') ?>/' + path + '.js';
                             if (path.includes('/vendor/')) {
                                 await new Promise(resolve => {
                                     script.onload = resolve;

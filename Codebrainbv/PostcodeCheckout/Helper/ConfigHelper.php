@@ -89,18 +89,19 @@ class ConfigHelper extends AbstractHelper
         $configuredProvider = $this->getConfigValue('postcodecheckout_section/general/configured_provider');
 
         $config = [
-            'enabled' => $this->isEnabled(),
-            'empty_default_address_fields' => $this->getConfigValue('postcodecheckout_section/general/empty_default_address_fields'),
-            'housenumber_addition_address2' => $this->getConfigValue('postcodecheckout_section/general/housenumber_addition_address2'),
-            'autocomplete_off' => $this->getConfigValue('postcodecheckout_section/general/autocomplete_off'),
-            'debug_mode' => $this->getConfigValue('postcodecheckout_section/general/debug_mode'),
-            'provider' => $configuredProvider,
+            'enabled' => $this->getConfigValue('postcodecheckout_section/general/enabled'),
+            'empty_default_address_fields' => $this->getConfigValue('postcodecheckout_section/address_settings/empty_default_address_fields'),
+            'housenumber_addition_address2' => $this->getConfigValue('postcodecheckout_section/address_settings/housenumber_addition_address2'),
+            'autocomplete_off' => $this->getConfigValue('postcodecheckout_section/extra_settings/autocomplete_off'),
+            'debug_mode' => $this->getConfigValue('postcodecheckout_section/extra_settings/debug_mode'),
+            'provider' => $this->getConfigValue('postcodecheckout_section/general/configured_provider'),
             'api_urls' => [
                 'national' => $apiUrl . 'national/address',
                 'international_suggest' => $apiUrl . 'international/suggest/${context}/${term}',
                 'international_details' => $apiUrl . 'international/details/${context}',
             ],
         ];
+
 
         if ($configuredProvider == 'postcodenlext') {
             // Load additional international config
@@ -124,7 +125,7 @@ class ConfigHelper extends AbstractHelper
 
     private function getCountries(): array
     {
-        $cacheDir = __DIR__ . '/cache/';
+        $cacheDir = dirname(__DIR__) .  DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR;
         if (!is_dir($cacheDir)) {
             mkdir($cacheDir, 0755, true);
         }
