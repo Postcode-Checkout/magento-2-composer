@@ -429,10 +429,9 @@ function pcm2_log(msg, data) {
         let pcm2_sSection = '';
         let oElement = '';
 
-        pcm2_sSection = 'billing';
+        pcm2_sSection = 'shipping';
         console.log(pcm2_sSection);
         oElement = document.getElementById(pcm2_sSection + '-country_id');
-        console.log(oElement.value);
 
         if (oElement) {
             pcm2_addLookup(oElement);
@@ -441,7 +440,7 @@ function pcm2_log(msg, data) {
             });
         }
 
-        pcm2_sSection = 'shipping';
+        pcm2_sSection = 'billing';
         oElement = document.getElementById(pcm2_sSection + '-country_id');
 
         if (oElement) {
