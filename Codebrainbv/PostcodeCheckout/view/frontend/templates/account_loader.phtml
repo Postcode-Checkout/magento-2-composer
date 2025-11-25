@@ -59,7 +59,7 @@ $jsFiles = $block->getAccountJsFilesForProvider();
                         const files = <?= json_encode($jsFiles) ?>;
                         for (const path of files) {
                             const script = document.createElement('script');
-                            script.src = '<?= $block->getViewFileUrl('') ?>' + path + '.js';
+                            script.src = '<?= $block->getViewFileUrl('') ?>/' + path + '.js';
                             if (path.includes('/vendor/')) {
                                 await new Promise(resolve => {
                                     script.onload = resolve;

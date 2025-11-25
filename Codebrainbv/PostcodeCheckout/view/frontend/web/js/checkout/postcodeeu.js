@@ -822,7 +822,7 @@
                 }
 
             } else {
-                console.warn('PCM2 national not enabled');
+                console.warn('PCM2 international not enabled');
             }
         }
 
