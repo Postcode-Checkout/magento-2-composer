@@ -1,0 +1,48 @@
+<?php
+
+/** @var \Codebrainbv\PostcodeCheckout\Block\Config $block */
+$configuredProvider = $block->getConfiguredProvider();
+$jsFiles = $block->getAccountJsFiles();
+$nonce = $block->getNonce();
+?>
+
+<script type="text/javascript" nonce="<?= $nonce ?>">
+    window.pcm2_config = <?= json_encode($block->getJsConfig(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+    window.pcm2_translations = <?= json_encode($block->getTranslations(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+</script>
+
+<!-- 
+    Postcode Checkout Default Account loader
+-->
+
+<script type="text/javascript" nonce="<?= $nonce ?>">
+    addEventListener("DOMContentLoaded", (event) => {
+        setTimeout(function() {
+            (function() {
+                var hasRequireJS = (typeof require === 'function');
+
+                if (hasRequireJS) {
+                    console.log('RequireJS detected - loading scripts via RequireJS');
+
+                    var jsFilesArray = <?= json_encode($jsFiles) ?>;
+                    
+                    require(jsFilesArray, function() {
+                        for (var i = 0; i < arguments.length; i++) {
+                            var currentFilePath = jsFilesArray[i];
+                                                        
+                            if (typeof arguments[i].pcm2_init === 'function') {
+                                try {
+                                    arguments[i].pcm2_init();
+                                } catch (e) {
+                                    console.error('Module init failed for:', currentFilePath, e);
+                                }
+                            } else {
+                                console.log('No pcm2_init function found for:', currentFilePath);
+                            }
+                        }
+                    })
+                }
+            })();
+        }, 500);
+    });
+</script>

@@ -126,8 +126,8 @@
 
         // Create new autocomplete instance for this form
         var autocomplete = new AutocompleteAddress(searchField, {
-            autocompleteUrl: config.pcm2_config.api_urls.international_suggest,
-            addressDetailsUrl: config.pcm2_config.api_urls.international_details,
+            autocompleteUrl: pcm2_config.api_urls.international_suggest,
+            addressDetailsUrl: pcm2_config.api_urls.international_details,
             autoFocus: true,
             autoSelect: true,
             showLogo: false,
@@ -197,9 +197,9 @@
         if (!validationFields.searchWrapper) {
             var html =
                 '<div class="field" id="pcm2_autocomplete_search_wrapper' + suffix + '">' +
-                '  <label class="label" for="pcm2_autocomplete_search' + suffix + '"><span>' + translate.pcm2_translations.search +'</span></label>' +
+                '  <label class="label" for="pcm2_autocomplete_search' + suffix + '"><span>' + pcm2_translations.search +'</span></label>' +
                 '  <div class="control">' +
-                '    <input id="pcm2_autocomplete_search' + suffix + '" name="pcm2_autocomplete_search' + suffix + '" type="text" class="input-text" placeholder="' + translate.pcm2_translations.placeholder_search +'" required />' +
+                '    <input id="pcm2_autocomplete_search' + suffix + '" name="pcm2_autocomplete_search' + suffix + '" type="text" class="input-text" placeholder="' + pcm2_translations.placeholder_search +'" required />' +
                 '  </div>' +
                 '</div>' +
                 '<div class="field" id="pcm2_autocomplete_result_wrapper' + suffix + '">' +
@@ -207,8 +207,8 @@
                 '  <div class="control" id="pcm2_autocomplete_result' + suffix + '"></div>' +
                 '</div>' +
                 '<div class="field"><div class="control">' +
-                '  <button type="button" class="action secondary" id="pcm2_autocomplete_manualbtn' + suffix + '"> ' + translate.pcm2_translations.manual + ' </button> ' +
-                '  <button type="button" class="action secondary" id="pcm2_autocomplete_autobtn' + suffix + '" style="display:none;"> ' + translate.pcm2_translations.automatic + ' </button>' +
+                '  <button type="button" class="action secondary" id="pcm2_autocomplete_manualbtn' + suffix + '"> ' + pcm2_translations.manual + ' </button> ' +
+                '  <button type="button" class="action secondary" id="pcm2_autocomplete_autobtn' + suffix + '" style="display:none;"> ' + pcm2_translations.automatic + ' </button>' +
                 '</div></div>';
             elements.country.insertAdjacentHTML('beforebegin', html);
             validationFields = pcm2_getValidationFields(contextCountryField); 
@@ -554,7 +554,7 @@
 
     function pcm2_isSupportedCountry(countryCode) {
 
-        if (config.pcm2_config.supported_countries.find(country => country.iso2 === countryCode)) {
+        if (pcm2_config.supported_countries.find(country => country.iso2 === countryCode)) {
 
             return true;
         }
@@ -564,11 +564,11 @@
 
 
     function pcm2_convertIso2ToIso3(iso2) {
-        return config.pcm2_config.supported_countries.find(country => country.iso2 === iso2).iso3;
+        return pcm2_config.supported_countries.find(country => country.iso2 === iso2).iso3;
     }
 
     function pcm2_log(msg, data) {
-        if (config.pcm2_config.debug_mode == 1) {
+        if (pcm2_config.debug_mode == 1) {
             console.log('PCM2:', msg);
             if (data) console.dir(data);
         }
@@ -741,12 +741,13 @@
     // Public API
     return {
         pcm2_init: function () {
+
             // Check if dom is ready
-            if (typeof config.pcm2_config !== 'undefined' && config.pcm2_config.enabled === true) {
+            if (typeof pcm2_config !== 'undefined' && pcm2_config.enabled == 1) {
 
-                pcm2_log(config.pcm2_config);
+                pcm2_log(pcm2_config);
 
-                placementHousenumberAdditions = config.pcm2_config.housenumber_addition_address2;
+                placementHousenumberAdditions = pcm2_config.housenumber_addition_address2;
 
                 pcm2_log("DOM fully loaded and parsed");
 

@@ -24,7 +24,7 @@
         }
 
         
-        if (config.pcm2_config.empty_default_address_fields == '1') {
+        if (pcm2_config.empty_default_address_fields == '1') {
             pcm2_clearAllAddressFields();
         }
 
@@ -95,8 +95,8 @@
         }
 
         pcm2_Autocomplete = new AutocompleteAddress(searchField, {
-            autocompleteUrl: config.pcm2_config.api_urls.international_suggest,
-            addressDetailsUrl: config.pcm2_config.api_urls.international_details,
+            autocompleteUrl: pcm2_config.api_urls.international_suggest,
+            addressDetailsUrl: pcm2_config.api_urls.international_details,
             autoFocus: true,
             autoSelect: true,
             showLogo: false,
@@ -202,7 +202,7 @@
             pcm2_updatePreview(true);
         } else {
 
-            if(config.pcm2_config.housenumber_addition_address2 == 0) {
+            if(pcm2_config.housenumber_addition_address2 == 0) {
                 // Everything on street 1 field
                 fields.address_1.value = result.street;
                 fields.address_1.value += ' ' + result.housenumber;
@@ -408,7 +408,7 @@
     function pcm2_isSupportedCountry(countryCode) {
 
         // Check if country code is NL
-        if (config.pcm2_config.supported_countries.find(country => country.iso2 === countryCode)) {
+        if (pcm2_config.supported_countries.find(country => country.iso2 === countryCode)) {
 
             return true;
         }
@@ -417,11 +417,11 @@
     }
 
     function pcm2_convertIso2ToIso3(iso2) {
-	    return config.pcm2_config.supported_countries.find(country => country.iso2 === iso2).iso3;
+	    return pcm2_config.supported_countries.find(country => country.iso2 === iso2).iso3;
     }
 
     function pcm2_log(msg, data) {
-        if (config.pcm2_config.debug_mode == 1) {
+        if (pcm2_config.debug_mode == 1) {
             console.log('PCM2:', msg);
             if (data) console.dir(data);
         }
@@ -431,7 +431,7 @@
     return {
         pcm2_init: function () {
             // Check if dom is ready
-            if (typeof config.pcm2_config !== 'undefined' && config.pcm2_config.enabled === true) {
+            if (typeof pcm2_config !== 'undefined' && pcm2_config.enabled == 1) {
 
                 // Add check if it is the checkout shipping form or the address form
                 // var isCheckoutAddress = document.getElementById('#shipping-new-address-form');

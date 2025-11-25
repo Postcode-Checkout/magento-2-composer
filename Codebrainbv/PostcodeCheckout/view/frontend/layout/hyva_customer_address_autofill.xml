@@ -6,13 +6,15 @@
         <!-- Load CSS globally -->
         <css src="Codebrainbv_PostcodeCheckout::css/vendor/autocompleteaddress.css"/>
         <css src="Codebrainbv_PostcodeCheckout::css/postcode-checkout.css"/>
+    
+        <script src="Codebrainbv_PostcodeCheckout::js/vendor/autocompleteaddress.js"/>
     </head>
+
     <body>
-        <referenceContainer name="magewire.plugin.scripts">
+		<referenceContainer name="content.top">
             <block class="Codebrainbv\PostcodeCheckout\Block\Config"
                     name="postcode_checkout_config"
-                    template="Codebrainbv_PostcodeCheckout::hyva/checkout_loader.phtml"
-                    after="-" />
+                    template="Codebrainbv_PostcodeCheckout::hyva/account_loader.phtml" />
         </referenceContainer>
     </body>
 </page>

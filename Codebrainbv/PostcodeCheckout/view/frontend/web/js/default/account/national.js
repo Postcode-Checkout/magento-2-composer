@@ -146,7 +146,7 @@
 
             // Do the lookup with ajax call to our controller
             var xhr = new XMLHttpRequest();
-            var url = config.pcm2_config.api_urls.national + '/' + encodeURIComponent(postcode) + '/' + encodeURIComponent(housenumber);
+            var url = pcm2_config.api_urls.national + '/' + encodeURIComponent(postcode) + '/' + encodeURIComponent(housenumber);
 
             xhr.onreadystatechange = function () {
                 if (this.readyState === 4) {
@@ -218,7 +218,7 @@
             pcm2_updatePreview(true);
         } else {
 
-            if (config.pcm2_config.housenumber_addition_address2 == 0) {
+            if (pcm2_config.housenumber_addition_address2 == 0) {
                 // Everything on street 1 field
                 fields.address_1.value = result.street;
                 fields.address_1.value += ' ' + result.housenumber;
@@ -335,16 +335,16 @@
 
 		var trimmedStreet = street.replace(/\s+\d+.*$/, '');
 
-        if(config.pcm2_config.housenumber_addition_address2 == 0) {
+        if(pcm2_config.housenumber_addition_address2 == 0) {
 
             // Everything on street 1 field
             fields.address_1.value = trimmedStreet + ' ' + housenumber;
             if (addition) {
                 fields.address_1.value += ' ' + addition;
             }
-        } else if (config.pcm2_config.housenumber_addition_address2 == 1) {
+        } else if (pcm2_config.housenumber_addition_address2 == 1) {
             fields.address_2.value = addition;
-        } else if(config.pcm2_config.housenumber_addition_address2 == 2) {
+        } else if(pcm2_config.housenumber_addition_address2 == 2) {
             if (addition) {
                 // Remove addition from address_2 if it was previously set
                 if (oldAddition) {
@@ -536,7 +536,7 @@
     }
 
     function pcm2_log(msg, data) {
-        if (config.pcm2_config.debug_mode == 1) {
+        if (pcm2_config.debug_mode == 1) {
             console.log('PCM2:', msg);
             if (data) console.dir(data);
         }
@@ -546,14 +546,14 @@
     return {
         pcm2_init: function () {
             // Check if dom is ready
-            if (typeof config.pcm2_config !== 'undefined' && config.pcm2_config.enabled === true) {
+            if (typeof pcm2_config !== 'undefined' && pcm2_config.enabled == 1) {
 
                 // Add check if it is the checkout shipping form or the address form
                 // var isCheckoutAddress = document.getElementById('#shipping-new-address-form');
 
                 // if ( isCheckoutAddress ) {
 
-                console.log('PCM2 national init with the config:', config.pcm2_config);
+                console.log('PCM2 national init with the config:', pcm2_config);
 
                 pcm2_addLookup();
                 // }

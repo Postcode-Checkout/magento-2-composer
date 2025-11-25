@@ -47,12 +47,10 @@ class Config extends Template
         return $this->configHelper->getConfiguredProvider();
     }
 
-
-
     /**
      * Get all Checkout JS files for the active provider.
      */
-    public function getCheckoutJsFilesForProvider(): array
+    public function getCheckoutJsFiles(): array
     {
         $provider = $this->getConfiguredProvider();
 
@@ -66,12 +64,12 @@ class Config extends Template
             // Load international file
             $files = [
                 'Codebrainbv_PostcodeCheckout/js/vendor/autocompleteaddress',
-                'Codebrainbv_PostcodeCheckout/js/checkout/postcodeeu'
+                'Codebrainbv_PostcodeCheckout/js/default/checkout/postcodeeu'
             ];
         } else {
             // Load national file
             $files = [
-                'Codebrainbv_PostcodeCheckout/js/checkout/national'
+                'Codebrainbv_PostcodeCheckout/js/default/checkout/national'
             ];
         }
 
@@ -81,7 +79,7 @@ class Config extends Template
     /**
      * Get all Account JS files for the active provider.
      */
-    public function getAccountJsFilesForProvider(): array
+    public function getAccountJsFiles(): array
     {
         $provider = $this->getConfiguredProvider();
 
@@ -95,12 +93,12 @@ class Config extends Template
             // Load international file
             $files = [
                 'Codebrainbv_PostcodeCheckout/js/vendor/autocompleteaddress',
-                'Codebrainbv_PostcodeCheckout/js/account/postcodeeu'
+                'Codebrainbv_PostcodeCheckout/js/default/account/postcodeeu'
             ];
         } else {
             // Load national file
             $files = [
-                'Codebrainbv_PostcodeCheckout/js/account/national'
+                'Codebrainbv_PostcodeCheckout/js/default/account/national'
             ];
         }
 
@@ -120,13 +118,38 @@ class Config extends Template
         if (in_array($provider, ['postcodenlext'])) {
             // Load international file
             $files = [
-                'Codebrainbv_PostcodeCheckout/js/vendor/autocompleteaddress',
-                'Codebrainbv_PostcodeCheckout/js/hyva/postcodeeu'
+                'Codebrainbv_PostcodeCheckout/js/hyva/checkout/postcodeeu'
             ];
         } else {
             // Load national file
             $files = [
-                'Codebrainbv_PostcodeCheckout/js/hyva/national'
+                'Codebrainbv_PostcodeCheckout/js/hyva/checkout/national'
+            ];
+        }
+
+        return $files;
+    }
+
+
+    public function getHyvaAccountJsFiles(): array
+    {
+        $provider = $this->getConfiguredProvider();
+
+        if ($provider === '') {
+            return [
+                'Codebrainbv_PostcodeCheckout/js/empty'
+            ];
+        }
+
+        if (in_array($provider, ['postcodenlext'])) {
+            // Load international file
+            $files = [
+                'Codebrainbv_PostcodeCheckout/js/hyva/account/postcodeeu'
+            ];
+        } else {
+            // Load national file
+            $files = [
+                'Codebrainbv_PostcodeCheckout/js/hyva/account/national'
             ];
         }
 
