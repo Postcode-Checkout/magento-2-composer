@@ -283,8 +283,8 @@
             // Hide address fields
             var html =
             '<div class="field" id="pcm2_autocomplete_search_wrapper">' +
-            '  <label class="label" for="pcm2_autocomplete_search"><span> '+ translate.pcm2_translations.search_address + ' </span></label>' +
-            '  <div class="control"><input id="pcm2_autocomplete_search" name="pcm2_autocomplete_search" type="text" class="input-text" required /></div>' +
+            '  <label class="label" for="pcm2_autocomplete_search"><span> '+ translate.pcm2_translations.search + ' </span></label>' +
+            '  <div class="control"><input id="pcm2_autocomplete_search" name="pcm2_autocomplete_search" type="text" placeholder="' + pcm2_translations.placeholder_search +'" class="input-text" required /></div>' +
             '</div>' +
             '<div class="field" id="pcm2_autocomplete_result_wrapper">' +
             '</div>' +
