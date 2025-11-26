@@ -6,6 +6,8 @@
         <!-- Load CSS globally -->
         <css src="Codebrainbv_PostcodeCheckout::css/vendor/autocompleteaddress.css"/>
         <css src="Codebrainbv_PostcodeCheckout::css/postcode-checkout.css"/>
+        
+        <script src="Codebrainbv_PostcodeCheckout::js/vendor/autocompleteaddress.js"/>
     </head>
     <body>
         <referenceContainer name="magewire.plugin.scripts">

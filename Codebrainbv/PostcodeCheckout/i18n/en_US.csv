@@ -28,7 +28,7 @@ api_key_helper, "You can find this information in your Postcode Checkout Dashboa
 
 license_key_helper, "You can find this in your Postcode Checkout Dashboard, under the '<a href='https://dashboard.postcode-checkout.nl/dashboard' target='_blank'>Dashboard</a>' tab. <br> On the right, under 'License information', you will find your license key."
 
-configured_provider_helper, "This is the provider of the postcode data currently configured in your Postcode Checkout. Not correct?<br> Log in to your dashboard and change the provider there. You can log in via <a href='https://dashboard.postcode-checkout.nl/domains' target='_blank'>this page</a>."
+configured_provider_helper, "This is the provider of the postcode data currently configured in your Postcode Checkout.<br> Not correct?<br> Log in to your dashboard and change the provider there. You can log in via <a href='https://dashboard.postcode-checkout.nl/domains' target='_blank'>this page</a>."
 
 debug_mode_helper, "Enable debug mode to get console logs in the frontend. <br><br> This option helps check if something goes wrong in the integration.<br> When enabled, additional information is shown to help trace the root cause of the issue."
 
