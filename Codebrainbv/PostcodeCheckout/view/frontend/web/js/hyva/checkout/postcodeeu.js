@@ -1,4 +1,5 @@
 var fields, elements, validationFields, pcm2_Autocomplete, countryCode; // Declare variables at module level
+var placementHousenumberAdditions = pcm2_config.housenumber_addition_address2;
 
 function pcm2_addLookup(pcm2_Section, oElement) {
 
@@ -14,7 +15,7 @@ function pcm2_addLookup(pcm2_Section, oElement) {
 
 
     if (pcm2_config.empty_default_address_fields == '1') {
-        pcm2_clearAllAddressFields();
+        pcm2_clearAllAddressFields(pcm2_Section);
     }
 
 
@@ -124,10 +125,10 @@ function pcm2_initLookup(pcm2_Section) {
                     var addressData = response.result;
 
                     pcm2_log('Address to be entered: ', addressData);
-                    pcm2_fillAddressFields(addressData);
+                    pcm2_fillAddressFields(addressData, pcm2_Section);
                 } else {
                     pcm2_log('No address data found in response:', response);
-                    pcm2_updatePreview(true);
+                    pcm2_updatePreview(pcm2_Section, true);
                 }
             });
         }
@@ -175,46 +176,51 @@ function pcm2_clearAllAddressFields(pcm2_Section) {
     pcm2_log('PCM2 cleared all address fields');
 }
 
-function pcm2_fillAddressFields(result) {
-    fields = pcm2_getFields();
+function pcm2_fillAddressFields(result, pcm2_Section) {
+    fields = pcm2_getFields(pcm2_Section);
+    validationFields = pcm2_getValidationFields(pcm2_Section);
 
     pcm2_log('PCM2 filling address fields with result:', result);
 
     // Check if we have a result, empty array?
     if (!result || Object.keys(result).length === 0) {
         pcm2_log('PCM2 no result found');
-
-        pcm2_updatePreview(true);
+        pcm2_updatePreview(pcm2_Section, true);
     } else {
 
-        if (pcm2_config.housenumber_addition_address2 == 0) {
-            // Everything on street 1 field
+        // Fill address fields based on configuration
+        if (placementHousenumberAdditions == 0) {
             fields.address_1.value = result.street;
-            fields.address_1.value += ' ' + result.housenumber;
-        }
-        else {
-            // Street on field 1, rest on field 2
+            fields.address_1.value += ' ' + result.housenumber + (result.addition ? ' ' + result.addition : '');
+        } else if (placementHousenumberAdditions == 1) {
+            fields.address_1.value = result.street + ' ' + result.housenumber;
+            fields.address_2.value = (result.addition ? ' ' + result.addition : '');
+
+        } else if (placementHousenumberAdditions == 2) {
+            fields.address_1.value = result.street;
+            fields.address_2.value = result.housenumber + (result.addition ? ' ' + result.addition : '');
+        } else if (placementHousenumberAdditions == 3) {
             fields.address_1.value = result.street;
             fields.address_2.value = result.housenumber;
-        }
-
-        // Check additions
-        if (result.addition) {
-            if (Array.isArray(result.addition) && result.addition.length > 0) {
-                pcm2_log('Found additions to place in the select:', result.addition);
-                pcm2_setHouseNumberAdditions(result.addition);
-            } else {
-                pcm2_changeHousenumberAddition(result.addition);
-                validationFields.housenumberAddition.style.display = 'none';
-            }
+            fields.address_3.value = (result.addition ? ' ' + result.addition : '');
         }
 
         fields.postcode.value = result.postcode;
         fields.city.value = result.city;
 
-        pcm2_updatePreview();
+
+        // Trigger change events in case there are any listeners
+        ['address_1', 'address_2', 'address_3', 'postcode', 'city', 'region'].forEach(function (fieldName) {
+            if (fields[fieldName]) {
+                var event = new Event('change', { bubbles: true });
+                fields[fieldName].dispatchEvent(event);
+            }
+        });
+
+        pcm2_updatePreview(pcm2_Section);
     }
 }
+
 
 function pcm2_updatePreview(pcm2_Section, errorMsg = false) {
 
@@ -267,19 +273,19 @@ function pcm2_hideForm(pcm2_Section, defaultForm = false) {
     } else {
         // Hide address fields
         var html =
-    '<div class="col-span-12 group field-wrapper field-type-text field md:col-span-12" id="pcm2_' + pcm2_Section + '_autocomplete_search_wrapper">' +
-    '  <label class="label text-sm text-slate-700" for="pcm2_' + pcm2_Section + '_autocomplete_search"><span> ' + pcm2_translations.search + ' </span></label>' +
-    '  <div class="flex">' +
-    '    <input id="pcm2_' + pcm2_Section + '_autocomplete_search" name="pcm2_autocomplete_search" type="text" class="form-input w-full grow" required />' +
-    '  </div>' +
-    '</div>' +
-    '<div class="col-span-12 group field-wrapper field-type-text field md:col-span-12" id="pcm2_' + pcm2_Section + '_autocomplete_result_wrapper"></div>' +
-    '<div class="col-span-12 group field-wrapper field-type-text field md:col-span-12">' +
-    '  <div class="group input-group flex gap-4">' +
-    '    <button type="button" class="btn btn-secondary justify-center py-2.5 btn-place-order" id="pcm2_' + pcm2_Section + '_autocomplete_manualbtn">' + pcm2_translations.manual + '</button>' +
-    '    <button type="button" class="btn btn-secondary justify-center py-2.5 btn-place-order" id="pcm2_' + pcm2_Section + '_autocomplete_autobtn" style="display:none;">' + pcm2_translations.automatic + '</button>' +
-    '  </div>' +
-    '</div>';
+            '<div class="col-span-12 md:col-span-12 field" id="pcm2_' + pcm2_Section + '_autocomplete_search_wrapper">' +
+            '  <label class="label text-sm text-slate-700" for="pcm2_' + pcm2_Section + '_autocomplete_search"><span> ' + pcm2_translations.search + ' </span></label>' +
+            '  <div class="flex">' +
+            '    <input id="pcm2_' + pcm2_Section + '_autocomplete_search" name="pcm2_autocomplete_search" type="text" class="form-input w-full grow" required />' +
+            '  </div>' +
+            '</div>' +
+            '<div class="col-span-12 md:col-span-12 field" id="pcm2_' + pcm2_Section + '_autocomplete_result_wrapper"></div>' +
+            '<div class="col-span-12 md:col-span-12 field">' +
+            '  <div class="flex w-full">' +
+            '    <button type="button" class="action btn btn-secondary w-full" id="pcm2_' + pcm2_Section + '_autocomplete_manualbtn">' + pcm2_translations.manual + '</button>' +
+            '    <button type="button" class="btn btn-secondary w-full" id="pcm2_' + pcm2_Section + '_autocomplete_autobtn" style="display:none;">' + pcm2_translations.automatic + '</button>' +
+            '  </div>' +
+            '</div>';
 
 
         // Check if it doesnt already exists
@@ -287,7 +293,6 @@ function pcm2_hideForm(pcm2_Section, defaultForm = false) {
             pcm2_log('PCM2 postcode lookup fields do not exist, adding them now');
             elements.country.insertAdjacentHTML('afterend', html);
         }
-
     }
 
     // Hide address fields
@@ -310,7 +315,7 @@ function pcm2_hideForm(pcm2_Section, defaultForm = false) {
     pcm2_initLookup(pcm2_Section);
 }
 
-function pcm2_showForm(pcm2_Section,defaultForm = false) {
+function pcm2_showForm(pcm2_Section, defaultForm = false) {
     fields = pcm2_getFields(pcm2_Section);
     elements = pcm2_getElements(pcm2_Section);
 
@@ -347,6 +352,7 @@ function pcm2_showForm(pcm2_Section,defaultForm = false) {
     } else {
         // Remove postcode lookup fields
         var domKeys = Object.keys(validationFields);
+        var domKeys = Object.keys(validationFields);
 
         for (var iDom = 0; iDom < domKeys.length; iDom++) {
             validationFields[domKeys[iDom]].remove();
@@ -369,7 +375,7 @@ function pcm2_getFields(pcm2_Section) {
 }
 
 function pcm2_getElements(pcm2_Section) {
-     console.log(pcm2_Section);
+    console.log(pcm2_Section);
 
     elements = {
         // Since street 0,1,2 have a single parent fieldset, we need to get the parent element once
@@ -415,37 +421,48 @@ function pcm2_log(msg, data) {
     }
 }
 
-(function () {
-    function pcm2_init() {
-        // Is the checkout validation enabled?
-        if (pcm2_config.enabled !== '1') {
-            return false;
-        }
 
-        pcm2_log(pcm2_config);
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializePostcodeEUCheckout);
+} else {
+    initializePostcodeEUCheckout();
+}
 
-        let pcm2_Section = '';
-        let oElement = '';
-
-        pcm2_Section = 'shipping';
-        oElement = document.getElementById(pcm2_Section + '-country_id');
-
-        if (oElement) {
-            pcm2_addLookup(pcm2_Section, oElement);
-            oElement.addEventListener('change', function () {
-                pcm2_addLookup(pcm2_Section, oElement);
-            });
-        }
-
-        pcm2_Section = 'billing';
-        oElement = document.getElementById(pcm2_Section + '-country_id');
-
-        if (oElement) {
-            pcm2_addLookup(pcm2_Section, oElement);
-            oElement.addEventListener('change', function () {
-                pcm2_addLookup(pcm2_Section, oElement);
-            });
-        }
+function initializePostcodeEUCheckout() {
+    // Is the checkout validation enabled?
+    if (pcm2_config.enabled !== '1') {
+        return false;
     }
-    pcm2_init();
-})();
+
+    pcm2_log(pcm2_config);
+
+    let pcm2_Section = '';
+    let oElement = '';
+
+    pcm2_Section = 'shipping';
+    oElement = document.getElementById(pcm2_Section + '-country_id');
+
+    if (oElement) {
+        pcm2_addLookup(pcm2_Section, oElement);
+        oElement.addEventListener('change', function () {
+            pcm2_addLookup(pcm2_Section, oElement);
+        });
+    }
+
+    var shippingToBillingCheckbox = document.getElementById('billing-as-shipping');
+
+    shippingToBillingCheckbox.addEventListener('change', function () {
+
+        if (!shippingToBillingCheckbox.checked) {
+            pcm2_Section = 'billing';
+            oElement = document.getElementById(pcm2_Section + '-country_id');
+
+            if (oElement) {
+                pcm2_addLookup(pcm2_Section, oElement);
+                oElement.addEventListener('change', function () {
+                    pcm2_addLookup(pcm2_Section, oElement);
+                });
+            }
+        }
+    });
+}  
