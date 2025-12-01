@@ -12,6 +12,7 @@ function initializePostcodeEUAccount() {
 }
 
 var fields, elements, validationFields, pcm2_Autocomplete, countryCode; // Declare variables at module level
+var placementHousenumberAdditions = pcm2_config.housenumber_addition_address2;
 
 function pcm2_addLookup() {
 
@@ -37,10 +38,15 @@ function pcm2_addLookup() {
         var newCountryCode = event.target.value;
         pcm2_log('PCM2 country changed to:', newCountryCode);
         countryCode = newCountryCode;
+    
+        if (pcm2_config.empty_default_address_fields == '1') {
+            pcm2_clearAllAddressFields();
+        }
 
         // Check if country is supported
         if(pcm2_isSupportedCountry(countryCode)) {
             pcm2_log('PCM2 country is supported, adding postcode lookup');
+            
             pcm2_hideForm();
         } else {
             pcm2_log('PCM2 country is not supported, no postcode lookup');
@@ -145,34 +151,33 @@ function pcm2_initLookup() {
 }
 
 function pcm2_clearAllAddressFields() {
-    // haal velden en validatie-elementen op
     fields = pcm2_getFields();
     validationFields = pcm2_getValidationFields();
 
-    // kleine helper om events te versturen
+    // Notify magento of changes
     const fireUpdates = (el) => {
         if (!el) return;
         el.dispatchEvent(new Event('input', { bubbles: true }));
         el.dispatchEvent(new Event('change', { bubbles: true }));
     };
 
-    // zoekveld (autocomplete) leegmaken
+    // Empty search field
     const searchField = document.getElementById('pcm2_autocomplete_search');
     if (searchField) {
         searchField.value = '';
         fireUpdates(searchField);
     }
 
-    // resultaatweergave leegmaken
+    // Empty result wrapper
     if (validationFields && validationFields.resultWrapper) {
         validationFields.resultWrapper.innerHTML = '';
     } else {
-        // fallback op id, voor het geval validationFields nog niet klaar staat
+        // Fallback for loading
         const resultWrapper = document.getElementById('pcm2_autocomplete_result_wrapper');
         if (resultWrapper) resultWrapper.innerHTML = '';
     }
 
-    // adresvelden leegmaken
+    // Empty address fields
     const keysToClear = ['address_1', 'address_2', 'address_3', 'postcode', 'city'];
     keysToClear.forEach((key) => {
         const el = fields && fields[key];
@@ -182,45 +187,63 @@ function pcm2_clearAllAddressFields() {
         }
     });
 
+    // Check if we have a result field
+    if (!validationFields || !validationFields.resultWrapper) {
+        // Fallback for loading
+        const resultWrapper = document.getElementById('pcm2_autocomplete_result_wrapper');
+        if (resultWrapper) {
+            resultWrapper.innerHTML = '';
+            resultWrapper.style.display = 'none';
+        }
+    } else {
+        validationFields.resultWrapper.innerHTML = '';
+        validationFields.resultWrapper.style.display = 'none';
+    }
+
     pcm2_log('PCM2 cleared all address fields');
 }
 
+
 function pcm2_fillAddressFields(result) {
     fields = pcm2_getFields();
-    
+    validationFields = pcm2_getValidationFields();
+
     pcm2_log('PCM2 filling address fields with result:', result);
 
     // Check if we have a result, empty array?
     if (!result || Object.keys(result).length === 0) {
         pcm2_log('PCM2 no result found');
-
         pcm2_updatePreview(true);
     } else {
 
-        if(pcm2_config.housenumber_addition_address2 == 0) {
-            // Everything on street 1 field
+        // Fill address fields based on configuration
+        if (placementHousenumberAdditions == 0) {
             fields.address_1.value = result.street;
-            fields.address_1.value += ' ' + result.housenumber;
-        }
-        else { 
-            // Street on field 1, rest on field 2
+            fields.address_1.value += ' ' + result.housenumber + (result.addition ? ' ' + result.addition : '');
+        } else if (placementHousenumberAdditions == 1) {
+            fields.address_1.value = result.street + ' ' + result.housenumber;
+            fields.address_2.value = (result.addition ? ' ' + result.addition : '');
+
+        } else if (placementHousenumberAdditions == 2) {
+            fields.address_1.value = result.street;
+            fields.address_2.value = result.housenumber + (result.addition ? ' ' + result.addition : '');
+        } else if (placementHousenumberAdditions == 3) {
             fields.address_1.value = result.street;
             fields.address_2.value = result.housenumber;
-        }
-
-        // Check additions
-        if (result.addition) {
-            if(Array.isArray(result.addition) && result.addition.length > 0) {
-                pcm2_log('Found additions to place in the select:', result.addition);
-                pcm2_setHouseNumberAdditions(result.addition);
-            } else {
-                pcm2_changeHousenumberAddition(result.addition);
-                validationFields.housenumberAddition.style.display = 'none';
-            }
+            fields.address_3.value = (result.addition ? ' ' + result.addition : '');
         }
 
         fields.postcode.value = result.postcode;
         fields.city.value = result.city;
+
+
+        // Trigger change events in case there are any listeners
+        ['address_1', 'address_2', 'address_3', 'postcode', 'city', 'region'].forEach(function (fieldName) {
+            if (fields[fieldName]) {
+                var event = new Event('change', { bubbles: true });
+                fields[fieldName].dispatchEvent(event);
+            }
+        });
 
         pcm2_updatePreview();
     }
@@ -230,6 +253,9 @@ function pcm2_updatePreview(errorMsg = false) {
 
     fields = pcm2_getFields();
     validationFields = pcm2_getValidationFields();
+
+    
+    validationFields.resultWrapper.style.display = 'block';
 
     if(errorMsg) {
         validationFields.resultWrapper.innerHTML = '<p style="color:red;">Adres kon niet worden gevonden, controleer Postcode en Huisnummer of voer handmatig in.</p>';
@@ -281,7 +307,7 @@ function pcm2_hideForm(defaultForm = false) {
         '  <label class="label" for="pcm2_autocomplete_search"><span> '+ pcm2_translations.search + ' </span></label>' +
         '  <div class="control"><input id="pcm2_autocomplete_search" name="pcm2_autocomplete_search" placeholder="' + pcm2_translations.placeholder_search +'" type="text" class="form-input w-full" required /></div>' +
         '</div>' +
-        '<div class="field field-reserved w-full col-span-2" id="pcm2_autocomplete_result_wrapper">' +
+        '<div class="field field-reserved w-full col-span-2" id="pcm2_autocomplete_result_wrapper" style="display: none;">' +
         '</div>' +
         '<div class="field field-reserved w-full col-span-2"><div class="control">' +
         '  <button type="button" class="action btn btn-secondary" id="pcm2_autocomplete_manualbtn">' + pcm2_translations.manual + '</button> ' +
@@ -357,6 +383,8 @@ function pcm2_showForm(defaultForm = false) {
         for (var iDom = 0; iDom < domKeys.length; iDom++) {
             validationFields[domKeys[iDom]].remove();
         }
+
+        pcm2_clearAllAddressFields();
     }
 
 }

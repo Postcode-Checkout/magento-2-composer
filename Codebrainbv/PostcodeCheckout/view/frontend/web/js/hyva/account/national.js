@@ -409,7 +409,7 @@ function pcm2_hideForm(defaultForm = false) {
         '   <label class="col-md-3 form-control-label">Toevoeging</label>' +
         '   <div class="control"><input id="pcm2_autocomplete_free_addition" name="pcm2_autocomplete_free_addition" class="form-control" type="text" placeholder="AB"></div>' +
         '</div>' +
-        '<div class="field field-reserved w-full col-span-2" id="pcm2_autocomplete_result_wrapper">' +
+        '<div class="field field-reserved w-full col-span-2" id="pcm2_autocomplete_result_wrapper" style="display: none;">' +
         '</div>' +
         '<div class="field field-reserved w-full col-span-2"><div class="control">' +
         '  <button type="button" class="action btn btn-secondary" id="pcm2_autocomplete_manualbtn">Enter manually</button> ' +

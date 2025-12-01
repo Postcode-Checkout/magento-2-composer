@@ -17,18 +17,16 @@ $nonce = $block->getNonce();
 
 <script type="text/javascript" nonce="<?= $nonce ?>">
     addEventListener("DOMContentLoaded", (event) => {
-        setTimeout(function() {
-            console.log('Hyvä detected - loading scripts via <script> tags');
-            var head = document.head || document.getElementsByTagName('head')[0];
-            (async function() {
-                const files = <?= json_encode($jsFiles) ?>;
-                for (const path of files) {
-                    const script = document.createElement('script');
-                    script.src = '<?= $block->getViewFileUrl('') ?>/' + path + '.js';
-                    
-                    head.appendChild(script);
-                }
-            })();
-        }, 500);
+        console.log('Hyvä detected - loading scripts via <script> tags');
+        var head = document.head || document.getElementsByTagName('head')[0];
+        (async function() {
+            const files = <?= json_encode($jsFiles) ?>;
+            for (const path of files) {
+                const script = document.createElement('script');
+                script.src = '<?= $block->getViewFileUrl('') ?>/' + path + '.js';
+                
+                head.appendChild(script);
+            }
+        })();
     });
 </script>
