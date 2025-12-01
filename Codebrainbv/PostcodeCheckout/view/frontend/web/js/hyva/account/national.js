@@ -264,6 +264,9 @@ function pcm2_updatePreview(errorMsg = false) {
     html += '<p>' + fields.postcode.value + ' ' + fields.city.value + '</p>';
 
     validationFields.resultWrapper.innerHTML = html;
+
+    // Display the result wrapper
+    validationFields.resultWrapper.style.display = 'block';
 }
 
 function pcm2_setHouseNumberAdditions(aAdditions) {
@@ -447,6 +450,12 @@ function pcm2_showForm(defaultForm = false) {
 
         // Hide the element, and empty the value, except for country
         if (domKeys[iDom] != 'country') {
+
+            // Do we need to empty the value?
+            if (!pcm2_config.empty_default_address_fields) {
+                fields[domKeys[iDom]].value = '';
+            }
+
 
             // If its address_2 or address_3 we skip this step
             if (domKeys[iDom] != 'address_2' && domKeys[iDom] != 'address_3') {
