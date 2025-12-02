@@ -4,6 +4,7 @@ function pcm2_initialize() {
 
     if (typeof pcm2_config !== 'undefined' && pcm2_config.enabled == 1) {
         console.log('PCM2 national init with the config:', pcm2_config);
+        
         pcm2_addLookup();
 
     } else {
@@ -12,9 +13,9 @@ function pcm2_initialize() {
 }
 
 function pcm2_addLookup() {
-
+    pcm2_section = 'shipping';
     // Get country value
-    var countryField = document.getElementById('country');
+    var countryField = document.getElementById(pcm2_section + '-country_id');
 
     pcm2_log('Country field:', countryField);
 

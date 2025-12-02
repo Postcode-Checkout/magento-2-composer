@@ -251,7 +251,7 @@ function pcm2_updatePreview(errorMsg = false) {
 
     var html = '';
 
-    html += '<p>'+ fields.address_1.value;
+    html += '<p>' + fields.address_1.value;
 
     if (fields.address_2 && fields.address_2.value) {
         html += ' ' + fields.address_2.value;
@@ -312,9 +312,9 @@ function pcm2_setHouseNumberAdditions(aAdditions) {
         // Multiple options: show wrapper, preselect default, and bind change
         wrapper.style.display = 'block';
     }
-    
+
     // Add event listener to the select field
-    validationFields.housenumberAddition.addEventListener('change', function(event) {
+    validationFields.housenumberAddition.addEventListener('change', function (event) {
         var selectedValue = event.target.value;
         pcm2_log('PCM2 housenumber addition changed to:', selectedValue);
         pcm2_changeHousenumberAddition(selectedValue);
@@ -335,7 +335,7 @@ function pcm2_changeHousenumberAddition(sNewAdditionValue) {
 
     var trimmedStreet = street.replace(/\s+\d+.*$/, '');
 
-    if(pcm2_config.housenumber_addition_address2 == 0) {
+    if (pcm2_config.housenumber_addition_address2 == 0) {
 
         // Everything on street 1 field
         fields.address_1.value = trimmedStreet + ' ' + housenumber;
@@ -344,7 +344,7 @@ function pcm2_changeHousenumberAddition(sNewAdditionValue) {
         }
     } else if (pcm2_config.housenumber_addition_address2 == 1) {
         fields.address_2.value = addition;
-    } else if(pcm2_config.housenumber_addition_address2 == 2) {
+    } else if (pcm2_config.housenumber_addition_address2 == 2) {
         if (addition) {
             // Remove addition from address_2 if it was previously set
             if (oldAddition) {
@@ -355,7 +355,7 @@ function pcm2_changeHousenumberAddition(sNewAdditionValue) {
             fields.address_2.value += ' ' + addition;
         }
     } else {
-        
+
         if (addition) {
             fields.address_3.value = addition;
         } else {
@@ -396,28 +396,28 @@ function pcm2_hideForm(defaultForm = false) {
     } else {
         // Hide address fields
         var html =
-        '<div class="field field-reserved w-full" id="pcm2_autocomplete_postcode_wrapper">' +
-        '  <label class="label" for="pcm2_autocomplete_postcode"><span>Postcode</span></label>' +
-        '  <div class="control"><input id="pcm2_autocomplete_postcode" name="pcm2_autocomplete_postcode" type="text" class="form-input w-full" required /></div>' +
-        '</div>' +
-        '<div class="field field-reserved w-full" id="pcm2_autocomplete_housenumber_wrapper">' +
-        '  <label class="label" for="pcm2_autocomplete_housenumber"><span>Huisnummer</span></label>' +
-        '  <div class="control"><input id="pcm2_autocomplete_housenumber" name="pcm2_autocomplete_housenumber" type="text" class="form-input w-full" required /></div>' +
-        '</div>' +
-        '<div class="field field-reserved w-full" id="pcm2_autocomplete_housenumber_addition_wrapper" style="display: none;">' +
-        '   <label class="label">Toevoeging</label>' +
-        '   <div class="control"><select class="form-select" type="select" class="form-input w-full" name="pcm2_autocomplete_housenumber_addition" id="pcm2_autocomplete_housenumber_addition" value=""></select></div>' +
-        '</div>' +
-        '<div class="field field-reserved w-full col-span-2" id="pcm2_autocomplete_free_addition_wrapper" style="display: none;">' +
-        '   <label class="col-md-3 form-control-label">Toevoeging</label>' +
-        '   <div class="control"><input id="pcm2_autocomplete_free_addition" name="pcm2_autocomplete_free_addition" class="form-control" type="text" placeholder="AB"></div>' +
-        '</div>' +
-        '<div class="field field-reserved w-full col-span-2" id="pcm2_autocomplete_result_wrapper" style="display: none;">' +
-        '</div>' +
-        '<div class="field field-reserved w-full col-span-2"><div class="control">' +
-        '  <button type="button" class="action btn btn-secondary" id="pcm2_autocomplete_manualbtn">Enter manually</button> ' +
-        '  <button type="button" class="action btn btn-secondary" id="pcm2_autocomplete_autobtn" style="display:none;">Enter automatically</button>' +
-        '</div></div>';
+            '<div class="field field-reserved w-full" id="pcm2_autocomplete_postcode_wrapper">' +
+            '  <label class="label" for="pcm2_autocomplete_postcode"><span>Postcode</span></label>' +
+            '  <div class="control"><input id="pcm2_autocomplete_postcode" name="pcm2_autocomplete_postcode" type="text" class="form-input w-full" required /></div>' +
+            '</div>' +
+            '<div class="field field-reserved w-full" id="pcm2_autocomplete_housenumber_wrapper">' +
+            '  <label class="label" for="pcm2_autocomplete_housenumber"><span>Huisnummer</span></label>' +
+            '  <div class="control"><input id="pcm2_autocomplete_housenumber" name="pcm2_autocomplete_housenumber" type="text" class="form-input w-full" required /></div>' +
+            '</div>' +
+            '<div class="field field-reserved w-full" id="pcm2_autocomplete_housenumber_addition_wrapper" style="display: none;">' +
+            '   <label class="label">Toevoeging</label>' +
+            '   <div class="control"><select class="form-select" type="select" class="form-input w-full" name="pcm2_autocomplete_housenumber_addition" id="pcm2_autocomplete_housenumber_addition" value=""></select></div>' +
+            '</div>' +
+            '<div class="field field-reserved w-full col-span-2" id="pcm2_autocomplete_free_addition_wrapper" style="display: none;">' +
+            '   <label class="col-md-3 form-control-label">Toevoeging</label>' +
+            '   <div class="control"><input id="pcm2_autocomplete_free_addition" name="pcm2_autocomplete_free_addition" class="form-control" type="text" placeholder="AB"></div>' +
+            '</div>' +
+            '<div class="field field-reserved w-full col-span-2" id="pcm2_autocomplete_result_wrapper" style="display: none;">' +
+            '</div>' +
+            '<div class="field field-reserved w-full col-span-2"><div class="control">' +
+            '  <button type="button" class="action btn btn-secondary" id="pcm2_autocomplete_manualbtn">Enter manually</button> ' +
+            '  <button type="button" class="action btn btn-secondary" id="pcm2_autocomplete_autobtn" style="display:none;">Enter automatically</button>' +
+            '</div></div>';
 
         elements.country.insertAdjacentHTML('beforebegin', html);
     }
@@ -428,7 +428,7 @@ function pcm2_hideForm(defaultForm = false) {
     for (var iDom = 0; iDom < domKeys.length; iDom++) {
 
         // Hide the element, and empty the value, except for country
-        if (domKeys[iDom] != 'country') {
+        if ((domKeys[iDom] != 'country') && (domKeys[iDom] != 'region')) {
 
             fields[domKeys[iDom]].value = '';
 
@@ -449,12 +449,10 @@ function pcm2_showForm(defaultForm = false) {
     for (var iDom = 0; iDom < domKeys.length; iDom++) {
 
         // Hide the element, and empty the value, except for country
-        if (domKeys[iDom] != 'country') {
+        if ((domKeys[iDom] != 'country') && (domKeys[iDom] != 'region')) {
 
             // Do we need to empty the value?
-            if (!pcm2_config.empty_default_address_fields) {
-                fields[domKeys[iDom]].value = '';
-            }
+            emptyDefaultAddressFields();
 
 
             // If its address_2 or address_3 we skip this step
@@ -485,7 +483,22 @@ function pcm2_showForm(defaultForm = false) {
         var domKeys = Object.keys(validationFields);
 
         for (var iDom = 0; iDom < domKeys.length; iDom++) {
-            validationFields[domKeys[iDom]].remove();
+            if (validationFields[domKeys[iDom]]) {
+                validationFields[domKeys[iDom]].remove();
+            }
+        }
+    }
+}
+
+function emptyDefaultAddressFields() {
+    if (pcm2_config.empty_default_address_fields == '1') {
+        addressFields = pcm2_getFields();
+
+        // Empty all fields except country
+        for (var key in addressFields) {
+            if (key !== 'country') {
+                addressFields[key].value = '';
+            }
         }
     }
 }
@@ -508,10 +521,10 @@ function pcm2_getElements() {
 
     elements = {
         address_1: document.getElementById('street_1').closest('div.street'),
-        postcode : document.getElementById('zip').closest('div.field'),
-        city : document.getElementById('city').closest('div.field'),
-        region : document.getElementById('region').closest('div.field'),
-        country : document.getElementById('country').closest('div.field'),
+        postcode: document.getElementById('zip').closest('div.field'),
+        city: document.getElementById('city').closest('div.field'),
+        region: document.getElementById('region').closest('div.field'),
+        country: document.getElementById('country').closest('div.field'),
     };
 
     return elements;
@@ -547,7 +560,7 @@ function pcm2_log(msg, data) {
 }
 
 // Initialize on DOM ready
-if(document.readyState === 'loading') {
+if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', pcm2_initialize);
 } else {
     pcm2_initialize();

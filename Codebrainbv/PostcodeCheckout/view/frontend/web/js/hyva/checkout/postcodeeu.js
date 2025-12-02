@@ -136,40 +136,28 @@ function pcm2_initLookup(pcm2_Section) {
 }
 
 function pcm2_clearAllAddressFields(pcm2_Section) {
-    // haal velden en validatie-elementen op
-    fields = pcm2_getFields(pcm2_Section);
-    validationFields = pcm2_getValidationFields(pcm2_Section);
+    const fields = pcm2_getFields(pcm2_Section) || {};
+    const validationFields = pcm2_getValidationFields(pcm2_Section) || {};
 
-    // kleine helper om events te versturen
-    const fireUpdates = (el) => {
-        if (!el) return;
-        el.dispatchEvent(new Event('input', { bubbles: true }));
-        el.dispatchEvent(new Event('change', { bubbles: true }));
-    };
-
-    // zoekveld (autocomplete) leegmaken
-    const searchField = document.getElementById('pcm2_' + pcm2_Section + '_autocomplete_search');
+    // make the search field empty
+    const searchField = document.getElementById(`pcm2_${pcm2_Section}_autocomplete_search`);
     if (searchField) {
         searchField.value = '';
-        fireUpdates(searchField);
     }
 
-    // resultaatweergave leegmaken
-    if (validationFields && validationFields.resultWrapper) {
+    // make result empty
+    if (validationFields.resultWrapper) {
         validationFields.resultWrapper.innerHTML = '';
     } else {
-        // fallback op id, voor het geval validationFields nog niet klaar staat
-        const resultWrapper = document.getElementById('pcm2_' + pcm2_Section + '_autocomplete_result_wrapper');
-        if (resultWrapper) resultWrapper.innerHTML = '';
+        const fallbackWrapper = document.getElementById(`pcm2_${pcm2_Section}_autocomplete_result_wrapper`);
+        if (fallbackWrapper) fallbackWrapper.innerHTML = '';
     }
 
-    // adresvelden leegmaken
+    // empty default address fields
     const keysToClear = ['address_1', 'address_2', 'address_3', 'postcode', 'city'];
     keysToClear.forEach((key) => {
-        const el = fields && fields[key];
-        if (el) {
-            el.value = '';
-            fireUpdates(el);
+        if (fields[key]) {
+            fields[key].value = '';
         }
     });
 
@@ -207,15 +195,6 @@ function pcm2_fillAddressFields(result, pcm2_Section) {
 
         fields.postcode.value = result.postcode;
         fields.city.value = result.city;
-
-
-        // Trigger change events in case there are any listeners
-        ['address_1', 'address_2', 'address_3', 'postcode', 'city', 'region'].forEach(function (fieldName) {
-            if (fields[fieldName]) {
-                var event = new Event('change', { bubbles: true });
-                fields[fieldName].dispatchEvent(event);
-            }
-        });
 
         pcm2_updatePreview(pcm2_Section);
     }
@@ -301,7 +280,7 @@ function pcm2_hideForm(pcm2_Section, defaultForm = false) {
     for (var iDom = 0; iDom < domKeys.length; iDom++) {
 
         // Hide the element, and empty the value, except for country
-        if (domKeys[iDom] != 'country') {
+        if ((domKeys[iDom] != 'country') && (domKeys[iDom] != 'region')) {
 
             fields[domKeys[iDom]].value = '';
 
@@ -324,7 +303,7 @@ function pcm2_showForm(pcm2_Section, defaultForm = false) {
     for (var iDom = 0; iDom < domKeys.length; iDom++) {
 
         // Hide the element, and empty the value, except for country
-        if (domKeys[iDom] != 'country') {
+        if ((domKeys[iDom] != 'country') && (domKeys[iDom] != 'region')) {
 
             // If its address_2 or address_3 we skip this step
             if (domKeys[iDom] != 'address_2' && domKeys[iDom] != 'address_3') {
@@ -421,7 +400,6 @@ function pcm2_log(msg, data) {
     }
 }
 
-
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializePostcodeEUCheckout);
 } else {
@@ -451,18 +429,33 @@ function initializePostcodeEUCheckout() {
 
     var shippingToBillingCheckbox = document.getElementById('billing-as-shipping');
 
-    shippingToBillingCheckbox.addEventListener('change', function () {
+    // Run on load if checkbox is already unchecked
+    if (!shippingToBillingCheckbox.checked) {
+        pcm2_Section = 'billing';
+        oElement = document.getElementById(pcm2_Section + '-country_id');
 
-        if (!shippingToBillingCheckbox.checked) {
-            pcm2_Section = 'billing';
-            oElement = document.getElementById(pcm2_Section + '-country_id');
-
-            if (oElement) {
+        if (oElement) {
+            pcm2_addLookup(pcm2_Section, oElement);
+            oElement.addEventListener('change', function () {
                 pcm2_addLookup(pcm2_Section, oElement);
-                oElement.addEventListener('change', function () {
-                    pcm2_addLookup(pcm2_Section, oElement);
-                });
-            }
+            });
         }
+    }
+
+    document.addEventListener('checkout:billing-details:address-form', function () {
+        // Run only when checkbox becomes unchecked
+        shippingToBillingCheckbox.addEventListener('change', function () {
+            if (!shippingToBillingCheckbox.checked) {
+                pcm2_Section = 'billing';
+                oElement = document.getElementById(pcm2_Section + '-country_id');
+
+                if (oElement) {
+                    pcm2_addLookup(pcm2_Section, oElement);
+                    oElement.addEventListener('change', function () {
+                        pcm2_addLookup(pcm2_Section, oElement);
+                    });
+                }
+            }
+        });
     });
-}  
+}

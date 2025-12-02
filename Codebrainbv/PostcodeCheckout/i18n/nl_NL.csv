@@ -9,7 +9,7 @@ debug_mode, Debug-modus
 field_settings, "Standaard instellingen voor adresvelden"
 empty_fields, "Adresvelden Legen"
 placement_housenumber_addition, "Huisnummer & toevoeging Adresveld 2"
-autocomplete_off, "Browser auto aanvullen"
+autocomplete_off, "uitschakelen browser auto aanvullen"
 everything_street_1, "Alles in Adresveld 1"
 street_and_housenumber_field_1_addition_field_2, "Straat & Huisnummer in Adresveld 1 & toevoeging in Adresveld 2"
 street_field_1_housenumber_addition_field_2, "Straat in Adresveld 1, Huisnummer & toevoeging in Adresveld 2"
