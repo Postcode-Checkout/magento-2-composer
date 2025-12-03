@@ -9,7 +9,7 @@ function pcm2_addLookup(pcm2_Section, oElement) {
     pcm2_log('Country field:', countryField);
 
     if (!countryField) {
-        pcm2_log('PCM2 country field not found');
+        pcm2_log('country field not found');
         return;
     }
 
@@ -20,20 +20,20 @@ function pcm2_addLookup(pcm2_Section, oElement) {
 
 
     countryCode = countryField.value;
-    pcm2_log('PCM2 country code:', countryCode);
+    pcm2_log('country code:', countryCode);
 
     // Add event listener to country field
     countryField.addEventListener('change', function (event) {
         var newCountryCode = event.target.value;
-        pcm2_log('PCM2 country changed to:', newCountryCode);
+        pcm2_log('country changed to:', newCountryCode);
         countryCode = newCountryCode;
 
         // Check if country is supported
         if (pcm2_isSupportedCountry(countryCode)) {
-            pcm2_log('PCM2 country is supported, adding postcode lookup');
+            pcm2_log('country is supported, adding postcode lookup');
             pcm2_hideForm(pcm2_Section);
         } else {
-            pcm2_log('PCM2 country is not supported, no postcode lookup');
+            pcm2_log('country is not supported, no postcode lookup');
             // Show default fields again
             pcm2_showForm(pcm2_Section);
         }
@@ -41,25 +41,25 @@ function pcm2_addLookup(pcm2_Section, oElement) {
 
     // Check if country is supported
     if (pcm2_isSupportedCountry(countryCode)) {
-        pcm2_log('PCM2 country is supported, adding postcode lookup');
+        pcm2_log('country is supported, adding postcode lookup');
 
         // Add postcode lookup
         pcm2_hideForm(pcm2_Section);
     } else {
-        pcm2_log('PCM2 country is not supported, no postcode lookup');
+        pcm2_log('country is not supported, no postcode lookup');
         return;
     }
 
     // Add event listener to pcm2 buttons
     document.addEventListener('click', function (event) {
         if (event.target && event.target.id === 'pcm2_' + pcm2_Section + '_autocomplete_manualbtn') {
-            pcm2_log('PCM2 manual button clicked, showing default fields');
+            pcm2_log('manual button clicked, showing default fields');
 
             pcm2_showForm(pcm2_Section, true);
         }
 
         if (event.target && event.target.id === 'pcm2_' + pcm2_Section + '_autocomplete_autobtn') {
-            pcm2_log('PCM2 auto button clicked, showing postcode lookup fields');
+            pcm2_log('auto button clicked, showing postcode lookup fields');
 
             pcm2_hideForm(pcm2_Section, true);
         }
@@ -91,8 +91,8 @@ function pcm2_initLookup(pcm2_Section) {
 
     pcm2_Autocomplete.getSuggestions = function (context, term, response) {
 
-        pcm2_log('PCM2 Autocomplete getSuggestions called with context:', context);
-        pcm2_log('PCM2 Autocomplete getSuggestions called with term:', term);
+        pcm2_log('Autocomplete getSuggestions called with context:', context);
+        pcm2_log('Autocomplete getSuggestions called with term:', term);
 
         // Encode the term to binary to preserve whitespace
         // and then encode it to base64 for the URL.
@@ -104,7 +104,7 @@ function pcm2_initLookup(pcm2_Section) {
     }
 
     pcm2_Autocomplete.getDetails = function (addressId, response) {
-        pcm2_log('PCM2 Autocomplete getDetails called with addressId:', addressId);
+        pcm2_log('Autocomplete getDetails called with addressId:', addressId);
 
         const url = this.options.addressDetailsUrl.replace('${context}', encodeURIComponent(addressId));
         return this.xhrGet(url, response);
@@ -168,11 +168,11 @@ function pcm2_fillAddressFields(result, pcm2_Section) {
     fields = pcm2_getFields(pcm2_Section);
     validationFields = pcm2_getValidationFields(pcm2_Section);
 
-    pcm2_log('PCM2 filling address fields with result:', result);
+    pcm2_log('filling address fields with result:', result);
 
     // Check if we have a result, empty array?
     if (!result || Object.keys(result).length === 0) {
-        pcm2_log('PCM2 no result found');
+        pcm2_log('no result found');
         pcm2_updatePreview(pcm2_Section, true);
     } else {
 
@@ -236,7 +236,7 @@ function pcm2_hideForm(pcm2_Section, defaultForm = false) {
 
     // If checkbox, hide our fields and show default fields
     if (defaultForm) {
-        pcm2_log('PCM2 checkbox is checked, hiding PCM2 fields and showing default fields');
+        pcm2_log('checkbox is checked, hiding PCM2 fields and showing default fields');
 
         var domKeys = Object.keys(validationFields);
 
@@ -259,7 +259,7 @@ function pcm2_hideForm(pcm2_Section, defaultForm = false) {
             '  </div>' +
             '</div>' +
             '<div class="col-span-12 md:col-span-12 field" id="pcm2_' + pcm2_Section + '_autocomplete_result_wrapper"></div>' +
-            '<div class="col-span-12 md:col-span-12 field">' +
+            '<div class="col-span-12 md:col-span-12 field" id="pcm2_' + pcm2_Section + '_autocomplete_buttons">' +
             '  <div class="flex w-full">' +
             '    <button type="button" class="action btn btn-secondary w-full" id="pcm2_' + pcm2_Section + '_autocomplete_manualbtn">' + pcm2_translations.manual + '</button>' +
             '    <button type="button" class="btn btn-secondary w-full" id="pcm2_' + pcm2_Section + '_autocomplete_autobtn" style="display:none;">' + pcm2_translations.automatic + '</button>' +
@@ -269,7 +269,7 @@ function pcm2_hideForm(pcm2_Section, defaultForm = false) {
 
         // Check if it doesnt already exists
         if (!document.getElementById('pcm2_' + pcm2_Section + '_autocomplete_search_wrapper')) {
-            pcm2_log('PCM2 postcode lookup fields do not exist, adding them now');
+            pcm2_log('postcode lookup fields do not exist, adding them now');
             elements.country.insertAdjacentHTML('afterend', html);
         }
     }
@@ -442,20 +442,14 @@ function initializePostcodeEUCheckout() {
         }
     }
 
-    document.addEventListener('checkout:billing-details:address-form', function () {
-        // Run only when checkbox becomes unchecked
-        shippingToBillingCheckbox.addEventListener('change', function () {
-            if (!shippingToBillingCheckbox.checked) {
-                pcm2_Section = 'billing';
-                oElement = document.getElementById(pcm2_Section + '-country_id');
+    window.addEventListener('checkout.billing-details', () => {
+        const oElement = document.getElementById('billing-country_id');
 
-                if (oElement) {
-                    pcm2_addLookup(pcm2_Section, oElement);
-                    oElement.addEventListener('change', function () {
-                        pcm2_addLookup(pcm2_Section, oElement);
-                    });
-                }
-            }
-        });
+        if (oElement) {
+            pcm2_addLookup('billing', oElement);
+            oElement.addEventListener('change', function () {
+                pcm2_addLookup('billing', oElement);
+            });
+        }
     });
 }
