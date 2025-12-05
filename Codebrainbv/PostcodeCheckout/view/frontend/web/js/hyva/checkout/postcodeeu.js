@@ -252,14 +252,14 @@ function pcm2_hideForm(pcm2_Section, defaultForm = false) {
     } else {
         // Hide address fields
         var html =
-            '<div class="col-span-12 md:col-span-12 field" id="pcm2_' + pcm2_Section + '_autocomplete_search_wrapper">' +
+            '<div class="col-span-12 md:col-span-12 field field-reserved" id="pcm2_' + pcm2_Section + '_autocomplete_search_wrapper">' +
             '  <label class="label text-sm text-slate-700" for="pcm2_' + pcm2_Section + '_autocomplete_search"><span> ' + pcm2_translations.search + ' </span></label>' +
             '  <div class="flex">' +
             '    <input id="pcm2_' + pcm2_Section + '_autocomplete_search" name="pcm2_autocomplete_search" type="text" class="form-input w-full grow" required />' +
             '  </div>' +
             '</div>' +
-            '<div class="col-span-12 md:col-span-12 field" id="pcm2_' + pcm2_Section + '_autocomplete_result_wrapper"></div>' +
-            '<div class="col-span-12 md:col-span-12 field" id="pcm2_' + pcm2_Section + '_autocomplete_buttons">' +
+            '<div class="col-span-12 md:col-span-12 field field-reserved" id="pcm2_' + pcm2_Section + '_autocomplete_result_wrapper"></div>' +
+            '<div class="col-span-12 md:col-span-12 field field-reserved" id="pcm2_' + pcm2_Section + '_autocomplete_buttons">' +
             '  <div class="flex w-full">' +
             '    <button type="button" class="action btn btn-secondary w-full" id="pcm2_' + pcm2_Section + '_autocomplete_manualbtn">' + pcm2_translations.manual + '</button>' +
             '    <button type="button" class="btn btn-secondary w-full" id="pcm2_' + pcm2_Section + '_autocomplete_autobtn" style="display:none;">' + pcm2_translations.automatic + '</button>' +
