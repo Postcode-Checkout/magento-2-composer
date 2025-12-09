@@ -217,21 +217,28 @@ function pcm2_fillAddressFields(pcm2_Section, result) {
 }
 
 function setValue(field, value) {
-    if (!field) return;
+    if (!field) {
+        console.log("Field is not defined");
+        return;
+    }
 
     field.value = value;
-    field.defaultValue = value;
+
+    const model = field.getAttribute("wire:model") ||
+        field.getAttribute("wire:model.defer");
+
+    if (model && field.magewire) {
+        console.log("Setting Magewire model:", model, "to value:", value);
+        field.magewire.set(model, value);
+    }
 
     if (field._x_model) {
+        console.log("Setting Alpine model:", model, "to value:", value);
         field._x_model.set(value);
     }
 
-    if (field.magewire) {
-        const model = field.getAttribute("wire:model.defer") || field.getAttribute("wire:model");
-        if (model) {
-            field.magewire.$entangle(model).set(value);
-        }
-    }
+    field.dispatchEvent(new Event('input', { bubbles: true }));
+    field.dispatchEvent(new Event('change', { bubbles: true }));
 }
 
 function pcm2_updatePreview(pcm2_Section, errorMsg = false) {
@@ -342,7 +349,7 @@ function pcm2_changeHousenumberAddition(pcm2_Section, selectedValue) {
 
     } else if (placementHousenumberAdditions == 1) {
         fields.address_2.value = addition;
-    } else if(placementHousenumberAdditions == 2) {
+    } else if (placementHousenumberAdditions == 2) {
         if (addition) {
             // Remove addition from address_2 if it was previously set
             if (oldAddition) {
@@ -414,7 +421,7 @@ function pcm2_hideForm(pcm2_Section, defaultForm = false) {
             '<button type="button" class="action btn btn-secondary" id="pcm2_' + pcm2_Section + '_autocomplete_autobtn" style="display:none;">Enter automatically</button>' +
             '</div></div>';
 
-        elements.country.insertAdjacentHTML('beforebegin', html);
+        document.getElementById(pcm2_Section + '-region').closest('div.field-region').insertAdjacentHTML('afterend', html);
     }
 
     // Hide address fields
@@ -600,6 +607,21 @@ function pcm2_setupSectionObserver(pcm2_Section, countryCode) {
     sectionObservers[pcm2_Section] = observer;
 }
 
+function FieldsAreThere(pcm2_Section) {
+    const fieldsobserver = new MutationObserver(() => {
+        const CustomFields = document.getElementById('pcm2_' + pcm2_Section + '_autocomplete_postcode_wrapper');
+        setTimeout(() => {
+            if (!CustomFields) {
+                console.log("Element got deleted! Replacing...");
+                initializePostcodeEUCheckout();
+                fieldsobserver.disconnect();
+            }
+        }, 250);
+    });
+
+    fieldsobserver.observe(document.body, { childList: true, subtree: true });
+}
+
 function pcm2_isSupportedCountry(countryCode) {
 
     // Check if country code is NL
@@ -637,6 +659,9 @@ function initializePostcodeEUCheckout() {
 
     if (oElement) {
         pcm2_addLookup(pcm2_Section, oElement);
+
+        //observer for if fields are there
+        FieldsAreThere(pcm2_Section);
     }
 
     var shippingToBillingCheckbox = document.getElementById('billing-as-shipping');
@@ -648,6 +673,8 @@ function initializePostcodeEUCheckout() {
         if (!shippingToBillingCheckbox.checked) {
             var billingCountry = document.getElementById(pcm2_Section + '-country_id');
             if (billingCountry) {
+                //observer for if fields are there
+                FieldsAreThere(pcm2_Section);
                 pcm2_addLookup(pcm2_Section, billingCountry);
             }
         }
