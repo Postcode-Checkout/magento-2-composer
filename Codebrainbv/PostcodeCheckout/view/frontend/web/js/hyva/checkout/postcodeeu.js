@@ -1,6 +1,7 @@
 var fields, elements, validationFields, pcm2_Autocomplete, countryCode; // Declare variables at module level
 var placementHousenumberAdditions = pcm2_config.housenumber_addition_address2;
 var sectionObservers = {}; // Track MutationObservers for each section
+var saveEvent;
 
 
 
@@ -332,7 +333,7 @@ function pcm2_showForm(pcm2_Section, defaultForm = false) {
         var domKeys = Object.keys(validationFields);
 
         // Check if they exist before removing
-        if(!document.getElementById('pcm2_' + pcm2_Section + '_autocomplete_search_wrapper')) {
+        if (!document.getElementById('pcm2_' + pcm2_Section + '_autocomplete_search_wrapper')) {
             return;
         }
 
@@ -430,17 +431,17 @@ function pcm2_setupSectionObserver(pcm2_Section, countryCode) {
     pcm2_log('Observing container for section:', pcm2_Section);
 
     // Create new observer
-    var observer = new MutationObserver(function(mutations) {
+    var observer = new MutationObserver(function (mutations) {
         // Check if our custom fields still exist
         var searchWrapper = document.getElementById('pcm2_' + pcm2_Section + '_autocomplete_search_wrapper');
         var countryField = document.getElementById(pcm2_Section + '-country_id');
-        
+
         // If country field exists but our custom fields are gone, DOM was rebuilt
         if (countryField && !searchWrapper) {
             pcm2_log('DOM rebuild detected for ' + pcm2_Section + ', re-initializing postcode fields');
-            
+
             // Small delay to ensure Magento/Hyva finished rebuilding
-            setTimeout(function() {
+            setTimeout(function () {
                 var currentCountry = document.getElementById(pcm2_Section + '-country_id');
                 if (currentCountry && pcm2_isSupportedCountry(currentCountry.value)) {
                     pcm2_log('Re-adding postcode lookup after DOM rebuild');
@@ -474,7 +475,6 @@ function initializePostcodeEUCheckout() {
 
     console.log("Initializing PostcodeEU Checkout Module");
 
-
     let pcm2_Section = '';
     let oElement = '';
 
@@ -484,53 +484,73 @@ function initializePostcodeEUCheckout() {
     if (oElement) {
         pcm2_addLookup(pcm2_Section, oElement);
     }
-    
+
     var shippingToBillingCheckbox = document.getElementById('billing-as-shipping');
+
     pcm2_Section = 'billing';
 
-    if (shippingToBillingCheckbox) {
+    window.addEventListener('name-updated', event => {
 
-        // Check state of the checkbox
-        if(!shippingToBillingCheckbox.checked) {
-            var billingCountry = document.getElementById(pcm2_Section + '-country_id');
-            if (billingCountry) {
-                pcm2_addLookup(pcm2_Section, billingCountry);
-            }
-        }
+    });
 
-        shippingToBillingCheckbox.addEventListener('change', function() {
+    document.addEventListener('magewire:load', () => {
+        console.log("magewire:load event detected");
+        window.addEventListener('billing_as_shipping_address_updated', event => {
+            console.log("billing_as_shipping_address_updated event detected", event);
+            console.dir(event);
+
             if (this.checked) {
                 console.log("Shipping to billing address checkbox checked");
-                // Re-initialize or update the PostcodeEU module as needed
-                // initializePostcodeEUCheckout();
+
             } else {
                 console.log("Shipping to billing address checkbox unchecked");
-                
-                // Use interval to wait for billing form to be rendered
-                var attempts = 0;
-                var maxAttempts = 20; // Try for 2 seconds (20 * 100ms)
-                
-                var checkBillingField = setInterval(function() {
-                    attempts++;
-                    console.log("Attempt " + attempts + ": Checking for billing country field");
-
-                    var billingCountry = document.getElementById(pcm2_Section + '-country_id');
-                    if (billingCountry) {
-                        console.log("Found billing country, adding lookup for billing address");
-                        clearInterval(checkBillingField);
-                        
-                        pcm2_addLookup(pcm2_Section, billingCountry);
-                        billingCountry.addEventListener('change', function () {
-                            pcm2_addLookup(pcm2_Section, billingCountry);
-                        });
-                        
-                    } else if (attempts >= maxAttempts) {
-                        console.log("Billing country field not found after " + maxAttempts + " attempts.");
-                        clearInterval(checkBillingField);
-                    }
-                }, 100);
-
             }
         });
-    }
+    });
+
+    // if (shippingToBillingCheckbox) {
+
+    //     // Check state of the checkbox
+    //     if (!shippingToBillingCheckbox.checked) {
+    //         var billingCountry = document.getElementById(pcm2_Section + '-country_id');
+    //         if (billingCountry) {
+    //             pcm2_addLookup(pcm2_Section, billingCountry);
+    //         }
+    //     }
+
+
+
+    //     shippingToBillingCheckbox.addEventListener('change', function () {
+    //         if (this.checked) {
+    //             console.log("Shipping to billing address checkbox checked");
+    //             // Re-initialize or update the PostcodeEU module as needed
+    //             // initializePostcodeEUCheckout();
+    //         } else {
+    //             console.log("Shipping to billing address checkbox unchecked");
+
+    //             //Use interval to wait for billing form to be rendered
+    //             var attempts = 0;
+    //             var maxAttempts = 20; // Try for 2 seconds (20 * 100ms)
+
+    //             var checkBillingField = setInterval(function () {
+    //                 attempts++;
+    //                 console.log("Attempt " + attempts + ": Checking for billing country field");
+
+    //                 if (billingCountry) {
+    //                     console.log("Found billing country, adding lookup for billing address");
+    //                     clearInterval(checkBillingField);
+
+    //                     pcm2_addLookup(pcm2_Section, billingCountry);
+    //                     billingCountry.addEventListener('change', function () {
+    //                         pcm2_addLookup(pcm2_Section, billingCountry);
+    //                     });
+
+    //                 } else if (attempts >= maxAttempts) {
+    //                     console.log("Billing country field not found after " + maxAttempts + " attempts.");
+    //                     clearInterval(checkBillingField);
+    //                 }
+    //             }, 100);
+    //         }
+    //     });
+    // }
 }
