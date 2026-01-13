@@ -127,7 +127,8 @@ function pcm2_doLookup(pcm2_Section) {
     }
 
     var postcode = postcodeField.value.trim().toUpperCase().replace(/\s+/g, '');
-    var housenumber = housenumberField.value.trim();
+    var housenumber = housenumberField.value.trim().replace(/(^\d+)(.*?$)/i, '$1');
+    var addition = housenumberField.value.trim().replace(/(^\d+)(.*?$)/i, '$2');
 
     // If both fields are filled, do the lookup
     if (postcode.length >= 6 && housenumber.length != 0) {
@@ -147,7 +148,7 @@ function pcm2_doLookup(pcm2_Section) {
 
                         // Handle the successful response
                         if (response && response.status === true && response.result.street) {
-                            pcm2_fillAddressFields(pcm2_Section, response.result);
+                            pcm2_fillAddressFields(pcm2_Section, response.result, addition);
                         } else {
                             pcm2_log('PCM2 No address found for the given postcode and housenumber');
                             pcm2_updatePreview(pcm2_Section, true);
@@ -183,7 +184,7 @@ function pcm2_doLookup(pcm2_Section) {
     }
 }
 
-function pcm2_fillAddressFields(pcm2_Section, result) {
+function pcm2_fillAddressFields(pcm2_Section, result, addition) {
     fields = pcm2_getFields(pcm2_Section);
     validationFields = pcm2_getValidationFields(pcm2_Section);
 
@@ -195,27 +196,23 @@ function pcm2_fillAddressFields(pcm2_Section, result) {
 
         pcm2_updatePreview(pcm2_Section, true);
     } else {
-
-        // Fill address fields based on configuration
-        if (placementHousenumberAdditions == 0) {
-            setValue(fields.address_1, result.street);
-            setValue(fields.address_1, fields.address_1.value + ' ' + result.housenumber);
-        } else if (placementHousenumberAdditions == 1) {
+        if (pcm2_config.housenumber_addition_address2 == 0) {
+            // Everything on street 1 field
             setValue(fields.address_1, result.street + ' ' + result.housenumber);
-            setValue(fields.address_2, '');
-        } else if (placementHousenumberAdditions == 2) {
-            setValue(fields.address_1, result.street);
-            setValue(fields.address_2, result.housenumber);
-        } else if (placementHousenumberAdditions == 3) {
+        } else if (pcm2_config.housenumber_addition_address2 == 1) {
+            // Street on field 1, addition on field 2
+            setValue(fields.address_1, result.street + ' ' + result.housenumber);
+        } else {
             setValue(fields.address_1, result.street);
             setValue(fields.address_2, result.housenumber);
         }
 
         // Check additions
-        if (result.addition && Array.isArray(result.addition) && result.addition.length > 0) {
+        if (result.addition && Array.isArray(result.addition) && result.addition.length > 0 && result.addition !== '') {
             pcm2_log('Found additions to place in the select:', result.addition);
             pcm2_setHouseNumberAdditions(pcm2_Section, result.addition);
         } else {
+            result.addition = addition;
             pcm2_changeHousenumberAddition(pcm2_Section, result.addition);
         }
 
@@ -358,16 +355,16 @@ function pcm2_changeHousenumberAddition(pcm2_Section, selectedValue) {
         setValue(fields.address_1, val);
 
     } else if (placementHousenumberAdditions == 1) {
-        fields.address_2.value = addition;
+        setValue(fields.address_2, addition);
     } else if (placementHousenumberAdditions == 2) {
         if (addition) {
             // Remove addition from address_2 if it was previously set
             if (oldAddition) {
                 var regex = new RegExp('\\s*' + oldAddition + '$');
-                fields.address_2.value = fields.address_2.value.replace(regex, '').trim();
+                setValue(fields.address_2, fields.address_2.value.replace(regex, '').trim());
             }
 
-            fields.address_2.value += ' ' + addition;
+            setValue(fields.address_2, fields.address_2.value + ' ' + addition);
         }
 
         if (addition) {
@@ -391,7 +388,7 @@ function pcm2_hideForm(pcm2_Section, defaultForm = false) {
 
         for (var iDom = 0; iDom < domKeys.length; iDom++) {
             // Hide all fields, except the autoBtn
-            if (domKeys[iDom] != 'autoBtn' && domKeys[iDom] != 'freeAdditionWrapper' && domKeys[iDom] != 'resultWrapper' && domKeys[iDom] != 'housenumberAdditionWrapper') {
+            if (domKeys[iDom] != 'autoBtn' && domKeys[iDom] != 'resultWrapper' && domKeys[iDom] != 'housenumberAdditionWrapper') {
                 validationFields[domKeys[iDom]].style.display = 'block';
             } else {
                 // Display the other button
@@ -407,16 +404,12 @@ function pcm2_hideForm(pcm2_Section, defaultForm = false) {
             '<div class="control"><input id="pcm2_' + pcm2_Section + '_autocomplete_postcode" name="pcm2_' + pcm2_Section + '_autocomplete_postcode" type="text" class="form-input w-full" /></div>' +
             '</div>' +
             '<div class="col-span-12 md:col-span-6 field field-reserved" id="pcm2_' + pcm2_Section + '_autocomplete_housenumber_wrapper">' +
-            '<label class="label" for="pcm2_' + pcm2_Section + '_autocomplete_housenumber"><span>Huisnummer</span></label>' +
+            '<label class="label" for="pcm2_' + pcm2_Section + '_autocomplete_housenumber"><span>' + (pcm2_config.provider.includes('postcodenl') ? 'huisnummer' : 'huisnummer + toevoeging') + '</span></label>' +
             '<div class="control"><input id="pcm2_' + pcm2_Section + '_autocomplete_housenumber" name="pcm2_' + pcm2_Section + '_autocomplete_housenumber" type="text" class="form-input w-full" /></div>' +
             '</div>' +
             '<div class="col-span-12 md:col-span-12 field field-reserved" id="pcm2_' + pcm2_Section + '_autocomplete_housenumber_addition_wrapper" style="display: none;">' +
             '<label for="pcm2_' + pcm2_Section + '_autocomplete_housenumber_addition" class="label">Toevoeging</label>' +
             '<div class="control"><select class="form-control form-control-select" type="select" class="form-input w-full" name="pcm2_' + pcm2_Section + '_autocomplete_housenumber_addition" id="pcm2_' + pcm2_Section + '_autocomplete_housenumber_addition" value=""></select></div>' +
-            '</div>' +
-            '<div class="col-span-12 md:col-span-12 field field-reserved " id="pcm2_' + pcm2_Section + '_autocomplete_free_addition_wrapper" style="display: none;">' +
-            '<label for="pcm2_' + pcm2_Section + '_autocomplete_free_addition" class="col-md-3 form-control-label">Toevoeging</label>' +
-            '<div class="control"><input id="pcm2_' + pcm2_Section + '_autocomplete_free_addition" name="pcm2_' + pcm2_Section + '_autocomplete_free_addition" class="form-control" type="text" placeholder="AB"></div>' +
             '</div>' +
             '<div class="col-span-12 md:col-span-12 field field-reserved " id="pcm2_' + pcm2_Section + '_autocomplete_result_wrapper" style="display: none;">' +
             '</div>' +
@@ -540,8 +533,6 @@ function pcm2_getValidationFields(pcm2_Section) {
         housenumberWrapper: document.getElementById('pcm2_' + pcm2_Section + '_autocomplete_housenumber_wrapper'),
         housenumberAdditionWrapper: document.getElementById('pcm2_' + pcm2_Section + '_autocomplete_housenumber_addition_wrapper'),
         housenumberAddition: document.getElementById('pcm2_' + pcm2_Section + '_autocomplete_housenumber_addition'),
-        freeAdditionWrapper: document.getElementById('pcm2_' + pcm2_Section + '_autocomplete_free_addition_wrapper'),
-        freeAddition: document.getElementById('pcm2_' + pcm2_Section + '_autocomplete_free_addition'),
         resultWrapper: document.getElementById('pcm2_' + pcm2_Section + '_autocomplete_result_wrapper'),
         manualBtn: document.getElementById('pcm2_' + pcm2_Section + '_autocomplete_manualbtn'),
         autoBtn: document.getElementById('pcm2_' + pcm2_Section + '_autocomplete_autobtn')
