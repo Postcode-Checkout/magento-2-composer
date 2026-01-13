@@ -181,6 +181,17 @@
         var postcode = postcodeField.value.trim().toUpperCase().replace(/\s+/g, '');
         var housenumber = housenumberField.value.trim();
 
+        //get from housenumber every letter after the last digit and thats the addition
+        var addition  = null;
+        var match = housenumber.match(/^(\d+)([a-zA-Z\s\-\/]*)$/);
+
+        // make the housenumber only digits for the lookup
+        housenumber = housenumber.match(/^(\d+)/)[0];
+
+        if (match) {
+            addition = match[2] ?? '';
+        }
+
         // If both fields are filled, do the lookup
         if (postcode.length >= 6 && housenumber.length != 0) {
             pcm2_log('PCM2 postcode and housenumber filled, doing lookup:', {postcode: postcode, housenumber: housenumber});
@@ -198,7 +209,7 @@
                             
                             // Handle the successful response
                             if (response && response.status === true && response.result.street) {
-                                pcm2_fillAddressFields(response.result, contextCountryField);
+                                pcm2_fillAddressFields(response.result, contextCountryField, addition);
                             } else {
                                 pcm2_log('PCM2 No address found for the given postcode and housenumber');
                                 pcm2_updatePreview(true, contextCountryField);
@@ -245,7 +256,7 @@
         };
     }
 
-    function pcm2_fillAddressFields(result, contextCountryField) {
+    function pcm2_fillAddressFields(result, contextCountryField, addition) {
         fields = pcm2_getFields(contextCountryField);
         validationFields = pcm2_getValidationFields(contextCountryField);
 
@@ -272,7 +283,7 @@
 
             // Check additions
             if (result.addition) {
-                if(Array.isArray(result.addition) && result.addition.length > 0) {
+                if(Array.isArray(result.addition) && result.addition.length > 0 && result.addition !== '') {
                     pcm2_setHouseNumberAdditions(result.addition, contextCountryField);
                 } else {
                     pcm2_changeHousenumberAddition(result.addition, contextCountryField);
@@ -280,6 +291,9 @@
                         validationFields.housenumberAddition.style.display = 'none';
                     }
                 }
+            } else {
+                result.addition = addition;
+                pcm2_changeHousenumberAddition(result.addition, contextCountryField);
             }
 
             if (fields.postcode) {
