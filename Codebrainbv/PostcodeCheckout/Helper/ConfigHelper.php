@@ -118,6 +118,7 @@ class ConfigHelper extends AbstractHelper
             'placeholder_search' => __('placeholder_search'),
             'automatic' => __('automatic'),
             'manual' => __('manual'),
+            'result' => __('result_address'),
         ];
 
         return $translate;

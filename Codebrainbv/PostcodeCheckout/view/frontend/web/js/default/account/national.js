@@ -277,6 +277,8 @@
         html += '<p>' + contextFields.postcode.value + ' ' + contextFields.city.value + '</p>';
 
         contextValidationFields.resultInit.innerHTML = html;
+
+        contextValidationFields.resultWrapper.style.display = 'block';
     }
 
     function pcm2_setHouseNumberAdditions(aAdditions) {
@@ -418,7 +420,7 @@
                 '   <label class="label">Toevoeging</label>' +
                 '   <div class="control"><select class="form-control form-control-select" type="select" class="input-text" name="pcm2_autocomplete_housenumber_addition" id="pcm2_autocomplete_housenumber_addition" value=""></select></div>' +
                 '</div>' +
-                '<div class="field" id="pcm2_autocomplete_result_wrapper">' +
+                '<div class="field" id="pcm2_autocomplete_result_wrapper" style="display: none;">' +
                 '<label class="label" for="pcm2_autocomplete_result"></label>' +
                 '<div class="control" id="pcm2_autocomplete_result"></div>' +
                 '</div>' +
@@ -439,9 +441,9 @@
 
             // Hide the element, and empty the value, except for country
             if (domKeys[iDom] != 'country') {
-
-                fields[domKeys[iDom]].value = '';
-
+                if (pcm2_config.empty_default_address_fields == 1) {
+                    fields[domKeys[iDom]].value = '';
+                }
                 // If its address_2 or address_3 we skip this step
                 if (domKeys[iDom] != 'address_2' && domKeys[iDom] != 'address_3') {
                     elements[domKeys[iDom]].style.display = 'none';

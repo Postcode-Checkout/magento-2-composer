@@ -483,6 +483,11 @@ function pcm2_showForm(pcm2_Section, defaultForm = false) {
         }
 
         for (var iDom = 0; iDom < domKeys.length; iDom++) {
+
+            if (pcm2_config.empty_default_address_fields == '1') {
+                emptyDefaultAddressFields(pcm2_Section);
+            }
+
             validationFields[domKeys[iDom]].remove();
         }
     }
@@ -638,6 +643,20 @@ function initializePostcodeEUCheckout() {
     if (oElement) {
         pcm2_addLookup(pcm2_Section, oElement);
     }
+
+    var loggedInNewAddressForm = document.getElementById('checkout-shipping-address-button');
+
+    loggedInNewAddressForm.addEventListener('click', function () {
+        setTimeout(function () {
+            pcm2_log("Logged in user clicked 'New Address' button");
+            pcm2_Section = 'shipping';
+            oElement = document.getElementById(pcm2_Section + '-country_id');
+
+            if (oElement) {
+                pcm2_addLookup(pcm2_Section, oElement);
+            }
+        }, 800);
+    });
 
     var billingCountry = document.getElementById('billing-country_id');
 

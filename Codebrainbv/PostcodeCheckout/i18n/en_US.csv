@@ -16,6 +16,7 @@ street_field_1_housenumber_addition_field_2, "Street in Address field 1, house n
 street_field_1_housenumber_field_2_addition_field_3, "Street in Address field 1, house number in Address field 2, addition in Address field 3"
 search_address, "Complete your address"
 placeholder_search, "postalcode, street name or city"
+result_address, "result"
 automatic, "Fill in automatically"
 manual, "Fill in manually"
 extra_settings, "Extra Settings"

@@ -164,12 +164,14 @@ function pcm2_clearAllAddressFields(pcm2_Section) {
     }
 
     // empty default address fields
-    const keysToClear = ['address_1', 'address_2', 'address_3', 'postcode', 'city'];
-    keysToClear.forEach((key) => {
-        if (fields[key]) {
-            fields[key].value = '';
-        }
-    });
+    if (pcm2_config.empty_default_address_fields == '1') {
+        const keysToClear = ['address_1', 'address_2', 'address_3', 'postcode', 'city'];
+        keysToClear.forEach((key) => {
+            if (fields[key]) {
+                fields[key].value = '';
+            }
+        });
+    }
 
     pcm2_log('PCM2 cleared all address fields');
 }
@@ -267,7 +269,7 @@ function pcm2_hideForm(pcm2_Section, defaultForm = false) {
     elements = pcm2_getElements(pcm2_Section);
     validationFields = pcm2_getValidationFields(pcm2_Section);
 
-    
+
     if (defaultForm) {
         var domKeys = Object.keys(validationFields);
 
@@ -368,6 +370,11 @@ function pcm2_showForm(pcm2_Section, defaultForm = false) {
         }
 
         for (var iDom = 0; iDom < domKeys.length; iDom++) {
+
+            if (pcm2_config.empty_default_address_fields == '1') {
+                pcm2_clearAllAddressFields(pcm2_Section);
+            }
+
             validationFields[domKeys[iDom]].remove();
         }
     }
@@ -516,6 +523,20 @@ function initializePostcodeEUCheckout() {
     if (oElement) {
         pcm2_addLookup(pcm2_Section, oElement);
     }
+
+    var loggedInNewAddressForm = document.getElementById('checkout-shipping-address-button');
+
+    loggedInNewAddressForm.addEventListener('click', function () {
+        setTimeout(function () {
+            pcm2_log("Logged in user clicked 'New Address' button");
+            pcm2_Section = 'shipping';
+            oElement = document.getElementById(pcm2_Section + '-country_id');
+
+            if (oElement) {
+                pcm2_addLookup(pcm2_Section, oElement);
+            }
+        }, 800);
+    });
 
     var billingCountry = document.getElementById('billing-country_id');
 

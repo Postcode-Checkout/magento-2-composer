@@ -453,7 +453,9 @@ function pcm2_hideForm(defaultForm = false) {
         // Hide the element, and empty the value, except for country
         if ((domKeys[iDom] != 'country') && (domKeys[iDom] != 'region')) {
 
-            fields[domKeys[iDom]].value = '';
+            if (pcm2_config.empty_default_address_fields == 1) {
+                fields[domKeys[iDom]].value = '';
+            }
 
             // If its address_2 or address_3 we skip this step
             if (domKeys[iDom] != 'address_2' && domKeys[iDom] != 'address_3') {
@@ -475,7 +477,10 @@ function pcm2_showForm(defaultForm = false) {
         if ((domKeys[iDom] != 'country') && (domKeys[iDom] != 'region')) {
 
             // Do we need to empty the value?
-            emptyDefaultAddressFields();
+            if (pcm2_config.empty_default_address_fields == 1) {
+                emptyDefaultAddressFields();
+            }
+
 
 
             // If its address_2 or address_3 we skip this step
@@ -514,14 +519,12 @@ function pcm2_showForm(defaultForm = false) {
 }
 
 function emptyDefaultAddressFields() {
-    if (pcm2_config.empty_default_address_fields == '1') {
-        addressFields = pcm2_getFields();
+    addressFields = pcm2_getFields();
 
-        // Empty all fields except country
-        for (var key in addressFields) {
-            if (key !== 'country') {
-                addressFields[key].value = '';
-            }
+    // Empty all fields except country
+    for (var key in addressFields) {
+        if (key !== 'country') {
+            addressFields[key].value = '';
         }
     }
 }

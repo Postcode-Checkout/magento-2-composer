@@ -197,12 +197,12 @@
         if (!validationFields.searchWrapper) {
             var html =
                 '<div class="field" id="pcm2_autocomplete_search_wrapper' + suffix + '">' +
-                '  <label class="label" for="pcm2_autocomplete_search' + suffix + '"><span>' + pcm2_translations.search +'</span></label>' +
+                '  <label class="label" for="pcm2_autocomplete_search' + suffix + '"><span>' + pcm2_translations.search + '</span></label>' +
                 '  <div class="control">' +
-                '    <input id="pcm2_autocomplete_search' + suffix + '" name="pcm2_autocomplete_search' + suffix + '" type="text" class="input-text" placeholder="' + pcm2_translations.placeholder_search +'" required />' +
+                '    <input id="pcm2_autocomplete_search' + suffix + '" name="pcm2_autocomplete_search' + suffix + '" type="text" class="input-text" placeholder="' + pcm2_translations.placeholder_search + '" required />' +
                 '  </div>' +
                 '</div>' +
-                '<div class="field" id="pcm2_autocomplete_result_wrapper' + suffix + '">' +
+                '<div class="field" id="pcm2_autocomplete_result_wrapper' + suffix + '" style="display: none;">' +
                 '  <label class="label"><span></span></label>' +
                 '  <div class="control" id="pcm2_autocomplete_result' + suffix + '"></div>' +
                 '</div>' +
@@ -211,7 +211,7 @@
                 '  <button type="button" class="action secondary" id="pcm2_autocomplete_autobtn' + suffix + '" style="display:none;"> ' + pcm2_translations.automatic + ' </button>' +
                 '</div></div>';
             elements.country.insertAdjacentHTML('beforebegin', html);
-            validationFields = pcm2_getValidationFields(contextCountryField); 
+            validationFields = pcm2_getValidationFields(contextCountryField);
         }
 
         if (validationFields.searchWrapper) validationFields.searchWrapper.style.display = 'block';
@@ -238,32 +238,34 @@
         const fields = pcm2_getFields(contextCountryField);
 
         const dispatchInputAndChange = (addressfield) => {
-            // alleen als er echt een element is met een value-achtige eigenschap
+            // only if there really is an element with a value-like property
             if (!addressfield) return;
             addressfield.dispatchEvent(new Event('input', { bubbles: true }));
             addressfield.dispatchEvent(new Event('change', { bubbles: true }));
         };
 
-        // zoekveld leegmaken
+        // empty search field
         const searchField = document.getElementById(`pcm2_autocomplete_search${suffix}`);
         if (searchField) {
             searchField.value = '';
             dispatchInputAndChange(searchField);
         }
 
-        // resultaten leegmaken
+        // empty results
         const resultElement = document.getElementById(`pcm2_autocomplete_result${suffix}`);
         if (resultElement) {
             resultElement.innerHTML = '';
         }
 
-        // adresvelden leegmaken
-        const keysToClear = ['address_1', 'address_2', 'address_3', 'postcode', 'city', 'region'];
-        for (const key of keysToClear) {
-            const addressfield = fields?.[key];
-            if (addressfield) {
-                addressfield.value = '';
-                dispatchInputAndChange(addressfield);
+        // empty address fields
+        if (pcm2_config.empty_default_address_fields == 1) {
+            const keysToClear = ['address_1', 'address_2', 'address_3', 'postcode', 'city', 'region'];
+            for (const key of keysToClear) {
+                const addressfield = fields?.[key];
+                if (addressfield) {
+                    addressfield.value = '';
+                    dispatchInputAndChange(addressfield);
+                }
             }
         }
 
@@ -313,11 +315,11 @@
 
 
             // Trigger change events in case there are any listeners
-            ['address_1', 'address_2', 'address_3', 'postcode', 'city', 'region'].forEach(function(fieldName) {
+            ['address_1', 'address_2', 'address_3', 'postcode', 'city', 'region'].forEach(function (fieldName) {
                 if (fields[fieldName]) {
                     var event = new Event('change', { bubbles: true });
                     fields[fieldName].dispatchEvent(event);
-                }   
+                }
             });
 
             pcm2_updatePreview(false, contextCountryField);
@@ -355,6 +357,8 @@
         html += '<br>' + fields.postcode.value + ' ' + fields.city.value + '</p>';
 
         resultElement.innerHTML = html;
+
+        validationFields.resultWrapper.style.display = 'block';
     }
 
     function pcm2_showForm(contextCountryField, defaultForm = false) {

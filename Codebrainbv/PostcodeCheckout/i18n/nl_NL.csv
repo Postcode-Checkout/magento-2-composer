@@ -16,6 +16,7 @@ street_field_1_housenumber_addition_field_2, "Straat in Adresveld 1, Huisnummer 
 street_field_1_housenumber_field_2_addition_field_3, "Straat in Adresveld 1, Huisnummer in Adresveld 2, Toevoeging in Adresveld 3"
 search_address, "Adres aanvullen"
 placeholder_search, "Postcode, straatnaam of stad"
+result_address, "resultaat"
 automatic, "Automatisch invullen"
 manual, "Handmatig invullen"
 extra_settings, "Extra instellingen"

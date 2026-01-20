@@ -7,9 +7,9 @@
 }(this, function (AutocompleteAddress) {
     'use strict';
 
-        
+
     var fields, elements, validationFields, pcm2_Autocomplete, countryCode; // Declare variables at module level
-    
+
 
     function pcm2_addLookup() {
 
@@ -23,7 +23,7 @@
             return;
         }
 
-        
+
         if (pcm2_config.empty_default_address_fields == '1') {
             pcm2_clearAllAddressFields();
         }
@@ -33,13 +33,13 @@
         pcm2_log('PCM2 country code:', countryCode);
 
         // Add event listener to country field
-        countryField.addEventListener('change', function(event) {
+        countryField.addEventListener('change', function (event) {
             var newCountryCode = event.target.value;
             pcm2_log('PCM2 country changed to:', newCountryCode);
             countryCode = newCountryCode;
 
             // Check if country is supported
-            if(pcm2_isSupportedCountry(countryCode)) {
+            if (pcm2_isSupportedCountry(countryCode)) {
                 pcm2_log('PCM2 country is supported, adding postcode lookup');
                 pcm2_hideForm();
             } else {
@@ -50,7 +50,7 @@
         });
 
         // Check if country is supported
-        if(pcm2_isSupportedCountry(countryCode)) {
+        if (pcm2_isSupportedCountry(countryCode)) {
             pcm2_log('PCM2 country is supported, adding postcode lookup');
 
             // Add postcode lookup
@@ -61,7 +61,7 @@
         }
 
         // Add event listener to pcm2 buttons
-        document.addEventListener('click', function(event) {
+        document.addEventListener('click', function (event) {
             if (event.target && event.target.id === 'pcm2_autocomplete_manualbtn') {
                 pcm2_log('PCM2 manual button clicked, showing default fields');
 
@@ -83,7 +83,7 @@
     function pcm2_initLookup() {
 
         var iso3Code = pcm2_convertIso2ToIso3(countryCode);
-        
+
         pcm2_log('Converted country code to ISO3:', iso3Code);
 
         // Initialize autocomplete
@@ -133,7 +133,7 @@
 
             if (event.detail.precision === 'Address') {
 
-                pcm2_Autocomplete.getDetails(event.detail.context, function(response) {
+                pcm2_Autocomplete.getDetails(event.detail.context, function (response) {
 
                     if (response) {
                         var addressData = response.result;
@@ -178,21 +178,23 @@
         }
 
         // adresvelden leegmaken
-        const keysToClear = ['address_1', 'address_2', 'address_3', 'postcode', 'city', 'region'];
-        keysToClear.forEach((key) => {
-            const el = fields && fields[key];
-            if (el) {
-                el.value = '';
-                fireUpdates(el);
-            }
-        });
+        if (pcm2_config.empty_default_address_fields == '1') {
+            const keysToClear = ['address_1', 'address_2', 'address_3', 'postcode', 'city', 'region'];
+            keysToClear.forEach((key) => {
+                const el = fields && fields[key];
+                if (el) {
+                    el.value = '';
+                    fireUpdates(el);
+                }
+            });
+        }
 
         pcm2_log('PCM2 cleared all address fields');
     }
 
     function pcm2_fillAddressFields(result) {
         fields = pcm2_getFields();
-        
+
         pcm2_log('PCM2 filling address fields with result:', result);
 
         // Check if we have a result, empty array?
@@ -202,12 +204,12 @@
             pcm2_updatePreview(true);
         } else {
 
-            if(pcm2_config.housenumber_addition_address2 == 0) {
+            if (pcm2_config.housenumber_addition_address2 == 0) {
                 // Everything on street 1 field
                 fields.address_1.value = result.street;
                 fields.address_1.value += ' ' + result.housenumber;
             }
-            else { 
+            else {
                 // Street on field 1, rest on field 2
                 fields.address_1.value = result.street;
                 fields.address_2.value = result.housenumber;
@@ -215,7 +217,7 @@
 
             // Check additions
             if (result.addition) {
-                if(Array.isArray(result.addition) && result.addition.length > 0) {
+                if (Array.isArray(result.addition) && result.addition.length > 0) {
                     pcm2_log('Found additions to place in the select:', result.addition);
                     pcm2_setHouseNumberAdditions(result.addition);
                 } else {
@@ -236,14 +238,14 @@
         fields = pcm2_getFields();
         validationFields = pcm2_getValidationFields();
 
-        if(errorMsg) {
-            validationFields.resultWrapper.innerHTML = '<p style="color:red;">Adres kon niet worden gevonden, controleer Postcode en Huisnummer of voer handmatig in.</p>';
+        if (errorMsg) {
+            validationFields.result.innerHTML = '<p style="color:red;">Adres kon niet worden gevonden, controleer Postcode en Huisnummer of voer handmatig in.</p>';
             return;
         }
 
         var html = '';
 
-        html += '<p>'+ fields.address_1.value;
+        html += '<p>' + fields.address_1.value;
 
         if (fields.address_2 && fields.address_2.value) {
             html += ' ' + fields.address_2.value;
@@ -251,11 +253,12 @@
 
         if (fields.address_3 && fields.address_3.value) {
             html += ' ' + fields.address_3.value;
-        }
-        html += '</p>';
-        html += '<p>' + fields.postcode.value + ' ' + fields.city.value + '</p>';
+        };
+        html += '<br>' + fields.postcode.value + ' ' + fields.city.value + '</p>';
 
-        validationFields.resultWrapper.innerHTML = html;
+        validationFields.result.innerHTML = html;
+
+        validationFields.resultWrapper.style.display = 'block';
     }
 
     function pcm2_hideForm(defaultForm = false) {
@@ -265,7 +268,7 @@
         validationFields = pcm2_getValidationFields();
 
         // If checkbox, hide our fields and show default fields
-		if (defaultForm) {
+        if (defaultForm) {
             pcm2_log('PCM2 checkbox is checked, hiding PCM2 fields and showing default fields');
 
             var domKeys = Object.keys(validationFields);
@@ -282,23 +285,27 @@
         } else {
             // Hide address fields
             var html =
-            '<div class="field" id="pcm2_autocomplete_search_wrapper">' +
-            '  <label class="label" for="pcm2_autocomplete_search"><span> '+ translate.pcm2_translations.search + ' </span></label>' +
-            '  <div class="control"><input id="pcm2_autocomplete_search" name="pcm2_autocomplete_search" type="text" placeholder="' + pcm2_translations.placeholder_search +'" class="input-text" required /></div>' +
-            '</div>' +
-            '<div class="field" id="pcm2_autocomplete_result_wrapper">' +
-            '</div>' +
-            '<div class="field"><div class="control">' +
-            '  <button type="button" class="action secondary" id="pcm2_autocomplete_manualbtn">' + translate.pcm2_translations.manual + '</button> ' +
-            '  <button type="button" class="action secondary" id="pcm2_autocomplete_autobtn" style="display:none;">' + translate.pcm2_translations.automatic + '</button>' +
-            '</div></div>';
+                '<div class="field" id="pcm2_autocomplete_search_wrapper">' +
+                '  <label class="label" for="pcm2_autocomplete_search"><span> ' + pcm2_translations.search + ' </span></label>' +
+                '  <div class="control"><input id="pcm2_autocomplete_search" name="pcm2_autocomplete_search" type="text" placeholder="' + pcm2_translations.placeholder_search + '" class="input-text" required /></div>' +
+                '</div>' +
+                '<div class="field" id="pcm2_autocomplete_result_wrapper" style="display: none;">' +
+                '<span class="label">' + pcm2_translations.result + '</span>' +
+                '<div id="pcm2_autocomplete_result"></div>' +
+                '</div>' +
+                '<div class="field">' +
+                '<label class="label" for="pcm2_autocomplete_manualbtn"></label>' +
+                '<div class="control">' +
+                '  <button type="button" class="action secondary" id="pcm2_autocomplete_manualbtn">' + pcm2_translations.manual + '</button> ' +
+                '  <button type="button" class="action secondary" id="pcm2_autocomplete_autobtn" style="display:none;">' + pcm2_translations.automatic + '</button>' +
+                '</div></div>';
 
             // Check if it doesnt already exists
             if (!document.getElementById('pcm2_autocomplete_search_wrapper')) {
                 pcm2_log('PCM2 postcode lookup fields do not exist, adding them now');
                 elements.country.insertAdjacentHTML('beforebegin', html);
             }
-            
+
         }
 
         // Hide address fields
@@ -309,7 +316,9 @@
             // Hide the element, and empty the value, except for country
             if (domKeys[iDom] != 'country') {
 
-                fields[domKeys[iDom]].value = '';
+                if (pcm2_config.empty_default_address_fields == 1) {
+                    fields[domKeys[iDom]].value = '';
+                }
 
                 // If its address_2 or address_3 we skip this step
                 if (domKeys[iDom] != 'address_2' && domKeys[iDom] != 'address_3') {
@@ -317,7 +326,7 @@
                 }
             }
         }
-        
+
         pcm2_initLookup();
     }
 
@@ -342,7 +351,7 @@
         validationFields = pcm2_getValidationFields();
 
         // Checkbox to show default form
-        if ( defaultForm ) {
+        if (defaultForm) {
 
             var domKeys = Object.keys(validationFields);
 
@@ -385,10 +394,10 @@
         elements = {
             // Since street 0,1,2 have a single parent fieldset, we need to get the parent element once
             address_1: document.getElementById('street_1').closest('div.field'),
-            postcode : document.getElementById('zip').closest('div.field'),
-            city : document.getElementById('city').closest('div.field'),
-            region : document.getElementById('region').closest('div.field'),
-            country : document.getElementById('country').closest('div.field'),
+            postcode: document.getElementById('zip').closest('div.field'),
+            city: document.getElementById('city').closest('div.field'),
+            region: document.getElementById('region').closest('div.field'),
+            country: document.getElementById('country').closest('div.field'),
         };
 
         return elements;
@@ -398,6 +407,7 @@
         validationFields = {
             searchWrapper: document.getElementById('pcm2_autocomplete_search_wrapper'),
             resultWrapper: document.getElementById('pcm2_autocomplete_result_wrapper'),
+            result: document.getElementById('pcm2_autocomplete_result'),
             manualBtn: document.getElementById('pcm2_autocomplete_manualbtn'),
             autoBtn: document.getElementById('pcm2_autocomplete_autobtn')
         };
@@ -417,7 +427,7 @@
     }
 
     function pcm2_convertIso2ToIso3(iso2) {
-	    return pcm2_config.supported_countries.find(country => country.iso2 === iso2).iso3;
+        return pcm2_config.supported_countries.find(country => country.iso2 === iso2).iso3;
     }
 
     function pcm2_log(msg, data) {
@@ -438,11 +448,11 @@
 
                 // if ( isCheckoutAddress ) {
 
-                    console.log('PCM2 Postcodeeu init');
+                console.log('PCM2 Postcodeeu init');
 
-                    pcm2_addLookup();
+                pcm2_addLookup();
                 // }
-            
+
             } else {
                 console.log('PCM2 Postcodeeu not enabled');
             }

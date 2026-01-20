@@ -539,7 +539,9 @@
             // Hide the element, and empty the value, except for country
             if (domKeys[iDom] != 'country') {
 
-                fields[domKeys[iDom]].value = '';
+                if (pcm2_config.empty_default_address_fields == 1) {
+                    fields[domKeys[iDom]].value = '';
+                }
 
                 // If its address_2 or address_3 we skip this step
                 if (domKeys[iDom] != 'address_2' && domKeys[iDom] != 'address_3') {
