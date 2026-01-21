@@ -200,36 +200,38 @@
         // Check if we have a result, empty array?
         if (!result || Object.keys(result).length === 0) {
             pcm2_log('PCM2 no result found');
-
             pcm2_updatePreview(true);
         } else {
 
+            // Fill address fields based on configuration
             if (pcm2_config.housenumber_addition_address2 == 0) {
-                // Everything on street 1 field
                 fields.address_1.value = result.street;
-                fields.address_1.value += ' ' + result.housenumber;
-            }
-            else {
-                // Street on field 1, rest on field 2
+                fields.address_1.value += ' ' + result.housenumber + (result.addition ? ' ' + result.addition : '');
+            } else if (pcm2_config.housenumber_addition_address2 == 1) {
+                fields.address_1.value = result.street + ' ' + result.housenumber;
+                fields.address_2.value = (result.addition ? ' ' + result.addition : '');
+
+            } else if (pcm2_config.housenumber_addition_address2 == 2) {
+                fields.address_1.value = result.street;
+                fields.address_2.value = result.housenumber + (result.addition ? ' ' + result.addition : '');
+            } else if (pcm2_config.housenumber_addition_address2 == 3) {
                 fields.address_1.value = result.street;
                 fields.address_2.value = result.housenumber;
-            }
-
-            // Check additions
-            if (result.addition) {
-                if (Array.isArray(result.addition) && result.addition.length > 0) {
-                    pcm2_log('Found additions to place in the select:', result.addition);
-                    pcm2_setHouseNumberAdditions(result.addition);
-                } else {
-                    pcm2_changeHousenumberAddition(result.addition);
-                    validationFields.housenumberAddition.style.display = 'none';
-                }
+                fields.address_3.value = (result.addition ? ' ' + result.addition : '');
             }
 
             fields.postcode.value = result.postcode;
             fields.city.value = result.city;
 
-            pcm2_updatePreview();
+            // Trigger change events in case there are any listeners
+            ['address_1', 'address_2', 'address_3', 'postcode', 'city', 'region'].forEach(function (fieldName) {
+                if (fields[fieldName]) {
+                    var event = new Event('change', { bubbles: true });
+                    fields[fieldName].dispatchEvent(event);
+                }
+            });
+
+            pcm2_updatePreview(false);
         }
     }
 

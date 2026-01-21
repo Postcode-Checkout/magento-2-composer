@@ -59,7 +59,7 @@
                 } else {
                     pcm2_log('PCM2 country is not supported, no postcode lookup');
                     // Show default fields again
-                    pcm2_showForm(event.target);
+                    pcm2_showForm(event.target, true);
                 }
             };
 
@@ -73,6 +73,7 @@
                 pcm2_initLookup(countryField);
             } else {
                 pcm2_log('PCM2 country is not supported, no postcode lookup for:', formId);
+                pcm2_showForm(event.target, true);
             }
 
             // Mark form as initialized
@@ -380,10 +381,18 @@
             if (form) form.style.display = 'block';
         }
 
-        if (validationFields.searchWrapper) validationFields.searchWrapper.style.display = 'none';
-        if (validationFields.resultWrapper) validationFields.resultWrapper.style.display = 'none';
-        if (validationFields.manualBtn) validationFields.manualBtn.style.display = 'none';
-        if (validationFields.autoBtn) validationFields.autoBtn.style.display = 'inline-block';
+        if (defaultForm) {
+            if (validationFields.searchWrapper) validationFields.searchWrapper.style.display = 'none';
+            if (validationFields.resultWrapper) validationFields.resultWrapper.style.display = 'none';
+            if (validationFields.manualBtn) validationFields.manualBtn.style.display = 'none';
+            if (validationFields.autoBtn) validationFields.autoBtn.style.display = 'inline-block';
+        } else {
+            // Remove everyting
+            if (validationFields.searchWrapper) validationFields.searchWrapper.remove();
+            if (validationFields.resultWrapper) validationFields.resultWrapper.remove();
+            if (validationFields.manualBtn) validationFields.manualBtn.remove();
+            if (validationFields.autoBtn) validationFields.autoBtn.remove();
+        }
     }
 
 
@@ -688,7 +697,7 @@
                 } else {
                     pcm2_log('PCM2 country is not supported, no postcode lookup');
                     // Show default fields again
-                    pcm2_showForm(event.target);
+                    pcm2_showForm(event.target, true);
                 }
             };
 
@@ -701,6 +710,7 @@
                 pcm2_hideForm(countryField);
             } else {
                 pcm2_log('PCM2 country is not supported, no postcode lookup for:', formId);
+                pcm2_showForm(countryField, true);
             }
 
             // Mark form as initialized
