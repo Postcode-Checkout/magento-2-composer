@@ -4,14 +4,11 @@ var sectionObservers = {}; // Track MutationObservers for each section
 var saveEvent;
 var addressSaved;
 
-
-
 function pcm2_addLookup(pcm2_Section, countryElement) {
     if (!countryElement) {
         pcm2_log("Country element not found for section: " + pcm2_Section);
         return;
     }
-
 
     addressSaved = pcm2_Section + '_address_saved';
 
@@ -82,7 +79,6 @@ function pcm2_addLookup(pcm2_Section, countryElement) {
 }
 
 function pcm2_initLookup(pcm2_Section) {
-
     var iso3Code = pcm2_convertIso2ToIso3(countryCode);
 
     pcm2_log('Converted country code to ISO3:', iso3Code);
@@ -94,9 +90,9 @@ function pcm2_initLookup(pcm2_Section) {
         autocompleteUrl: pcm2_config.api_urls.international_suggest,
         addressDetailsUrl: pcm2_config.api_urls.international_details,
         autoFocus: true,
-        autoSelect: true,
         showLogo: false,
-        context: iso3Code
+        context: iso3Code,
+        autoSelectSingleAddress: true
     });
 
     pcm2_Autocomplete.getSuggestions = function (context, term, response) {
@@ -120,9 +116,25 @@ function pcm2_initLookup(pcm2_Section) {
         return this.xhrGet(url, response);
     };
 
+    document.addEventListener('address-form-modal-show', (event) => {
+        (function () {
+            const originalListener = window.hyva.modal.eventListeners.click;
+
+            document.removeEventListener('click', originalListener);
+
+            window.hyva.modal.eventListeners.click = event => {
+                const clickedElement = event.target;
+
+                if (!clickedElement.classList.value.match(/\bpostcodenl-autocomplete-item\b/)) {
+                    originalListener(event);
+                }
+            };
+
+            document.addEventListener('click', window.hyva.modal.eventListeners.click);
+        })();
+    });
 
     searchField.addEventListener('autocomplete-select', function (event) {
-
         // Set value of the search field to the selected address
         searchField.value = event.detail.label;
         pcm2_log('Autocomplete-select event: ', event);
@@ -261,6 +273,8 @@ function pcm2_updatePreview(pcm2_Section, errorMsg = false) {
     html += '<p>' + fields.postcode.value + ' ' + fields.city.value + '</p>';
 
     validationFields.resultWrapper.innerHTML = html;
+
+
 }
 
 function pcm2_hideForm(pcm2_Section, defaultForm = false) {
@@ -526,17 +540,19 @@ function initializePostcodeEUCheckout() {
 
     var loggedInNewAddressForm = document.getElementById('checkout-shipping-address-button');
 
-    loggedInNewAddressForm.addEventListener('click', function () {
-        setTimeout(function () {
-            pcm2_log("Logged in user clicked 'New Address' button");
-            pcm2_Section = 'shipping';
-            oElement = document.getElementById(pcm2_Section + '-country_id');
+    if (loggedInNewAddressForm) {
+        loggedInNewAddressForm.addEventListener('click', function (event) {
+            setTimeout(function () {
+                pcm2_log("Logged in user clicked 'New Address' button with evetn:", event);
+                pcm2_Section = 'shipping';
+                oElement = document.getElementById(pcm2_Section + '-country_id');
 
-            if (oElement) {
-                pcm2_addLookup(pcm2_Section, oElement);
-            }
-        }, 800);
-    });
+                if (oElement) {
+                    pcm2_addLookup(pcm2_Section, oElement);
+                }
+            }, 800);
+        });
+    }
 
     var billingCountry = document.getElementById('billing-country_id');
 
@@ -550,21 +566,42 @@ function initializePostcodeEUCheckout() {
 
     Magewire.on('billing_as_shipping_address_updated', (event) => {
         if (event.billingAsShipping == false) {
-            pcm2_log("Shipping to billing address checkbox unchecked");
 
-            pcm2_Section = 'billing';
+            var newAddressButton = document.getElementById('checkout-billing-address-button');
+            if (!newAddressButton) {
+                pcm2_log("Shipping to billing address checkbox unchecked");
 
-            billingCountry = document.getElementById('billing-country_id');
+                pcm2_Section = 'billing';
 
-            if (billingCountry) {
-                pcm2_log("Found billing country, adding lookup for billing address");
-                pcm2_addLookup(pcm2_Section, billingCountry);
-                billingCountry.addEventListener('change', function () {
+                billingCountry = document.getElementById('billing-country_id');
+
+                if (billingCountry) {
+                    pcm2_log("Found billing country, adding lookup for billing address");
                     pcm2_addLookup(pcm2_Section, billingCountry);
+                    billingCountry.addEventListener('change', function () {
+                        pcm2_addLookup(pcm2_Section, billingCountry);
+                    });
+                }
+            } else {
+                newAddressButton.addEventListener('click', function () {
+                    setTimeout(function () {
+                        pcm2_log("Shipping to billing address checkbox unchecked");
+
+                        pcm2_Section = 'billing';
+
+                        billingCountry = document.getElementById('billing-country_id');
+
+                        if (billingCountry) {
+                            pcm2_log("Found billing country, adding lookup for billing address");
+                            pcm2_addLookup(pcm2_Section, billingCountry);
+                            billingCountry.addEventListener('change', function () {
+                                pcm2_addLookup(pcm2_Section, billingCountry);
+                            });
+                        }
+                    }, 800);
                 });
             }
-        }
-        else {
+        } else {
             pcm2_log("Shipping to billing address checkbox checked");
         }
     });

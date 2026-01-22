@@ -130,7 +130,7 @@
             autocompleteUrl: pcm2_config.api_urls.international_suggest,
             addressDetailsUrl: pcm2_config.api_urls.international_details,
             autoFocus: true,
-            autoSelect: true,
+            autoSelectSingleAddress: true,
             showLogo: false,
             context: iso3Code
         });
@@ -381,13 +381,16 @@
             if (form) form.style.display = 'block';
         }
 
-        if (defaultForm) {
-            if (validationFields.searchWrapper) validationFields.searchWrapper.style.display = 'none';
-            if (validationFields.resultWrapper) validationFields.resultWrapper.style.display = 'none';
-            if (validationFields.manualBtn) validationFields.manualBtn.style.display = 'none';
-            if (validationFields.autoBtn) validationFields.autoBtn.style.display = 'inline-block';
+
+        if (pcm2_isSupportedCountry(contextCountryField.value)) {
+            if (defaultForm) {
+                if (validationFields.searchWrapper) validationFields.searchWrapper.style.display = 'none';
+                if (validationFields.resultWrapper) validationFields.resultWrapper.style.display = 'none';
+                if (validationFields.manualBtn) validationFields.manualBtn.style.display = 'none';
+                if (validationFields.autoBtn) validationFields.autoBtn.style.display = 'inline-block';
+            }
         } else {
-            // Remove everyting
+            // Remove everything
             if (validationFields.searchWrapper) validationFields.searchWrapper.remove();
             if (validationFields.resultWrapper) validationFields.resultWrapper.remove();
             if (validationFields.manualBtn) validationFields.manualBtn.remove();

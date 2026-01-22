@@ -99,7 +99,7 @@ function pcm2_initLookup() {
         autocompleteUrl: pcm2_config.api_urls.international_suggest,
         addressDetailsUrl: pcm2_config.api_urls.international_details,
         autoFocus: true,
-        autoSelect: true,
+        autoSelectSingleAddress: true,
         showLogo: false,
         context: iso3Code
     });

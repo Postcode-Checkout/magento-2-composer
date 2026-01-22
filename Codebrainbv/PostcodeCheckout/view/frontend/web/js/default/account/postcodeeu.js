@@ -98,7 +98,7 @@
             autocompleteUrl: pcm2_config.api_urls.international_suggest,
             addressDetailsUrl: pcm2_config.api_urls.international_details,
             autoFocus: true,
-            autoSelect: true,
+            autoSelectSingleAddress: true,
             showLogo: false,
             context: iso3Code
         });
@@ -352,10 +352,10 @@
 
         validationFields = pcm2_getValidationFields();
 
-        // Checkbox to show default form
-        if (defaultForm) {
+            // Checkbox to show default form
+            if (defaultForm) {
 
-            var domKeys = Object.keys(validationFields);
+                var domKeys = Object.keys(validationFields);
 
             for (var iDom = 0; iDom < domKeys.length; iDom++) {
                 // Hide all fields, except the autoBtn
@@ -374,7 +374,6 @@
                 validationFields[domKeys[iDom]].remove();
             }
         }
-
     }
 
     function pcm2_getFields() {
