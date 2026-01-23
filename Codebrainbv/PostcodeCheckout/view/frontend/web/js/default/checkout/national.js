@@ -512,7 +512,7 @@
                 '  <div class="control"><input id="pcm2_autocomplete_postcode' + suffix + '" name="pcm2_autocomplete_postcode' + suffix + '" type="text" class="input-text" required /></div>' +
                 '</div>' +
                 '<div class="field" id="pcm2_autocomplete_housenumber_wrapper' + suffix + '">' +
-                '  <label class="label" for="pcm2_autocomplete_housenumber' + suffix + '"><span>' + (pcm2_config.provider.includes('postcodenl') ? 'huisnummer' : 'huisnummer + toevoeging') + '</span></label>' +
+                '  <label class="label" for="pcm2_autocomplete_housenumber' + suffix + '"><span>' + (pcm2_config.provider.includes('postcodenl') ? 'Huisnummer' : 'Huisnummer + Toevoeging') + '</span></label>' +
                 '  <div class="control"><input id="pcm2_autocomplete_housenumber' + suffix + '" name="pcm2_autocomplete_housenumber' + suffix + '" type="text" class="input-text" required /></div>' +
                 '</div>' +
                 '<div class="field" id="pcm2_autocomplete_housenumber_addition_wrapper' + suffix + '" style="display: none;">' +
@@ -524,7 +524,7 @@
                 '  <div class="control" id="pcm2_autocomplete_result' + suffix + '"></div>' +
                 '</div>' +
                 '<div class="field"><div class="control">' +
-                '  <button type="button" class="action secondary" id="pcm2_autocomplete_manualbtn' + suffix + '">handmatig invoeren</button> ' +
+                '  <button type="button" class="action secondary" id="pcm2_autocomplete_manualbtn' + suffix + '">Handmatig invoeren</button> ' +
                 '  <button type="button" class="action secondary" id="pcm2_autocomplete_autobtn' + suffix + '" style="display:none;">Automatisch invoeren</button>' +
                 '</div></div>';
 

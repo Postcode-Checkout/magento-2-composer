@@ -3,7 +3,6 @@ var placementHousenumberAdditions = pcm2_config.housenumber_addition_address2;
 var sectionObservers = {}; // Track MutationObservers for each section
 var addressSaved;
 var saveEvent;
-var countryCode;
 
 function pcm2_addLookup(pcm2_Section, countryElement) {
     if (!countryElement) {
@@ -647,17 +646,19 @@ function initializePostcodeEUCheckout() {
 
     var loggedInNewAddressForm = document.getElementById('checkout-shipping-address-button');
 
+    if (loggedInNewAddressForm) {
     loggedInNewAddressForm.addEventListener('click', function () {
-        setTimeout(function () {
-            pcm2_log("Logged in user clicked 'New Address' button");
-            pcm2_Section = 'shipping';
-            oElement = document.getElementById(pcm2_Section + '-country_id');
+            setTimeout(function () {
+                pcm2_log("Logged in user clicked 'New Address' button");
+                pcm2_Section = 'shipping';
+                oElement = document.getElementById(pcm2_Section + '-country_id');
 
-            if (oElement) {
-                pcm2_addLookup(pcm2_Section, oElement);
-            }
-        }, 800);
-    });
+                if (oElement) {
+                    pcm2_addLookup(pcm2_Section, oElement);
+                }
+            }, 800);
+        });
+    }
 
     var billingCountry = document.getElementById('billing-country_id');
 
@@ -671,42 +672,22 @@ function initializePostcodeEUCheckout() {
 
     Magewire.on('billing_as_shipping_address_updated', (event) => {
         if (event.billingAsShipping == false) {
+            pcm2_log("Shipping to billing address checkbox unchecked");
 
-            var newAddressButton = document.getElementById('checkout-billing-address-button');
-            if (!newAddressButton) {
-                pcm2_log("Shipping to billing address checkbox unchecked");
+            pcm2_Section = 'billing';
 
-                pcm2_Section = 'billing';
+            billingCountry = document.getElementById('billing-country_id');
 
-                billingCountry = document.getElementById('billing-country_id');
 
-                if (billingCountry) {
-                    pcm2_log("Found billing country, adding lookup for billing address");
+            if (billingCountry) {
+                pcm2_log("Found billing country, adding lookup for billing address");
+                pcm2_addLookup(pcm2_Section, billingCountry);
+                billingCountry.addEventListener('change', function () {
                     pcm2_addLookup(pcm2_Section, billingCountry);
-                    billingCountry.addEventListener('change', function () {
-                        pcm2_addLookup(pcm2_Section, billingCountry);
-                    });
-                }
-            } else {
-                newAddressButton.addEventListener('click', function () {
-                    setTimeout(function () {
-                        pcm2_log("Shipping to billing address checkbox unchecked");
-
-                        pcm2_Section = 'billing';
-
-                        billingCountry = document.getElementById('billing-country_id');
-
-                        if (billingCountry) {
-                            pcm2_log("Found billing country, adding lookup for billing address");
-                            pcm2_addLookup(pcm2_Section, billingCountry);
-                            billingCountry.addEventListener('change', function () {
-                                pcm2_addLookup(pcm2_Section, billingCountry);
-                            });
-                        }
-                    }, 800);
                 });
             }
-        } else {
+        }
+        else {
             pcm2_log("Shipping to billing address checkbox checked");
         }
     });

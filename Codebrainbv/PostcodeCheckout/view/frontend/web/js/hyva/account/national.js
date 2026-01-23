@@ -428,7 +428,7 @@ function pcm2_hideForm(defaultForm = false) {
             '  <div class="control"><input id="pcm2_autocomplete_postcode" name="pcm2_autocomplete_postcode" type="text" class="form-input w-full" required /></div>' +
             '</div>' +
             '<div class="field field-reserved w-full" id="pcm2_autocomplete_housenumber_wrapper">' +
-            '  <label class="label" for="pcm2_autocomplete_housenumber"><span>' + (pcm2_config.provider.includes('postcodenl') ? 'huisnummer' : 'huisnummer + toevoeging') + '</span></label>' +
+            '  <label class="label" for="pcm2_autocomplete_housenumber"><span>' + (pcm2_config.provider.includes('postcodenl') ? 'Huisnummer' : 'Huisnummer + Toevoeging') + '</span></label>' +
             '  <div class="control"><input id="pcm2_autocomplete_housenumber" name="pcm2_autocomplete_housenumber" type="text" class="form-input w-full" required /></div>' +
             '</div>' +
             '<div class="field field-reserved w-full" id="pcm2_autocomplete_housenumber_addition_wrapper" style="display: none;">' +
@@ -438,8 +438,8 @@ function pcm2_hideForm(defaultForm = false) {
             '<div class="field field-reserved w-full col-span-2" id="pcm2_autocomplete_result_wrapper" style="display: none;">' +
             '</div>' +
             '<div class="field field-reserved w-full col-span-2"><div class="control">' +
-            '  <button type="button" class="action btn btn-secondary" id="pcm2_autocomplete_manualbtn">Enter manually</button> ' +
-            '  <button type="button" class="action btn btn-secondary" id="pcm2_autocomplete_autobtn" style="display:none;">Enter automatically</button>' +
+            '  <button type="button" class="action btn btn-secondary" id="pcm2_autocomplete_manualbtn">Handmatig invoeren</button> ' +
+            '  <button type="button" class="action btn btn-secondary" id="pcm2_autocomplete_autobtn" style="display:none;">Automatisch invoeren</button>' +
             '</div></div>';
 
         elements.country.insertAdjacentHTML('beforebegin', html);
