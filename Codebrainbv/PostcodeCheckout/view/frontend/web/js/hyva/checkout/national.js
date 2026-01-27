@@ -72,17 +72,38 @@ function pcm2_addLookup(pcm2_Section, countryElement) {
     pcm2_initLookup(pcm2_Section);
 }
 
+function debounce(func, delay) {
+    let timeoutId;
+    return function (...args) {
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => {
+            func.apply(this, args);
+        }, delay);
+    };
+}
+
 function pcm2_initLookup(pcm2_Section) {
     pcm2_log('PCM2 initializing lookup functionality with event delegation');
 
-    document.addEventListener('input', function (event) {
-        setTimeout(function () {
-            if (event.target && (event.target.id === 'pcm2_' + pcm2_Section + '_autocomplete_postcode' ||
-                event.target.id === 'pcm2_' + pcm2_Section + '_autocomplete_housenumber')) {
-                pcm2_doLookup(pcm2_Section);
-            }
-        }, 250);
-    });
+    // Remove existing event delegation listener if it exists
+    if (window.pcm2GlobalInputHandler) {
+        document.removeEventListener('input', window.pcm2GlobalInputHandler);
+        pcm2_log('PCM2 removed existing global input handler');
+    }
+
+    // Create debounced handler
+    const debouncedHandleInput = debounce(() => pcm2_doLookup(pcm2_Section), 400);
+
+    // Create global input handler using event delegation
+    window.pcm2GlobalInputHandler = function (event) {
+        if (event.target && (event.target.id === 'pcm2_' + pcm2_Section + '_autocomplete_postcode' || event.target.id === 'pcm2_' + pcm2_Section + '_autocomplete_housenumber')) {
+            pcm2_log('PCM2 input detected on:', event.target.id, 'value:', event.target.value);
+            debouncedHandleInput();
+        }
+    };
+
+    // Add global event listener using delegation
+    document.addEventListener('input', window.pcm2GlobalInputHandler);
 
     pcm2_log('PCM2 global event delegation setup complete');
 
@@ -638,7 +659,7 @@ function initializePostcodeEUCheckout() {
     let oElement = '';
 
     pcm2_Section = 'shipping';
-    oElement = document.getElementById(pcm2_Section + '-country_id');
+    oElement = document.getElementById('shipping-country_id');
 
     if (oElement) {
         pcm2_addLookup(pcm2_Section, oElement);
@@ -647,11 +668,11 @@ function initializePostcodeEUCheckout() {
     var loggedInNewAddressForm = document.getElementById('checkout-shipping-address-button');
 
     if (loggedInNewAddressForm) {
-    loggedInNewAddressForm.addEventListener('click', function () {
+        loggedInNewAddressForm.addEventListener('click', function () {
             setTimeout(function () {
                 pcm2_log("Logged in user clicked 'New Address' button");
                 pcm2_Section = 'shipping';
-                oElement = document.getElementById(pcm2_Section + '-country_id');
+                oElement = document.getElementById('shipping-country_id');
 
                 if (oElement) {
                     pcm2_addLookup(pcm2_Section, oElement);
