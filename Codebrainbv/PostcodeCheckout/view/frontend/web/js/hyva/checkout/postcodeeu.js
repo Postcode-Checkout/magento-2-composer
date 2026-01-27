@@ -75,7 +75,6 @@ function pcm2_addLookup(pcm2_Section, countryElement) {
 
     // Initialize lookup functionality
     pcm2_initLookup(pcm2_Section);
-
 }
 
 function pcm2_initLookup(pcm2_Section) {
