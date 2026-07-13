@@ -14,7 +14,7 @@ Create an free account on the [Postcode Checkout dashboard](https://dashboard.po
 1. Install this module using Composer:
 
 ```bash
-$ composer require 
+$ composer require codebrainbv/postcode_checkout
 ```
 
 2. Upgrade, compile & clear cache:
