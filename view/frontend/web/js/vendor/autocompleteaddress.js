@@ -8,7 +8,7 @@
  * https://www.tldrlegal.com/license/apple-mit-license-aml
  *
  * @author Postcode.nl
- * @version 1.4.2
+ * @version 1.4.3
  */
 
 (function (root, factory) {
@@ -31,13 +31,12 @@
 	const document = window.document,
 		$ = function (selector) { return document.querySelectorAll(selector); },
 		elementData = new WeakMap(),
-		VERSION = '1.4.2',
+		VERSION = '1.4.3',
 		EVENT_NAMESPACE = 'autocomplete-',
 		PRECISION_ADDRESS = 'Address',
 		KEY_ESC = 'Escape',
 		KEY_ESC_LEGACY = 'Esc',
 		KEY_ENTER = 'Enter',
-		KEY_TAB = 'Tab',
 		KEY_UP = 'ArrowUp',
 		KEY_UP_LEGACY = 'Up',
 		KEY_DOWN = 'ArrowDown',
@@ -894,6 +893,9 @@
 
 			xhr.open('GET', url);
 			xhr.setRequestHeader('X-Autocomplete-Session', sessionId);
+			activeElement?.dispatchEvent(
+				new CustomEvent(EVENT_NAMESPACE + 'xhr-send', {detail: xhr, bubbles: true})
+			);
 			xhr.send();
 
 			return xhr;
@@ -1140,6 +1142,9 @@
 				return; // Menu is not part of the DOM, assume already destroyed.
 			}
 
+			// Prevent potential race condition with pending timeout scheduled by searchDebounced().
+			window.clearTimeout(searchTimeoutId);
+
 			document.body.removeChild(liveRegion);
 
 			for (let i = 0, element; (element = inputElements[i++]);)
@@ -1241,14 +1246,6 @@
 						menu.close(true);
 					break;
 
-					case KEY_TAB:
-						if (menu.hasFocus)
-						{
-							menu.select();
-							e.preventDefault();
-						}
-					break;
-
 					case KEY_ENTER:
 						if (menu.hasFocus)
 						{
@@ -1313,7 +1310,15 @@
 				{
 					menu.open(element);
 					data.context = e.detail.context;
-					window.setTimeout(search, 0, element);
+					window.setTimeout(() => {
+						if (!e.defaultPrevented)
+						{
+							// Make sure value isn't changed (e.g. via React render).
+							element.value = data.match.value;
+						}
+
+						search(element);
+					});
 				}
 			});
 

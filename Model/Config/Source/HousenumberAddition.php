@@ -27,11 +27,7 @@ class HousenumberAddition implements \Magento\Framework\Data\OptionSourceInterfa
             [
                 'value' => 2,
                 'label' => __('street_field_1_housenumber_addition_field_2')
-            ],
-            [
-                'value' => 3,
-                'label' => __('street_field_1_housenumber_field_2_addition_field_3')
-            ],
+            ]
         ];
     }
 }

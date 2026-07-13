@@ -1,0 +1,140 @@
+<?php
+declare(strict_types=1);
+
+use Hyva\Theme\ViewModel\HyvaCsp;
+use Magento\Framework\Escaper;
+
+/** @var Escaper $escaper */
+/** @var HyvaCsp $hyvaCsp */
+
+?>
+
+<script>
+    (() => {
+        if (hyva && hyva.formValidation) {
+
+            hyva.formValidation.addRule('validate-postcode', function(value, options, field, context) {
+                const postcodeRegex = /[1-9][0-9]{3}\s*[a-z]{2}/i;
+                const isValidPostcode = postcodeRegex.test(value);
+
+                if (!value || isValidPostcode) {
+                    return true;
+                } else {
+                    return '<?= $escaper->escapeJs(__('Please enter a valid zip/postal code.')); ?>';
+                }
+            });
+
+            hyva.formValidation.addRule('validate-house-number', function(value, options, field, context) {
+                const houseNumberRegex = /[1-9]\d{0,4}(?:\D.*)?$/i;
+                const isHouseNumberValid = houseNumberRegex.test(value)
+
+                if (!value || isHouseNumberValid) {
+                    return true;
+                } else {
+                    return '<?= $escaper->escapeJs(__('Please enter a valid house number.')); ?>';
+                }
+            })
+        }
+    })();
+
+    // --- PCM2: National address layout restructuring ---
+    // Hyva renders pc_postcode, pc_house_number, pc_house_number_addition as
+    // separate fields. This JS re-wraps them: postcode + huisnummer side-by-side
+    // in a 2-column grid, Hyva's addition dropdown hidden, our own addition row
+    // below (shown/hidden dynamically by core.js based on API response).
+    (function () {
+        var _pcm2LayoutTimer = null;
+
+        function pcm2NationalLayout() {
+            // Collect all postcode field wrappers (shipping + billing)
+            var postcodeFields = Array.from(
+                document.querySelectorAll('.field-pc_postcode, input[name="pc_postcode"]')
+            ).map(function (el) {
+                return el.tagName === 'INPUT' ? el.closest('.field') : el;
+            }).filter(function (el, i, arr) {
+                return el && arr.indexOf(el) === i;
+            });
+
+            postcodeFields.forEach(function (pcWrapper) {
+                if (pcWrapper.closest('.pcm2-postcode-grid')) return; // already done
+
+                var parent = pcWrapper.parentElement;
+
+                var hnWrapper = parent.querySelector('.field-pc_house_number') ||
+                    (function () {
+                        var inp = parent.querySelector('input[name="pc_house_number"]');
+                        return inp ? inp.closest('.field') : null;
+                    }());
+
+                if (!hnWrapper) return;
+
+                // Hide Hyva's built-in addition dropdown
+                var addWrapper = parent.querySelector('.field-pc_house_number_addition') ||
+                    (function () {
+                        var sel = parent.querySelector('select[name="pc_house_number_addition"]');
+                        return sel ? sel.closest('.field') : null;
+                    }());
+                if (addWrapper) addWrapper.style.display = 'none';
+
+                // Wrap postcode + huisnummer in a 2-column grid
+                var grid = document.createElement('div');
+                grid.className = 'pcm2-postcode-grid grid grid-cols-2 gap-4';
+                parent.insertBefore(grid, pcWrapper);
+                grid.appendChild(pcWrapper);
+                grid.appendChild(hnWrapper);
+
+                // Add custom addition row (shown by core.js when result.addition is set)
+                if (!parent.querySelector('.pcm2-national-addition-row')) {
+                    var addRow = document.createElement('div');
+                    addRow.className = 'pcm2-national-addition-row field';
+                    addRow.style.display = 'none';
+                    addRow.innerHTML =
+                        '<label class="label"><span>Toevoeging</span></label>' +
+                        '<div class="control"><input type="text" class="pcm2-national-addition-input form-input w-full" readonly></div>';
+                    grid.insertAdjacentElement('afterend', addRow);
+                }
+            });
+        }
+
+        function _schedule() {
+            clearTimeout(_pcm2LayoutTimer);
+            _pcm2LayoutTimer = setTimeout(pcm2NationalLayout, 200);
+        }
+
+        ['DOMContentLoaded', 'magewire:load', 'magewire:update',
+         'postcodecheckout:hyva-checkout:ready', 'checkout:step:loaded'].forEach(function (e) {
+            document.addEventListener(e, _schedule);
+        });
+        window.addEventListener('load', _schedule);
+    }());
+    // --- end PCM2 ---
+
+    window.addEventListener('checkout:step:loaded', () => {
+        const validateRequiredDisabledFields = (formId, messageType) => {
+            const form = document.querySelector(`#${formId}`);
+            if (!form) return true;
+
+            const emptyFields = Array.from(
+                form.querySelectorAll('input[disabled][required], select[disabled][required], textarea[disabled][required]')
+            ).filter(field => !field.value.trim());
+
+            if (emptyFields.length > 0) {
+                hyvaCheckout.messenger.dispatch(messageType, '<?= $escaper->escapeJs(__('Please enter all required fields before proceeding.')) ?>');
+                return false;
+            }
+
+            return true;
+        };
+
+        hyvaCheckout.validation.register('pcNationalShippingValidation', () => {
+            return validateRequiredDisabledFields('shipping-details', 'shipping:details');
+        }, document.querySelector('#shipping-details'));
+
+        hyvaCheckout.validation.register('ppcNationalBillingValidation', () => {
+            return validateRequiredDisabledFields('billing-details', 'billing:details');
+        }, document.querySelector('#billing-details'));
+    });
+
+</script>
+<?php $hyvaCsp->registerInlineScript() ?>
+

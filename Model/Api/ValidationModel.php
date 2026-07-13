@@ -32,6 +32,11 @@ class ValidationModel implements ValidationInterface
      */
     private $suggestionResultFactory;
 
+    /**
+     * @var api_url
+     */
+    private $api_url = 'https://api.postcode-checkout.nl';
+
     public function __construct(
         ConfigHelper $configHelper,
         AddressResponseFactory $responseFactory,
@@ -63,7 +68,10 @@ class ValidationModel implements ValidationInterface
                 ->setError('Module is not yet configured (no API key)');
         }
 
-        $url = 'https://dashboard.postcode-checkout.nl/api/international/v2/suggestions?country=' . rawurlencode($context) . '&query=' . rawurlencode(base64_decode($term));
+
+        // In magento2Test: $context is altijd ISO3, $term is altijd plain base64
+        $url = $this->api_url . '/international/v2/suggestions?country=' . rawurlencode($context)
+            . '&query=' . rawurlencode(base64_decode($term));
 
         $rawResponse = $this->callInternationalApi($url, $apiKey);
 
@@ -103,7 +111,8 @@ class ValidationModel implements ValidationInterface
                 ->setResult(null);
         }
 
-        $url = 'https://dashboard.postcode-checkout.nl/api/international/v2/details?query=' . rawurlencode($context);
+        $url = $this->api_url . '/international/v2/details?query=' . rawurlencode($context)
+            . '&provider=' . rawurlencode($this->configHelper->getConfiguredProvider());
         $rawResponse = $this->callInternationalApi($url, $apiKey);
 
         if ($rawResponse['error']) {
@@ -153,7 +162,7 @@ class ValidationModel implements ValidationInterface
                 ->setResult(null);
         }
 
-        $url = 'https://dashboard.postcode-checkout.nl/api/national/v3/address?postcode='
+        $url = $this->api_url . '/national/v3/address?postcode='
             . urlencode($zipCode) . '&housenumber=' . urlencode($houseNumber);
 
         $rawResponse = $this->callApi($url, $apiKey);
@@ -248,7 +257,7 @@ class ValidationModel implements ValidationInterface
         $headers = [
             'Authorization: Bearer ' . $apiKey,
             'Referer: ' . $this->configHelper->getShopUrl(),
-            'X-Autocomplete-Session: ' . $_SERVER['HTTP_X_AUTOCOMPLETE_SESSION'] ?? uniqid(),
+            'X-Autocomplete-Session: ' . ($_SERVER['HTTP_X_AUTOCOMPLETE_SESSION'] ?? uniqid()),
         ];
 
         $ch = curl_init($url);
@@ -295,5 +304,63 @@ class ValidationModel implements ValidationInterface
             'message' => null,
             'result' => $decoded ?? null
         ];
+    }
+
+    /**
+     * Pro6PP autocomplete proxy.
+     *
+     * @param string $country  ISO-2 country code
+     * @param string $query    Search query
+     * @param int|null $limit  Max results (optional)
+     * @return array
+     */
+    public function getPro6ppAutocomplete(string $country, string $query, $limit = null): array
+    {
+        $country = strtoupper(trim($country));
+        $query   = trim($query);
+
+        if (empty($country) || empty($query)) {
+            return ['stage' => 'final', 'suggestions' => [], 'error' => true, 'message' => 'Country and query are required'];
+        }
+
+        $apiKey = $this->configHelper->getApiKey();
+        if (empty($apiKey)) {
+            return ['stage' => 'final', 'suggestions' => [], 'error' => true, 'message' => 'Module is not yet configured (no API key)'];
+        }
+
+        $url = $this->api_url . '/international/v2/suggestions'
+            . '?country=' . rawurlencode($country)
+            . '&query=' . rawurlencode($query);
+
+        if ($limit !== null && $limit !== '') {
+            $url .= '&limit=' . (int) $limit;
+        }
+
+        $rawResponse = $this->callInternationalApi($url, $apiKey);
+
+        if ($rawResponse['error']) {
+            return ['stage' => 'final', 'suggestions' => [], 'error' => true, 'message' => $rawResponse['message']];
+        }
+
+        $apiData = $rawResponse['result'];
+
+        if (!is_array($apiData)) {
+            return ['stage' => 'final', 'suggestions' => []];
+        }
+
+        if (isset($apiData['stage'])) {
+            return [
+                'stage'       => $apiData['stage'],
+                'suggestions' => $apiData['suggestions'] ?? [],
+                'cities'      => $apiData['cities'] ?? [],
+                'streets'     => $apiData['streets'] ?? [],
+            ];
+        }
+
+        if (isset($apiData['suggestions']) && is_array($apiData['suggestions'])) {
+            return ['stage' => 'final', 'suggestions' => $apiData['suggestions']];
+        }
+
+        return ['stage' => 'final', 'suggestions' => $apiData];
     }
 }

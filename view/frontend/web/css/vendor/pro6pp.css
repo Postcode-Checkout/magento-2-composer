@@ -1,0 +1,202 @@
+.pro6pp-wrapper {
+    position: relative;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    box-sizing: border-box;
+    width: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .pro6pp-wrapper * {
+    box-sizing: border-box;
+  }
+  .pro6pp-input {
+    width: 100%;
+    padding: 12px 14px;
+    padding-right: 48px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    font-size: 16px;
+    line-height: 1.5;
+    appearance: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .pro6pp-input::placeholder {
+    font-size: 16px;
+    color: #a3a3a3;
+  }
+
+  .pro6pp-input:focus {
+    outline: none;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+  }
+
+  .pro6pp-input-addons {
+    position: absolute;
+    right: 4px;
+    top: 0;
+    bottom: 0;
+    display: flex;
+    align-items: center;
+    pointer-events: none;
+  }
+  .pro6pp-input-addons > * {
+    pointer-events: auto;
+  }
+
+  .pro6pp-clear-button {
+    background: none;
+    border: none;
+    width: 32px;
+    height: 32px;
+    cursor: pointer;
+    color: #a3a3a3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: color 0.2s, background-color 0.2s;
+    touch-action: manipulation;
+  }
+
+  @media (hover: hover) {
+    .pro6pp-clear-button:hover {
+      color: #1f2937;
+      background-color: #f3f4f6;
+    }
+  }
+
+  .pro6pp-clear-button:active {
+    background-color: #f3f4f6;
+  }
+
+  .pro6pp-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    margin-top: 4px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 6px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    z-index: 9999;
+    padding: 0;
+    max-height: 280px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
+
+  @media (max-height: 500px) {
+    .pro6pp-dropdown {
+      max-height: 180px;
+    }
+  }
+
+  .pro6pp-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    width: 100%;
+  }
+
+  .pro6pp-item {
+    padding: 12px 14px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    font-size: 15px;
+    line-height: 1.4;
+    color: #374151;
+    border-bottom: 1px solid #f3f4f6;
+    transition: background-color 0.1s;
+    flex-shrink: 0;
+  }
+
+  .pro6pp-item:last-child {
+    border-bottom: none;
+  }
+
+  @media (hover: hover) {
+    .pro6pp-item:hover, .pro6pp-item--active {
+      background-color: #f9fafb;
+    }
+  }
+
+  .pro6pp-item:active {
+    background-color: #f3f4f6;
+  }
+
+  .pro6pp-item__label {
+    font-weight: 400;
+    flex-shrink: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pro6pp-item__label--match {
+    font-weight: 520;
+  }
+
+  .pro6pp-item__label--unmatched {
+    font-weight: 400;
+    color: #4b5563;
+  }
+
+  .pro6pp-item__subtitle {
+    color: #6b7280;
+    flex-shrink: 0;
+  }
+
+  .pro6pp-item__chevron {
+    color: #d1d5db;
+    display: flex;
+    align-items: center;
+    margin-left: auto;
+    padding-left: 8px;
+  }
+
+  .pro6pp-no-results {
+    padding: 24px 16px;
+    color: #6b7280;
+    font-size: 15px;
+    text-align: center;
+  }
+
+  .pro6pp-loader-item {
+    padding: 10px 12px;
+    color: #6b7280;
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    background-color: #f9fafb;
+    border-top: 1px solid #f3f4f6;
+  }
+
+  .pro6pp-mini-spinner {
+    width: 14px;
+    height: 14px;
+    border: 2px solid #e5e7eb;
+    border-top-color: #6b7280;
+    border-radius: 50%;
+    animation: pro6pp-spin 0.6s linear infinite;
+  }
+
+  @media (max-width: 640px) {
+    .pro6pp-input {
+      font-size: 16px;
+      padding: 10px 12px;
+    }
+    .pro6pp-item {
+      padding: 10px 12px;
+      font-size: 14px;
+    }
+  }
+
+  @keyframes pro6pp-spin {
+    to { transform: rotate(360deg); }
+  }

@@ -5,6 +5,7 @@
     <head>
         <!-- Load CSS globally -->
         <css src="Codebrainbv_PostcodeCheckout::css/vendor/autocompleteaddress.css"/>
+        <css src="Codebrainbv_PostcodeCheckout::css/vendor/pro6pp.css"/>
         <css src="Codebrainbv_PostcodeCheckout::css/postcode-checkout.css"/>
     </head>
 
@@ -12,7 +13,7 @@
         <referenceContainer name="after.body.start">
             <block class="Codebrainbv\PostcodeCheckout\Block\Config"
                     name="postcode_checkout_config"
-                    template="Codebrainbv_PostcodeCheckout::default/account_loader.phtml"
+                    template="Codebrainbv_PostcodeCheckout::luma/account_loader.phtml"
                     after="-" />
         </referenceContainer>
     </body>

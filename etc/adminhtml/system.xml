@@ -8,7 +8,7 @@
             <label>postcode_checkout</label>
             <tab>codebrain</tab>
             <resource>Codebrainbv_PostcodeCheckout::config</resource>
-            <group id="general" translate="label" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="general" translate="label comment" type="text" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>configure_module</label>
                 <comment>main_settings_helper</comment>
                 <field id="enabled" translate="label comment" type="select" sortOrder="10" showInDefault="1" showInWebsite="1" showInStore="1">
@@ -16,38 +16,43 @@
                     <comment>enable_helper</comment>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="api_key" translate="label" type="textarea" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="api_key" translate="label comment" type="textarea" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>api_key</label>
                     <comment>api_key_helper</comment>
                 </field>
-                <field id="license_key" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="license_key" translate="label comment" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>license_key</label>
                     <comment>license_key_helper</comment>
                 </field>
-                <field id="configured_provider" translate="label" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="configured_provider" translate="label comment" type="text" sortOrder="40" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>configured_provider</label>
                     <comment>configured_provider_helper</comment>
                     <frontend_model>Codebrainbv\PostcodeCheckout\Block\System\Config\Form\Field\Disable</frontend_model>
                 </field>
             </group>
-            <group id="address_settings" translate="label" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="address_settings" translate="label comment" type="text" sortOrder="20" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>field_settings</label>
                 <comment>field_settings_helper</comment>
-                <field id="empty_default_address_fields" translate="label" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="empty_default_address_fields" translate="label comment" type="select" sortOrder="60" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>empty_fields</label>
                     <comment>empty_fields_helper</comment>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="housenumber_addition_address2" translate="label" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="hide_default_address_fields" translate="label comment" type="select" sortOrder="65" showInDefault="1" showInWebsite="1" showInStore="1">
+                    <label>hide_default_fields</label>
+                    <comment>hide_default_fields_helper</comment>
+                    <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
+                </field>
+                <field id="housenumber_addition_address2" translate="label comment" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>placement_housenumber_addition</label>
                     <comment>placement_housenumber_addition_helper</comment>
                     <source_model>Codebrainbv\PostcodeCheckout\Model\Config\Source\HousenumberAddition</source_model>
                 </field>
             </group>
-            <group id="extra_settings" translate="label" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
+            <group id="extra_settings" translate="label comment" type="text" sortOrder="30" showInDefault="1" showInWebsite="1" showInStore="1">
                 <label>extra_settings</label>
                 <comment>extra_settings_helper</comment>
-                <field id="autocomplete_off" translate="label" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="1">
+                <field id="autocomplete_off" translate="label comment" type="select" sortOrder="80" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>autocomplete_off</label>
                     <comment>autocomplete_off_helper</comment>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>

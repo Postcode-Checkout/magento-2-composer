@@ -7,7 +7,6 @@ use Codebrainbv\PostcodeCheckout\Api\Data\SuggestionResultInterface;
 
 interface ValidationInterface
 {
-
     /**
      * Get international address suggestion based on country ISO3 and search query
      * 
@@ -17,7 +16,6 @@ interface ValidationInterface
      */
     public function getInternationalSuggestion($context, $term): SuggestionResultInterface;
 
-
     /**
      * Get international address details based on provided context/addressId
      * 
@@ -25,7 +23,6 @@ interface ValidationInterface
      * @return \Codebrainbv\PostcodeCheckout\Api\Data\AddressResponseInterface
      */
     public function getInternationalDetails($context): AddressResponseInterface;
-
 
     /**
      * Get national address based on zip code and house number
@@ -35,6 +32,4 @@ interface ValidationInterface
      * @return \Codebrainbv\PostcodeCheckout\Api\Data\AddressResponseInterface
      */
     public function getNationalAddress($zipCode, $houseNumber): AddressResponseInterface;
-
-
 }

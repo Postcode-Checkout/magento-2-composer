@@ -1,6 +1,6 @@
 {
   "name": "codebrainbv/postcode_checkout",
-  "description": "Address validation for your Magento checkout.",
+  "description": "Address validation for your Magento/Hyva checkout.",
   "type": "magento2-module",
   "version": "1.0.1",
 	"keywords": [ "postcode", "validation", "checkout" ],

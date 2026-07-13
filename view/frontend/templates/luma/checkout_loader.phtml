@@ -1,0 +1,39 @@
+<?php
+/** @var \Codebrainbv\PostcodeCheckout\Block\Config $block */
+$jsFiles = $block->getCheckoutJsFiles();
+$nonce = $block->getNonce();
+?>
+<script type="text/javascript" nonce="<?= $nonce ?>">
+    window.pcm2_config = (function(cfg){ delete cfg.national_providers; delete cfg.international_providers; return cfg; })(<?= json_encode($block->getJsConfig(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>);
+    window.pcm2_translations = <?= json_encode($block->getTranslations(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+    if (window.console && window.pcm2_config) {
+        console.log('[PCM2][CONFIG][loader]', JSON.parse(JSON.stringify(window.pcm2_config)));
+    }
+</script>
+<script type="text/javascript" nonce="<?= $nonce ?>">
+    (function () {
+        function boot() {
+            if (typeof require !== 'function') return;
+
+            require(<?= json_encode($jsFiles) ?>, function () {
+                /*
+                 * The last argument is the provider module (shim or core itself).
+                 * Each shim returns PCM2Core, so we can call init() on it.
+                 * Vendor libs are guaranteed loaded at this point (AMD deps).
+                 */
+                var mod = arguments[arguments.length - 1] || window.PCM2Core;
+                if (mod && typeof mod.init === 'function') {
+                    mod.init();
+                } else if (window.PCM2Core && typeof window.PCM2Core.init === 'function') {
+                    window.PCM2Core.init();
+                }
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', boot);
+        } else {
+            boot();
+        }
+    })();
+</script>

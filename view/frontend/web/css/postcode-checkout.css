@@ -1,17 +1,28 @@
-#pccheckout input[readonly]
-{
-	background-color: #D3D3D3;
+/* Zorg dat postcodezoeker knoppen altijd onder het veld staan en niet overlappen */
+.pcm2-autocomplete-btn-group {
+	display: flex;
+    flex-direction: row;
+	gap: 0.5em;
+	margin-top: 0.5em;
+	flex-wrap: wrap;
+}
+.pcm2-autocomplete-btn-group button {
+	min-width: 160px;
+	white-space: normal;
+	margin: 0;
+	box-sizing: border-box;
 }
 
-.hidden {
-	display: none !important;
+fieldset .lumaPostcode {
+	margin: 0 0 20px;
 }
 
-.margin_buttons {
-	margin-top: 1rem;
-	margin-bottom: 1rem;
+fieldset .lumaPostcode label {
+	font-weight: 600;
+	margin: 0 0 8px;
 }
 
-.postcodenl-autocomplete-menu {
-	z-index: 1000 !important;
+fieldset .lumaPostcode > div,
+.fieldset .lumaPostcode.field > div {
+	margin: 0 0 20px;
 }

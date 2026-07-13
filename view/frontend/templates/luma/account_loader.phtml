@@ -1,0 +1,31 @@
+<?php
+/** @var \Codebrainbv\PostcodeCheckout\Block\Config $block */
+$jsFiles = $block->getAccountJsFiles();
+$nonce = $block->getNonce();
+?>
+<script type="text/javascript" nonce="<?= $nonce ?>">
+    window.pcm2_config = <?= json_encode($block->getJsConfig(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+    window.pcm2_translations = <?= json_encode($block->getTranslations(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
+</script>
+<script type="text/javascript" nonce="<?= $nonce ?>">
+    (function () {
+        function boot() {
+            if (typeof require !== 'function') return;
+
+            require(<?= json_encode($jsFiles) ?>, function () {
+                var mod = arguments[arguments.length - 1] || window.PCM2Core;
+                if (mod && typeof mod.init === 'function') {
+                    mod.init();
+                } else if (window.PCM2Core && typeof window.PCM2Core.init === 'function') {
+                    window.PCM2Core.init();
+                }
+            });
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', boot);
+        } else {
+            boot();
+        }
+    })();
+</script>

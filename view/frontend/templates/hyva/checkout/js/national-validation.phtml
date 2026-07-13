@@ -11,7 +11,7 @@ use Magento\Framework\Escaper;
 /** @var HyvaCsp $hyvaCsp */
 /** @var \Codebrainbv\PostcodeCheckout\Block\Config $block */
 
-$jsFiles = $block->getHyvaAccountJsFiles();
+$jsFiles = $block->getHyvaCheckoutJsFiles();
 $nonce = $block->getNonce();
 ?>
 <script type="text/javascript" nonce="<?= $escaper->escapeHtmlAttr($nonce) ?>">
@@ -39,7 +39,7 @@ $nonce = $block->getNonce();
                 window.PCM2Core.init();
             }
 
-            window.dispatchEvent(new CustomEvent('postcodecheckout:hyva-account:ready', {
+            window.dispatchEvent(new CustomEvent('postcodecheckout:hyva-checkout:ready', {
                 detail: window.pcm2_config || {}
             }));
         }).catch(function (error) {

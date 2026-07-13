@@ -115,7 +115,7 @@ class ConfigValidateObserver implements ObserverInterface
 
         try {
             $this->curlClient->setHeaders($headers);
-            $this->curlClient->get('https://dashboard.postcode-checkout.nl/api/v1/check');
+            $this->curlClient->get('https://api.postcode-checkout.nl/check');
             $httpCode = $this->curlClient->getStatus();
             $responseBody = $this->curlClient->getBody();
         } catch (\Exception $e) {

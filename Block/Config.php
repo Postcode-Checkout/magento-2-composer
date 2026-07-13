@@ -8,11 +8,7 @@ use Magento\Csp\Helper\CspNonceProvider;
 
 class Config extends Template
 {
-    protected $scopeConfig;
     protected $configHelper;
-    /**
-     * @var CspNonceProvider
-     */
     private $cspNonceProvider;
 
     public function __construct(
@@ -28,139 +24,90 @@ class Config extends Template
 
     public function getJsConfig(): array
     {
-        $config = $this->configHelper->getJsConfig();
-        return $config;
+        return $this->configHelper->getJsConfig();
     }
 
     public function getTranslations(): array
     {
-        $translate = $this->configHelper->getTranslations();
-        return $translate;
+        return $this->configHelper->getTranslations();
     }
 
-    /**
-     * Returns configured provider, to be used in JS
-     * @return string
-     */
     public function getConfiguredProvider(): string
     {
-        return $this->configHelper->getConfiguredProvider();
+        return strtolower((string) $this->configHelper->getConfiguredProvider());
     }
 
-    /**
-     * Get all Checkout JS files for the active provider.
-     */
     public function getCheckoutJsFiles(): array
     {
-        $provider = $this->getConfiguredProvider();
-
-        if ($provider === '') {
-            return [
-                'Codebrainbv_PostcodeCheckout/js/empty'
-            ];
-        }
-
-        if (in_array($provider, ['postcodenlext'])) {
-            // Load international file
-            $files = [
-                'Codebrainbv_PostcodeCheckout/js/vendor/autocompleteaddress',
-                'Codebrainbv_PostcodeCheckout/js/default/checkout/postcodeeu'
-            ];
-        } else {
-            // Load national file
-            $files = [
-                'Codebrainbv_PostcodeCheckout/js/default/checkout/national'
-            ];
-        }
-
-        return $files;
+        return $this->getDefaultJsFiles();
     }
 
-    /**
-     * Get all Account JS files for the active provider.
-     */
     public function getAccountJsFiles(): array
     {
-        $provider = $this->getConfiguredProvider();
-
-        if ($provider === '') {
-            return [
-                'Codebrainbv_PostcodeCheckout/js/empty'
-            ];
-        }
-
-        if (in_array($provider, ['postcodenlext'])) {
-            // Load international file
-            $files = [
-                'Codebrainbv_PostcodeCheckout/js/vendor/autocompleteaddress',
-                'Codebrainbv_PostcodeCheckout/js/default/account/postcodeeu'
-            ];
-        } else {
-            // Load national file
-            $files = [
-                'Codebrainbv_PostcodeCheckout/js/default/account/national'
-            ];
-        }
-
-        return $files;
+        return $this->getDefaultJsFiles();
     }
 
     public function getHyvaCheckoutJsFiles(): array
     {
-        $provider = $this->getConfiguredProvider();
-
-        if ($provider === '') {
-            return [
-                'Codebrainbv_PostcodeCheckout/js/empty'
-            ];
-        }
-
-        if (in_array($provider, ['postcodenlext'])) {
-            // Load international file
-            $files = [
-                'Codebrainbv_PostcodeCheckout/js/hyva/checkout/postcodeeu'
-            ];
-        } else {
-            // Load national file
-            $files = [
-                'Codebrainbv_PostcodeCheckout/js/hyva/checkout/national'
-            ];
-        }
-
-        return $files;
+        return $this->getHyvaJsFiles();
     }
-
 
     public function getHyvaAccountJsFiles(): array
     {
+        return $this->getHyvaJsFiles();
+    }
+
+    private function getDefaultJsFiles(): array
+    {
         $provider = $this->getConfiguredProvider();
 
-        if ($provider === '') {
+        // The shim files (postcodenlext.js / pro6ppext.js) declare the vendor lib
+        // as an AMD dependency, so RequireJS guarantees correct load order.
+        if ($provider === 'postcodenlext') {
             return [
-                'Codebrainbv_PostcodeCheckout/js/empty'
+                'Codebrainbv_PostcodeCheckout/js/pcm2/postcodenlext',
             ];
         }
 
-        if (in_array($provider, ['postcodenlext'])) {
-            // Load international file
-            $files = [
-                'Codebrainbv_PostcodeCheckout/js/hyva/account/postcodeeu'
-            ];
-        } else {
-            // Load national file
-            $files = [
-                'Codebrainbv_PostcodeCheckout/js/hyva/account/national'
+        if ($provider === 'pro6ppext') {
+            return [
+                'Codebrainbv_PostcodeCheckout/js/pcm2/pro6ppext',
             ];
         }
 
-        return $files;
+        // National providers: use adapter/core.js which has proper postcode+housenumber UI.
+        return [
+            'Codebrainbv_PostcodeCheckout/js/adapter/luma',
+        ];
     }
- 
-    /**
-     * Get CSP Nonce
-     *
-     * @return String
-     */
+
+    private function getHyvaJsFiles(): array
+    {
+        $provider = $this->getConfiguredProvider();
+
+        // Hyvä: sequential script loading guarantees vendor is ready before core.
+        if ($provider === 'postcodenlext') {
+            return [
+                'Codebrainbv_PostcodeCheckout::js/vendor/autocompleteaddress.js',
+                'Codebrainbv_PostcodeCheckout::js/pcm2/core.js',
+            ];
+        }
+
+        if ($provider === 'pro6ppext') {
+            return [
+                'Codebrainbv_PostcodeCheckout::js/vendor/pro6pp.js',
+                'Codebrainbv_PostcodeCheckout::js/pcm2/core.js',
+            ];
+        }
+
+        // National providers: use adapter/core.js which has proper postcode+housenumber UI.
+        // adapter/hyva.js boots PCM2 on all relevant Hyvä events.
+        return [
+            'Codebrainbv_PostcodeCheckout::js/adapter/core.js',
+            'Codebrainbv_PostcodeCheckout::js/adapter/hyva.js',
+        ];
+    }
+
     public function getNonce(): string
     {
         return $this->cspNonceProvider->generateNonce();

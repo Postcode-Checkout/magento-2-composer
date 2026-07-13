@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<page xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      layout="1column"
+      xsi:noNamespaceSchemaLocation="urn:magento:framework:View/Layout/etc/page_configuration.xsd">
+    <head>
+        <css src="Codebrainbv_PostcodeCheckout::css/vendor/autocompleteaddress.css"/>
+        <css src="Codebrainbv_PostcodeCheckout::css/vendor/pro6pp.css"/>
+        <css src="Codebrainbv_PostcodeCheckout::css/postcode-checkout.css"/>
+    </head>
+    <body>
+        <referenceContainer name="before.body.end">
+            <block name="postcodecheckout-validation-rule"
+                   template="Codebrainbv_PostcodeCheckout::hyva/form/field/national/validation-rules.phtml" />
+        </referenceContainer>
+
+        <referenceBlock name="entity-form.field-renderers">
+            <block name="form-field.postcodecheckout_national"
+                   as="aac_address"
+                   template="Codebrainbv_PostcodeCheckout::hyva/form/field/national/national-validation-fields.phtml" />
+        </referenceBlock>
+
+        <referenceContainer name="hyva.checkout.api-v1.after">
+            <block name="hyva.checkout.postcode-checkout"
+                   class="Codebrainbv\PostcodeCheckout\Block\Config"
+                   template="Codebrainbv_PostcodeCheckout::hyva/checkout/js/national-validation.phtml" />
+        </referenceContainer>
+    </body>
+</page>

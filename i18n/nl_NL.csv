@@ -1,3 +1,5 @@
+hide_default_fields,"Verberg standaard adresvelden"
+hide_default_fields_helper,"Ja: verbergt alle standaard adresvelden behalve land. Nee: toont alle standaard adresvelden. Gebruik dit om het formulier voor gebruikers te vereenvoudigen."
 codebrain, "Codebrain BV"
 postcode_checkout, "Postcode Checkout"
 configure_module, "Instellingen Postcode Checkout plugin"

@@ -20,5 +20,5 @@
             <argument name="data" xsi:type="array">{}</argument>
         </arguments>
     </type>
-    
+
 </config>

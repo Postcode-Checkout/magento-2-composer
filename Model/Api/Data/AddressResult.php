@@ -57,13 +57,13 @@ class AddressResult extends DataObject implements AddressResultInterface
      */
     public function setCity(?string $city) { return $this->setData('city', $city); }
     
-    /**
-     * @inheritdoc
-     */
-    public function getProvince(): ?string { return $this->getData('province'); }
+    // /**
+    //  * @inheritdoc
+    //  */
+    // public function getProvince(): ?string { return $this->getData('province'); }
     
-    /**
-     * @inheritdoc
-     */
-    public function setProvince(?string $province) { return $this->setData('province', $province); }
+    // /**
+    //  * @inheritdoc
+    //  */
+    // public function setProvince(?string $province) { return $this->setData('province', $province); }
 }

@@ -1,0 +1,59 @@
+<?php
+
+declare(strict_types=1);
+
+use Hyva\Checkout\Model\Form\AbstractEntityForm;
+use Hyva\Checkout\Model\Form\EntityFieldInterface;
+use Hyva\Theme\Model\ViewModelRegistry;
+use Magento\Framework\Escaper;
+use Magento\Framework\View\Element\Template;
+
+/** @var Template $block */
+/** @var EntityFieldInterface $postcodeElement */
+/** @var ViewModelRegistry $viewModels */
+/** @var Escaper $escaper */
+/** @var AbstractEntityForm $form */
+
+$element = $block->getData('element');
+$form = $element ? $element->getForm() : null;
+
+$postcodeField = $form ? $form->getField('pc_postcode') : null;
+$houseNumberField = $form ? $form->getField('pc_house_number') : null;
+$manualCompletionField = $form ? $form->getField('pc_manual_completion') : null;
+
+if (! $form || ! $postcodeField || ! $houseNumberField) {
+    return;
+}
+?>
+<div x-data="postcodecheckoutNational"
+     class="w-full font-medium text-gray-500 space-y-4"
+     wire:key="postcodecheckout_national_<?= $escaper->escapeHtmlAttr($form->getNamespace()) ?>"
+>
+    <?= $block->getChildHtml('messenger') ?>
+
+    <div class="grid grid-cols-2 gap-x-4">
+        <div>
+            <?= /* @noEscape */ $postcodeField->render() ?>
+        </div>
+        <div>
+            <?= /* @noEscape */ $houseNumberField->render() ?>
+        </div>
+    </div>
+
+    <div class="pcm2-national-addition-row" style="display:none;">
+        <div class="field">
+            <label class="label"><span><?= $escaper->escapeHtml(__('Toevoeging')) ?></span></label>
+            <div class="control">
+                <input type="text"
+                       class="pcm2-national-addition-input form-input w-full"
+                       readonly />
+            </div>
+        </div>
+    </div>
+
+    <?php if ($manualCompletionField): ?>
+        <div class="md:mb-4">
+            <?= /* @noEscape */ $manualCompletionField->render() ?>
+        </div>
+    <?php endif; ?>
+</div>

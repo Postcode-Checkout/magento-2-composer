@@ -1,3 +1,5 @@
+hide_default_fields,"Hide default address fields"
+hide_default_fields_helper,"Yes: hides all default address fields except country. No: shows all default address fields. Use this to simplify the form for users."
 codebrain, "Codebrain BV"
 postcode_checkout, "Postcode Checkout"
 configure_module, "Postcode Checkout plugin settings"

@@ -69,16 +69,16 @@ interface AddressResultInterface
      */
     public function setCity(?string $city);
 
-    /**
-     * Get the province name
-     * @return string|null
-     */
-    public function getProvince(): ?string;
+    // /**
+    //  * Get the province name
+    //  * @return string|null
+    //  */
+    // public function getProvince(): ?string;
 
-    /**
-     * Set the province name
-     * @param string|null $province
-     * @return $this
-     */
-    public function setProvince(?string $province);
+    // /**
+    //  * Set the province name
+    //  * @param string|null $province
+    //  * @return $this
+    //  */
+    // public function setProvince(?string $province);
 }
