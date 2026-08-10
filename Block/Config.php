@@ -75,6 +75,13 @@ class Config extends Template
             ];
         }
 
+        if ($provider === 'demoint') {
+            return [
+                'Codebrainbv_PostcodeCheckout/js/pcm2/demoint',
+            ];
+        }
+        
+
         // National providers: use adapter/core.js which has proper postcode+housenumber UI.
         return [
             'Codebrainbv_PostcodeCheckout/js/adapter/luma',
@@ -96,6 +103,13 @@ class Config extends Template
         if ($provider === 'pro6ppext') {
             return [
                 'Codebrainbv_PostcodeCheckout::js/vendor/pro6pp.js',
+                'Codebrainbv_PostcodeCheckout::js/pcm2/core.js',
+            ];
+        }
+
+        if ($provider === 'demoint') {
+            return [
+                'Codebrainbv_PostcodeCheckout::js/vendor/demointaddress.js',
                 'Codebrainbv_PostcodeCheckout::js/pcm2/core.js',
             ];
         }

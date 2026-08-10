@@ -6,7 +6,7 @@ namespace Codebrainbv\PostcodeCheckout\Model\Provider;
 
 class ProviderType
 {
-    public const INTERNATIONAL = ['postcodenlext', 'pro6ppext'];
+    public const INTERNATIONAL = ['postcodenlext', 'pro6ppext', 'demoint'];
 
     public function isInternational(?string $provider): bool
     {

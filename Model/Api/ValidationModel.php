@@ -9,6 +9,7 @@ use Codebrainbv\PostcodeCheckout\Helper\ConfigHelper;
 use Codebrainbv\PostcodeCheckout\Model\Api\Data\AddressResponseFactory;
 use Codebrainbv\PostcodeCheckout\Model\Api\Data\AddressResultFactory;
 use Codebrainbv\PostcodeCheckout\Model\Api\Data\SuggestionResultFactory;
+use Magento\Framework\App\RequestInterface;
 
 class ValidationModel implements ValidationInterface
 {
@@ -37,29 +38,36 @@ class ValidationModel implements ValidationInterface
      */
     private $api_url = 'https://api.postcode-checkout.nl';
 
+    /**
+     * @var RequestInterface
+     */
+    private $request;
+
     public function __construct(
         ConfigHelper $configHelper,
         AddressResponseFactory $responseFactory,
         AddressResultFactory $resultFactory,
         SuggestionResultFactory $suggestionResultFactory,
+        RequestInterface $request
     ) {
         $this->configHelper = $configHelper;
         $this->responseFactory = $responseFactory;
         $this->resultFactory = $resultFactory;
         $this->suggestionResultFactory = $suggestionResultFactory;
+        $this->request = $request;
     }
 
 
     /**
      * @inheritdoc
      */
-    public function getInternationalSuggestion($context, $term): SuggestionResultInterface
+    public function getSuggestion($country, $query): SuggestionResultInterface
     {
         $response = $this->suggestionResultFactory->create();
 
-        if (empty($context) || empty($term)) {
+        if (empty($country) || empty($query)) {
             return $response
-                ->setError('Context and Term are required');
+                ->setError('Country and Query are required');
         }
 
         $apiKey = $this->configHelper->getApiKey();
@@ -70,8 +78,8 @@ class ValidationModel implements ValidationInterface
 
 
         // In magento2Test: $context is altijd ISO3, $term is altijd plain base64
-        $url = $this->api_url . '/international/v2/suggestions?country=' . rawurlencode($context)
-            . '&query=' . rawurlencode(base64_decode($term));
+        $url = $this->api_url . '/international/v2/suggestions?country=' . $country
+            . '&query=' . urlencode($query);
 
         $rawResponse = $this->callInternationalApi($url, $apiKey);
 
@@ -80,11 +88,31 @@ class ValidationModel implements ValidationInterface
                 ->setError($rawResponse['message']);
         }
 
-        // Process the successful response
-        $matches = $rawResponse['result']['matches'] ?? [];
-        $newContext = $rawResponse['result']['newContext'] ?? null;
+        $result = $rawResponse['result'] ?? [];
 
-        return $response->setNewContext($newContext)
+        $matches = $result['matches'] ?? [];
+
+        // Pro6PP
+        if (empty($matches) && isset($result['suggestions']) && is_array($result['suggestions'])) {
+            $matches = $result['suggestions'];
+        }
+
+        if (empty($matches)) {
+            $matches = [];
+
+            foreach (($result['cities'] ?? []) as $city) {
+                $matches[] = $city;
+            }
+
+            foreach (($result['streets'] ?? []) as $street) {
+                $matches[] = $street;
+            }
+        }
+
+        $newContext = $result['newContext'] ?? null;
+
+        return $response
+            ->setNewContext($newContext)
             ->setMatches($matches)
             ->setMessage('Success');
     }
@@ -92,14 +120,14 @@ class ValidationModel implements ValidationInterface
     /**
      * @inheritdoc
      */
-    public function getInternationalDetails($context): AddressResponseInterface
+    public function getDetails($query): AddressResponseInterface
     {
         $response = $this->responseFactory->create();
 
-        if (empty($context)) {
+        if (empty($query)) {
             return $response
                 ->setStatus(false)
-                ->setMessage('Context is required')
+                ->setMessage('Query is required')
                 ->setResult(null);
         }
 
@@ -111,7 +139,7 @@ class ValidationModel implements ValidationInterface
                 ->setResult(null);
         }
 
-        $url = $this->api_url . '/international/v2/details?query=' . rawurlencode($context)
+        $url = $this->api_url . '/international/v2/details?query=' . rawurlencode($query)
             . '&provider=' . rawurlencode($this->configHelper->getConfiguredProvider());
         $rawResponse = $this->callInternationalApi($url, $apiKey);
 
@@ -124,15 +152,21 @@ class ValidationModel implements ValidationInterface
 
         $result = $this->resultFactory->create();
 
-        // Map the international response to the result object
-        $addressData = $rawResponse['result']['address'] ?? [];
-        
-        $result->setStreet($addressData['street'] ?? null)
-            ->setHousenumber($addressData['buildingNumber'] ?? null)
-            ->setPostcode($addressData['postcode'] ?? null)
-            ->setCity($addressData['locality'] ?? null)
-            ->setProvince($addressData['province'] ?? null)
-            ->setAddition($addressData['buildingNumberAddition'] ?? null);
+        $addressData = [];
+        if (isset($rawResponse['result']['address']) && is_array($rawResponse['result']['address'])) {
+            $addressData = $rawResponse['result']['address'];
+        } elseif (isset($rawResponse['result']) && is_array($rawResponse['result'])) {
+            $addressData = $rawResponse['result'];
+        } elseif (isset($rawResponse['address']) && is_array($rawResponse['address'])) {
+            $addressData = $rawResponse['address'];
+        }
+
+        $result->setStreet($addressData['street'] ?? $addressData['streetName'] ?? null)
+            ->setHousenumber($addressData['buildingNumber'] ?? $addressData['houseNumber'] ?? $addressData['housenumber'] ?? $addressData['street_number'] ?? null)
+            ->setPostcode($addressData['postcode'] ?? $addressData['postalCode'] ?? null)
+            ->setCity($addressData['locality'] ?? $addressData['city'] ?? null)
+            ->setProvince($addressData['province'] ?? $addressData['state'] ?? null)
+            ->setAddition($addressData['buildingNumberAddition'] ?? $addressData['addition'] ?? null);
 
         return $response
             ->setStatus(true)
@@ -257,8 +291,11 @@ class ValidationModel implements ValidationInterface
         $headers = [
             'Authorization: Bearer ' . $apiKey,
             'Referer: ' . $this->configHelper->getShopUrl(),
-            'X-Autocomplete-Session: ' . ($_SERVER['HTTP_X_AUTOCOMPLETE_SESSION'] ?? uniqid()),
         ];
+
+        if ($this->configHelper->getConfiguredProvider() == 'postcodenlext') {
+            $headers[] = 'X-Autocomplete-Session: ' . ($_SERVER['HTTP_X_AUTOCOMPLETE_SESSION'] ?? uniqid());
+        }
 
         $ch = curl_init($url);
         curl_setopt_array($ch, [
@@ -304,63 +341,5 @@ class ValidationModel implements ValidationInterface
             'message' => null,
             'result' => $decoded ?? null
         ];
-    }
-
-    /**
-     * Pro6PP autocomplete proxy.
-     *
-     * @param string $country  ISO-2 country code
-     * @param string $query    Search query
-     * @param int|null $limit  Max results (optional)
-     * @return array
-     */
-    public function getPro6ppAutocomplete(string $country, string $query, $limit = null): array
-    {
-        $country = strtoupper(trim($country));
-        $query   = trim($query);
-
-        if (empty($country) || empty($query)) {
-            return ['stage' => 'final', 'suggestions' => [], 'error' => true, 'message' => 'Country and query are required'];
-        }
-
-        $apiKey = $this->configHelper->getApiKey();
-        if (empty($apiKey)) {
-            return ['stage' => 'final', 'suggestions' => [], 'error' => true, 'message' => 'Module is not yet configured (no API key)'];
-        }
-
-        $url = $this->api_url . '/international/v2/suggestions'
-            . '?country=' . rawurlencode($country)
-            . '&query=' . rawurlencode($query);
-
-        if ($limit !== null && $limit !== '') {
-            $url .= '&limit=' . (int) $limit;
-        }
-
-        $rawResponse = $this->callInternationalApi($url, $apiKey);
-
-        if ($rawResponse['error']) {
-            return ['stage' => 'final', 'suggestions' => [], 'error' => true, 'message' => $rawResponse['message']];
-        }
-
-        $apiData = $rawResponse['result'];
-
-        if (!is_array($apiData)) {
-            return ['stage' => 'final', 'suggestions' => []];
-        }
-
-        if (isset($apiData['stage'])) {
-            return [
-                'stage'       => $apiData['stage'],
-                'suggestions' => $apiData['suggestions'] ?? [],
-                'cities'      => $apiData['cities'] ?? [],
-                'streets'     => $apiData['streets'] ?? [],
-            ];
-        }
-
-        if (isset($apiData['suggestions']) && is_array($apiData['suggestions'])) {
-            return ['stage' => 'final', 'suggestions' => $apiData['suggestions']];
-        }
-
-        return ['stage' => 'final', 'suggestions' => $apiData];
     }
 }

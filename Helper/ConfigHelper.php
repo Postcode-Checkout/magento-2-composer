@@ -64,14 +64,11 @@ class ConfigHelper extends AbstractHelper
             'debug_mode' => $this->getConfigValue('postcodecheckout_section/extra_settings/debug_mode'),
             'provider' => $provider,
             'national_providers' => ['demo', 'postcodenl', 'pro6pp', 'postcodeapi', 'nederland_postcode', 'postcode_connect'],
-            'international_providers' => ['postcodenlext', 'pro6ppext'],
+            'international_providers' => ['postcodenlext', 'pro6ppext', 'demoint'],
             'api_urls' => [
                 'national' => $apiUrl . 'national/address',
-                'postcodenlext_suggest' => $apiUrl . 'international/suggest/${context}/${term}',
-                'postcodenlext_details' => $apiUrl . 'international/details/${context}',
-                'international_suggest' => $apiUrl . 'international/suggest/${context}/${term}',
-                'international_details' => $apiUrl . 'international/details/${context}',
-                'pro6pp_autocomplete' => $baseUrl . 'postcodecheckout/pro6pp/autocomplete',
+                'suggest' => $apiUrl . 'international/suggest',
+                'details' => $apiUrl . 'international/details',
             ],
         ];
 
@@ -79,6 +76,8 @@ class ConfigHelper extends AbstractHelper
             $config['supported_countries'] = $this->getCountriesPostcodeNlExt();
         } elseif ($provider === 'pro6ppext') {
             $config['supported_countries'] = $this->getCountriesPro6ppExt();
+        } elseif ($provider === 'demoint') {
+            $config['supported_countries'] = $this->getCountriesDemoInt();
         } else {
             // National providers only work for the Netherlands.
             $config['supported_countries'] = [
@@ -107,10 +106,9 @@ class ConfigHelper extends AbstractHelper
 
     private function getCountriesPro6ppExt(): array
     {
-        $cacheDir = dirname(__DIR__) . DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR;
-
+        $cacheDir = BP . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'cache_postcode_checkout' . DIRECTORY_SEPARATOR;
         if (!is_dir($cacheDir)) {
-            mkdir($cacheDir, 0755, true);
+            mkdir($cacheDir, 0777, true);
         }
 
         $cacheFilePath = $cacheDir . 'pro6pp_countries.json';
@@ -211,9 +209,9 @@ class ConfigHelper extends AbstractHelper
     }
     private function getCountriesPostcodeNlExt(): array
     {
-        $cacheDir = dirname(__DIR__) .  DIRECTORY_SEPARATOR . 'cache' . DIRECTORY_SEPARATOR;
+        $cacheDir = BP . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'cache_postcode_checkout' . DIRECTORY_SEPARATOR;
         if (!is_dir($cacheDir)) {
-            mkdir($cacheDir, 0755, true);
+            mkdir($cacheDir, 0777, true);
         }
         $cacheFilePath = $cacheDir . 'postcodeEU_countries.json';
 
@@ -266,5 +264,37 @@ class ConfigHelper extends AbstractHelper
         ]));
 
         return $countries ?: $fallback;
+    }
+
+    private function getCountriesDemoInt(): array
+    {
+        $cacheDir = BP . DIRECTORY_SEPARATOR . 'var' . DIRECTORY_SEPARATOR . 'cache_postcode_checkout' . DIRECTORY_SEPARATOR;
+        if (!is_dir($cacheDir)) {
+            mkdir($cacheDir, 0777, true);
+        }
+        $cacheFilePath = $cacheDir . 'demoInt_countries.json';
+
+        $countries = [
+            ['name' => 'The Netherlands', 'iso3' => 'NLD', 'iso2' => 'NL'],
+            ['name' => 'Belgium', 'iso3' => 'BEL', 'iso2' => 'BE'],
+            ['name' => 'Germany', 'iso3' => 'DEU', 'iso2' => 'DE'],
+            ['name' => 'United Kingdom', 'iso3' => 'GBR', 'iso2' => 'GB'],
+        ];
+
+        if (file_exists($cacheFilePath) && is_readable($cacheFilePath)) {
+            $data = json_decode(file_get_contents($cacheFilePath), true);
+            if (!empty($data['expiry']) && time() < $data['expiry']) {
+                return $data['countries'] ?? $countries;
+            }
+        }
+
+        $expiry = time() + 86400;
+
+        file_put_contents($cacheFilePath, json_encode([
+            'countries' => $countries,
+            'expiry'    => $expiry,
+        ], JSON_PRETTY_PRINT));
+
+        return $countries;
     }
 }

@@ -2,15 +2,17 @@
     if (typeof define === 'function' && define.amd) {
         define([
             'Codebrainbv_PostcodeCheckout/js/vendor/autocompleteaddress',
+            'Codebrainbv_PostcodeCheckout/js/vendor/demointaddress',
             'Codebrainbv_PostcodeCheckout/js/vendor/pro6pp'
         ], factory);
     } else {
         root.PCM2Core = factory(
             root.PostcodeNl && root.PostcodeNl.AutocompleteAddress,
+            root.DemoIntAddress,
             root.Pro6PP
         );
     }
-}(this, function (AutocompleteAddress, Pro6PP) {
+}(this, function (AutocompleteAddress, DemoIntAddress, Pro6PP) {
     'use strict';
     var fields, elements, validationFields, countryCode;
     var initializedForms = [];
@@ -48,7 +50,7 @@
     function pcm2_getAutocompleteRand() {
         if (!_pcm2AutocompleteRand) {
             var chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-            _pcm2AutocompleteRand = Array.from({length: 10}, function () {
+            _pcm2AutocompleteRand = Array.from({ length: 10 }, function () {
                 return chars[Math.floor(Math.random() * chars.length)];
             }).join('');
         }
@@ -83,12 +85,6 @@
         var provider = (window.pcm2_config && window.pcm2_config.provider || '').toLowerCase();
         log('Provider:', provider);
         return provider;
-    }
-
-    function encodeTerm(term) {
-        var encoded = new TextEncoder().encode(term);
-        var binary = Array.from(encoded, (byte) => String.fromCharCode(byte)).join('');
-        return window.btoa(binary);
     }
 
     function pcm2_addLookup() {
@@ -174,21 +170,16 @@
         var provider = getProvider();
         log('Widget provider:', provider, 'searchField:', searchField);
 
-        var tryAttach = function() {
-            // The vendor libraries are plain (esbuild IIFE / global) scripts loaded via
-            // separate <script> tags. Depending on whether RequireJS is present on the
-            // page, the factory params can be undefined (AMD resolves a non-AMD module
-            // to undefined) or were bound before the global finished loading. Always
-            // fall back to the live globals so this retry loop can pick the library up
-            // once it is ready, instead of re-checking a stale closure reference.
+        var tryAttach = function () {
             var Pro6PPLib = Pro6PP || (typeof window !== 'undefined' && window.Pro6PP) || null;
             var AutocompleteLib = AutocompleteAddress ||
                 (window.PostcodeNl && window.PostcodeNl.AutocompleteAddress) || null;
+            var DemoLib = DemoIntAddress || window.DemoIntAddress || null;
 
             if (provider === 'pro6ppext') {
                 if (Pro6PPLib && typeof Pro6PPLib.attach === 'function') {
                     log('Initializing Pro6PP widget...');
-                    var autocompleteUrl = pcm2_config.api_urls.pro6pp_autocomplete;
+                    var autocompleteUrl = pcm2_config.api_urls.suggest;
                     if (!autocompleteUrl) {
                         log('[Pro6PP] pro6pp_autocomplete URL niet geconfigureerd');
                         return false;
@@ -208,10 +199,33 @@
                                             }
                                             return { stage: 'final', suggestions: data };
                                         }
-                                        if (data && Array.isArray(data.suggestions)) {
-                                            return data;
+                                        if (data) {
+
+                                            // Magento response
+                                            if (Array.isArray(data.matches)) {
+                                                data.suggestions = data.matches;
+
+                                                if (!data.stage) {
+                                                    data.stage = 'mixed';
+                                                }
+
+                                                return data;
+                                            }
+
+                                            // Native Pro6PP response
+                                            if (Array.isArray(data.suggestions)) {
+                                                if (!data.stage) {
+                                                    data.stage = 'mixed';
+                                                }
+
+                                                return data;
+                                            }
                                         }
-                                        return { stage: 'final', suggestions: [] };
+
+                                        return {
+                                            stage: 'final',
+                                            suggestions: []
+                                        };                                    
                                     });
                                 }
                             };
@@ -221,7 +235,7 @@
                     var widget = Pro6PPLib.attach(searchField, {
                         country: countryCode,
                         apiUrl: autocompleteUrl,
-                        limit: 20,
+                        limit: 9999,
                         fetcher: pro6ppFetcher,
                         onSelect: function (result) {
                             log('[Pro6PP] onSelect:', result);
@@ -233,16 +247,7 @@
                     autocompleteInstances[formId] = widget;
                     return true;
                 }
-            } else if (AutocompleteLib) {
-                // Reuse the widget already bound to this input instead of creating a
-                // second one. The vendor destroy() bails out early when its menu is no
-                // longer in the DOM (e.g. after a magewire re-render), leaving the old
-                // keydown/input listeners attached - so recreating would stack widgets
-                // and fire the suggest request multiple times (each debounced widget
-                // captures the value at a slightly different moment, hence several calls
-                // with different terms). The instance is stored on the element itself, so
-                // a genuinely replaced input has no instance and falls through to a fresh
-                // attach; a persisting (wire:ignore) input keeps its single widget.
+            } else if (provider == 'postcodenlext' && AutocompleteLib) {
                 if (searchField._pcm2_acInstance) {
                     log('Reusing existing PostcodeNL widget, updating context to', iso3Code);
                     if (typeof searchField._pcm2_acInstance.setCountry === 'function') {
@@ -254,32 +259,25 @@
 
                 log('Initializing PostcodeNL AutocompleteAddress widget...');
 
-                var autocomplete = new AutocompleteLib(searchField, {
-                    autocompleteUrl: pcm2_config.api_urls.postcodenlext_suggest || pcm2_config.api_urls.international_suggest,
-                    addressDetailsUrl: pcm2_config.api_urls.postcodenlext_details || pcm2_config.api_urls.international_details,
+                var autocompleteEU = new AutocompleteLib(searchField, {
+                    autocompleteUrl: pcm2_config.api_urls.suggest + '?country=${country}&query=${query}',
+                    addressDetailsUrl: pcm2_config.api_urls.details + '?query=${query}',
                     autoFocus: true,
                     autoSelectSingleAddress: true,
                     showLogo: false,
                     context: iso3Code
                 });
-                autocomplete.getSuggestions = function (context, term, response) {
-                    var encodedTerm = encodeTerm(term);
-                    var url = this.options.autocompleteUrl.replace('${context}', encodeURIComponent(context)).replace('${term}', encodeURIComponent(encodedTerm));
+                autocompleteEU.getSuggestions = function (context, term, response) {
+                    var url = this.options.autocompleteUrl.replace('${country}', encodeURIComponent(context)).replace('${query}', encodeURIComponent(term));
                     return pcm2XhrGetDeduped(this, url, response);
                 };
-                autocomplete.getDetails = function (addressId, response) {
-                    var url = this.options.addressDetailsUrl.replace('${context}', encodeURIComponent(addressId));
+                autocompleteEU.getDetails = function (addressId, response) {
+                    var url = this.options.addressDetailsUrl.replace('${query}', encodeURIComponent(addressId));
                     return pcm2XhrGetDeduped(this, url, response);
                 };
-                searchField._pcm2_acInstance = autocomplete;
-                autocompleteInstances[formId] = autocomplete;
+                searchField._pcm2_acInstance = autocompleteEU;
+                autocompleteInstances[formId] = autocompleteEU;
 
-                // The vendor appends its suggestion menu to <body>, outside the Hyvä
-                // checkout overlay. Hyvä closes the overlay on any outside (click.away)
-                // pointer event, so clicking a suggestion would dismiss the whole form.
-                // Stop the menu's pointer events from bubbling to document so the
-                // outside-click handler never fires. Selection still works because the
-                // vendor's own listeners live on the same wrapper element.
                 document.querySelectorAll('.postcodenl-autocomplete-menu:not([data-pcm2-overlay-guard])').forEach(function (menuEl) {
                     menuEl.setAttribute('data-pcm2-overlay-guard', '1');
                     ['mousedown', 'pointerdown', 'touchstart', 'click'].forEach(function (evt) {
@@ -308,14 +306,90 @@
                     });
                 }
                 return true;
+            } else if (provider == 'demoint' && typeof DemoLib === 'function') {
+                if (searchField._pcm2_acInstance) {
+                    log('Reusing existing demoInt widget, updating context to', iso3Code);
+                    if (typeof searchField._pcm2_acInstance.setCountry === 'function') {
+                        searchField._pcm2_acInstance.setCountry(iso3Code);
+                    }
+                    autocompleteInstances[formId] = searchField._pcm2_acInstance;
+                    return true;
+                }
+
+                log('Initializing DemoInt widget...');
+
+                var autocompleteDemo = new DemoLib(searchField, {
+                    autocompleteUrl: pcm2_config.api_urls.suggest + '?country=${country}&query=${query}',
+                    addressDetailsUrl: pcm2_config.api_urls.details + '?query=${query}',
+                    autoFocus: true,
+                    autoSelect: true,
+                    prefixMatch: true,
+                    lowercaseContext: false,
+                    context: iso3Code
+                });
+
+                autocompleteDemo._fetchSuggestions = function (term) {
+                    const self = this;
+
+                    // Encode the term to binary to preserve whitespace
+                    // and then encode it to base64 for the URL.
+                    const encodedTerm = new TextEncoder().encode(term),
+                        binaryTerm = Array.from(encodedTerm, (byte) => String.fromCodePoint(byte)).join(''),
+                        url = this.options.autocompleteUrl
+                            .replace('${country}', encodeURIComponent(this.context))
+                            .replace('${query}', encodeURIComponent(binaryTerm));
+
+                    this._xhrGet(url, function (data) {
+                        const matches = self._filterMatches(
+                            (data && Array.isArray(data.matches)) ? data.matches : [],
+                            term
+                        );
+
+                        self._render(matches);
+
+                        if (self.options.autoSelect && matches.length === 1 && matches[0].precision === 'Address') {
+                            self._select(0);
+                        }
+                    });
+                };
+
+                searchField._pcm2_acInstance = autocompleteDemo;
+                autocompleteInstances[formId] = autocompleteDemo;
+
+                document.querySelectorAll('.DemoIntAddress-menu:not([data-pcm2-overlay-guard])').forEach(function (menuEl) {
+                    menuEl.setAttribute('data-pcm2-overlay-guard', '1');
+                    ['mousedown', 'pointerdown', 'touchstart', 'click'].forEach(function (evt) {
+                        menuEl.addEventListener(evt, function (e) { e.stopPropagation(); });
+                    });
+                });
+
+                if (searchField.getAttribute('data-pcm2-select-bound') !== '1') {
+                    searchField.setAttribute('data-pcm2-select-bound', '1');
+                    searchField.addEventListener('DemoIntAddress-details', function (event) {
+
+                        const result = event.detail.result ?? event.detail;
+                        const detailsPayload = result && typeof result === 'object' ? result : (event.detail || {});
+
+                        searchField.value = detailsPayload.label || event.detail.label || '';
+
+                        log('[DemoInt] details response:', detailsPayload);
+
+                        if (detailsPayload) {
+                            pcm2_fillAddressFields(detailsPayload, contextCountryField);
+                        } else {
+                            pcm2_updatePreview(true, contextCountryField);
+                        }
+                    });
+                }
+                return true;
             }
             return false;
         };
 
         if (!tryAttach()) {
             var attachAttempts = 0;
-            var attachInterval = setInterval(function() {
-                
+            var attachInterval = setInterval(function () {
+
                 log('Retrying widget attach, attempt', attachAttempts + 1);
 
                 attachAttempts++;
@@ -382,7 +456,7 @@
             }
 
             var countrySwitchDiv = null;
-            
+
             if (fields.country) {
                 countrySwitchDiv = fields.country.closest('.field-country_id');
             }
@@ -407,7 +481,7 @@
                 } else if (streetFieldEl) {
                     log('pcm2_hideForm: inserting lookup HTML after street field for', suffix);
                     streetFieldEl.insertAdjacentHTML('afterend', html);
-                } else  {
+                } else {
                     log('pcm2_hideForm: inserting lookup HTML before country field for', suffix);
                     elements.country.insertAdjacentHTML('beforebegin', html);
                 }
@@ -527,84 +601,84 @@
     function pcm2_fillAddressFields(result, contextCountryField) {
         fields = pcm2_getFields(contextCountryField);
         validationFields = pcm2_getValidationFields(contextCountryField);
-            if (!result || Object.keys(result).length === 0) {
-                pcm2_updatePreview(true, contextCountryField);
-                var _fCtx = contextCountryField ? (contextCountryField.closest('form') || document) : document;
-                var _addRow = _fCtx.querySelector('.pcm2-national-addition-row');
-                if (_addRow) { _addRow.style.display = 'none'; var _addIn = _addRow.querySelector('.pcm2-national-addition-input'); if (_addIn) _addIn.value = ''; }
-                return;
-            }
+        if (!result || Object.keys(result).length === 0) {
+            pcm2_updatePreview(true, contextCountryField);
+            var _fCtx = contextCountryField ? (contextCountryField.closest('form') || document) : document;
+            var _addRow = _fCtx.querySelector('.pcm2-national-addition-row');
+            if (_addRow) { _addRow.style.display = 'none'; var _addIn = _addRow.querySelector('.pcm2-national-addition-input'); if (_addIn) _addIn.value = ''; }
+            return;
+        }
 
-            var houseNumber = result.housenumber || result.street_number || '';
+        var houseNumber = result.housenumber || result.street_number || '';
 
-            var placement = window.pcm2_config && parseInt(window.pcm2_config.housenumber_addition_address2, 10);
-            if (placement === 0) {
-                if (fields.address_1) fields.address_1.value = (result.street || '') + (houseNumber ? ' ' + houseNumber : '') + (result.addition ? ' ' + result.addition : '');
-            } else if (placement === 1) {
-                if (fields.address_1) fields.address_1.value = (result.street || '') + (houseNumber ? ' ' + houseNumber : '');
-                if (fields.address_2) fields.address_2.value = (result.addition ? result.addition : '');
-            } else if (placement === 2) {
-                if (fields.address_1) fields.address_1.value = (result.street || '');
-                if (fields.address_2) fields.address_2.value = (houseNumber ? houseNumber : '') + (result.addition ? ' ' + result.addition : '');
-            } else if (placement === 3) {
-                if (fields.address_1) fields.address_1.value = (result.street || '');
-                if (fields.address_2) fields.address_2.value = (houseNumber ? houseNumber : '');
-                if (fields.address_3) fields.address_3.value = (result.addition ? result.addition : '');
+        var placement = window.pcm2_config && parseInt(window.pcm2_config.housenumber_addition_address2, 10);
+        if (placement === 0) {
+            if (fields.address_1) fields.address_1.value = (result.street || '') + (houseNumber ? ' ' + houseNumber : '') + (result.addition ? ' ' + result.addition : '');
+        } else if (placement === 1) {
+            if (fields.address_1) fields.address_1.value = (result.street || '') + (houseNumber ? ' ' + houseNumber : '');
+            if (fields.address_2) fields.address_2.value = (result.addition ? result.addition : '');
+        } else if (placement === 2) {
+            if (fields.address_1) fields.address_1.value = (result.street || '');
+            if (fields.address_2) fields.address_2.value = (houseNumber ? houseNumber : '') + (result.addition ? ' ' + result.addition : '');
+        } else if (placement === 3) {
+            if (fields.address_1) fields.address_1.value = (result.street || '');
+            if (fields.address_2) fields.address_2.value = (houseNumber ? houseNumber : '');
+            if (fields.address_3) fields.address_3.value = (result.addition ? result.addition : '');
+        }
+        if (placement === 0) {
+            if (fields.address_2) fields.address_2.value = '';
+            if (fields.address_3) fields.address_3.value = '';
+        } else if (placement === 1 || placement === 2) {
+            if (fields.address_3) fields.address_3.value = '';
+        }
+        if (fields.postcode) fields.postcode.value = result.postcode || '';
+        if (fields.city) fields.city.value = result.city || '';
+        if (fields.region) {
+            var regionValue = result.region || '';
+            if (fields.region.tagName === 'SELECT') {
+                var opts = Array.prototype.slice.call(fields.region.options);
+                var matchedOpt = opts.find(function (o) {
+                    return o.text.trim().toLowerCase() === regionValue.toLowerCase() ||
+                        o.value === regionValue;
+                });
+                fields.region.value = matchedOpt ? matchedOpt.value : '';
+            } else {
+                fields.region.value = regionValue;
             }
-            if (placement === 0) {
-                if (fields.address_2) fields.address_2.value = '';
-                if (fields.address_3) fields.address_3.value = '';
-            } else if (placement === 1 || placement === 2) {
-                if (fields.address_3) fields.address_3.value = '';
-            }
-            if (fields.postcode) fields.postcode.value = result.postcode || '';
-            if (fields.city) fields.city.value = result.city || '';
-            if (fields.region) {
-                var regionValue = result.region || '';
-                if (fields.region.tagName === 'SELECT') {
-                    var opts = Array.prototype.slice.call(fields.region.options);
-                    var matchedOpt = opts.find(function (o) {
-                        return o.text.trim().toLowerCase() === regionValue.toLowerCase() ||
-                               o.value === regionValue;
-                    });
-                    fields.region.value = matchedOpt ? matchedOpt.value : '';
+        }
+        var _hyva = typeof window.Alpine !== 'undefined';
+        ['address_1', 'address_2', 'address_3', 'postcode', 'city', 'region'].forEach(function (fieldName) {
+            if (fields[fieldName]) {
+                var el = fields[fieldName];
+                if (el._x_model && typeof el._x_model.set === 'function') {
+                    el._x_model.set(el.value);
                 } else {
-                    fields.region.value = regionValue;
+                    el.dispatchEvent(new Event('input', { bubbles: true }));
                 }
             }
-            var _hyva = typeof window.Alpine !== 'undefined';
+        });
+
+        if (!_hyva) {
             ['address_1', 'address_2', 'address_3', 'postcode', 'city', 'region'].forEach(function (fieldName) {
-                if (fields[fieldName]) {
-                    var el = fields[fieldName];
-                    if (el._x_model && typeof el._x_model.set === 'function') {
-                        el._x_model.set(el.value);
-                    } else {
-                        el.dispatchEvent(new Event('input', { bubbles: true }));
-                    }
+                if (fields[fieldName] && fields[fieldName].value) {
+                    fields[fieldName].dispatchEvent(new Event('change', { bubbles: true }));
                 }
             });
+        }
+        pcm2_updatePreview(false, contextCountryField);
 
-            if (!_hyva) {
-                ['address_1', 'address_2', 'address_3', 'postcode', 'city', 'region'].forEach(function (fieldName) {
-                    if (fields[fieldName] && fields[fieldName].value) {
-                        fields[fieldName].dispatchEvent(new Event('change', { bubbles: true }));
-                    }
-                });
+        var _formCtx = contextCountryField ? (contextCountryField.closest('form') || document) : document;
+        var _additionRow = _formCtx.querySelector('.pcm2-national-addition-row');
+        if (_additionRow) {
+            var _additionInput = _additionRow.querySelector('.pcm2-national-addition-input');
+            if (result.addition) {
+                if (_additionInput) _additionInput.value = result.addition;
+                _additionRow.style.display = '';
+            } else {
+                if (_additionInput) _additionInput.value = '';
+                _additionRow.style.display = 'none';
             }
-            pcm2_updatePreview(false, contextCountryField);
-
-            var _formCtx = contextCountryField ? (contextCountryField.closest('form') || document) : document;
-            var _additionRow = _formCtx.querySelector('.pcm2-national-addition-row');
-            if (_additionRow) {
-                var _additionInput = _additionRow.querySelector('.pcm2-national-addition-input');
-                if (result.addition) {
-                    if (_additionInput) _additionInput.value = result.addition;
-                    _additionRow.style.display = '';
-                } else {
-                    if (_additionInput) _additionInput.value = '';
-                    _additionRow.style.display = 'none';
-                }
-            }
+        }
     }
 
     function pcm2_updatePreview(errorMsg = false, contextCountryField) {
@@ -719,7 +793,7 @@
             var base = hasZeroBasedIds ? 0 : 1;
 
             return formContext.querySelector('#street_' + (index + base)) ||
-                   formContext.querySelector('#street_' + (index + 1));
+                formContext.querySelector('#street_' + (index + 1));
         }
 
         fields = {
@@ -730,9 +804,9 @@
             city: formContext.querySelector('input[name="city"]'),
 
             region: formContext.querySelector('input[name="region"]') ||
-                    formContext.querySelector('select[name="region_id"]') ||
-                    formContext.querySelector('select[name="region"]') ||
-                    formContext.querySelector('input[name="region_id"]'),
+                formContext.querySelector('select[name="region_id"]') ||
+                formContext.querySelector('select[name="region"]') ||
+                formContext.querySelector('input[name="region_id"]'),
             country: contextCountryField || formContext.querySelector('select[name="country_id"]')
         };
         return fields;
@@ -862,7 +936,7 @@
     function pcm2_isSupportedCountry(countryCode) {
         var countries = pcm2_config.supported_countries || [];
         if (!countries.length) return false;
-        if (countries.find(function(c) { return c.iso2 === countryCode; })) {
+        if (countries.find(function (c) { return c.iso2 === countryCode; })) {
             return true;
         }
         return false;
@@ -875,7 +949,7 @@
 
     function pcm2_convertIso2ToIso3(iso2) {
         var countries = pcm2_config.supported_countries || [];
-        var found = countries.find(function(c) { return c.iso2 === iso2; });
+        var found = countries.find(function (c) { return c.iso2 === iso2; });
         return found ? found.iso3 : iso2;
     }
 

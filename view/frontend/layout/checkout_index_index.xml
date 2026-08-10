@@ -6,6 +6,7 @@
         <!-- Load CSS globally -->
         <css src="Codebrainbv_PostcodeCheckout::css/vendor/autocompleteaddress.css"/>
         <css src="Codebrainbv_PostcodeCheckout::css/vendor/pro6pp.css"/>
+        <css src="Codebrainbv_PostcodeCheckout::css/vendor/demointaddress.css"/>
         <css src="Codebrainbv_PostcodeCheckout::css/postcode-checkout.css"/>
     </head>
 

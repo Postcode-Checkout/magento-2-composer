@@ -30,11 +30,6 @@ class PostcodeCheckout implements ArgumentInterface
 
     public function isInternationalProvider(): bool
     {
-        return in_array($this->getConfiguredProvider(), ['postcodenlext', 'pro6ppext'], true);
-    }
-
-    public function isProviderPostcodeNlExt(): bool
-    {
-        return $this->isInternationalProvider();
+        return in_array($this->getConfiguredProvider(), ['postcodenlext', 'pro6ppext', 'demoint'], true);
     }
 }

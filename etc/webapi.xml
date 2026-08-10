@@ -2,16 +2,16 @@
 <routes xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Webapi:etc/webapi.xsd">
 
     <!-- International suggest -->
-    <route url="/V1/codebrainbv_postcodecheckout/international/suggest/:context/:term" method="GET">
-        <service class="Codebrainbv\PostcodeCheckout\Api\ValidationInterface" method="getInternationalSuggestion"/>
+    <route url="/V1/codebrainbv_postcodecheckout/international/suggest" method="GET">
+        <service class="Codebrainbv\PostcodeCheckout\Api\ValidationInterface" method="getSuggestion"/>
         <resources>
            <resource ref="anonymous" />
         </resources>
     </route>
 
     <!-- International details -->
-    <route url="/V1/codebrainbv_postcodecheckout/international/details/:context" method="GET">
-        <service class="Codebrainbv\PostcodeCheckout\Api\ValidationInterface" method="getInternationalDetails"/>
+    <route url="/V1/codebrainbv_postcodecheckout/international/details" method="GET">
+        <service class="Codebrainbv\PostcodeCheckout\Api\ValidationInterface" method="getDetails"/>
         <resources>
            <resource ref="anonymous" />
         </resources>
