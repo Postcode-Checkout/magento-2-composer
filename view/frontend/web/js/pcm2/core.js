@@ -19,6 +19,8 @@
     var autocompleteInstances = {};
     var placementHousenumberAdditions;
     var _pcm2AutocompleteRand = null;
+    var pcm2CountrySwitching = {};
+    var pcm2ManualMode = {};
 
     // Coalesces identical, overlapping API requests into a single XHR. If more than
     // one PostcodeNl widget gets bound to the same field (e.g. on re-init), or the
@@ -76,7 +78,7 @@
     }
 
     function log() {
-        if (window.pcm2_config && window.pcm2_config.debug_mode == 1 && window.console) {
+        if (window.pcm2_config && window.pcm2_config.debug_mode == '1' && window.console) {
             console.log('[PCM2]', ...arguments);
         }
     }
@@ -87,50 +89,210 @@
         return provider;
     }
 
+    function pcm2_findManualCompletionCheckbox(contextCountryField) {
+        var formContext = contextCountryField
+            ? (contextCountryField.closest('form') || contextCountryField.closest('.checkout-shipping-address') ||
+                contextCountryField.closest('.checkout-billing-address') || document)
+            : document;
+
+        return formContext.querySelector(
+            'input[type="checkbox"][name="pc_manual_completion"],' +
+            'input[type="checkbox"][id="pc_manual_completion"],' +
+            'input[type="checkbox"][name*="manual_completion"],' +
+            'input[type="checkbox"][id*="manual_completion"],' +
+            'input[type="checkbox"][name="disable_checkbox"],' +
+            'input[type="checkbox"][id="disable_checkbox"]'
+        );
+    }
+
+    function pcm2_setManualCompletionReadonly(contextCountryField) {
+        if (getProvider() !== 'pro6ppext') {
+            return;
+        }
+
+        var checkbox = pcm2_findManualCompletionCheckbox(contextCountryField);
+        if (!checkbox) {
+            return;
+        }
+
+        var hideFields = String((window.pcm2_config || {}).hide_default_address_fields) === '1';
+        var manualCompletion = checkbox.checked;
+        var addressFields = pcm2_getFields(contextCountryField);
+
+        // When the default address fields are hidden, the manual form is editable.
+        // When they are visible, keep them readonly until manual completion is enabled.
+        if (hideFields) {
+            manualCompletion = true;
+        }
+
+        ['address_1', 'address_2', 'address_3', 'postcode', 'city', 'region'].forEach(function (key) {
+            var input = addressFields[key];
+
+            if (!input || input.type === 'hidden') {
+                return;
+            }
+
+            if (input.tagName === 'SELECT') {
+                input.setAttribute('aria-readonly', manualCompletion ? 'false' : 'true');
+                input.classList.toggle('pcm2-readonly', !manualCompletion);
+                input.style.pointerEvents = manualCompletion ? '' : 'none';
+                return;
+            }
+
+            input.readOnly = !manualCompletion;
+            input.classList.toggle('pcm2-readonly', !manualCompletion);
+        });
+
+        log('[Pro6PP] manual completion:', manualCompletion, 'readonly:', !manualCompletion);
+    }
+
+    function pcm2_bindManualCompletionCheckbox(contextCountryField) {
+        if (getProvider() !== 'pro6ppext') {
+            return;
+        }
+
+        var checkbox = pcm2_findManualCompletionCheckbox(contextCountryField);
+        if (!checkbox) {
+            return;
+        }
+
+        if (checkbox.getAttribute('data-pcm2-manual-bound') !== '1') {
+            checkbox.setAttribute('data-pcm2-manual-bound', '1');
+            checkbox.addEventListener('change', function () {
+                pcm2_setManualCompletionReadonly(contextCountryField);
+            });
+        }
+
+        pcm2_setManualCompletionReadonly(contextCountryField);
+    }
+
     function pcm2_addLookup() {
         log('pcm2_addLookup: start');
+
         pcm2_bindManualAutoButtons();
-        var countryFields = document.querySelectorAll('select[name="country_id"]');
-        log('Found country fields:', countryFields.length, countryFields);
+
+        var countryFields = document.querySelectorAll(
+            'select[name="country_id"]'
+        );
+
+        log(
+            'Found country fields:',
+            countryFields.length,
+            countryFields
+        );
+
         if (countryFields.length === 0) {
             log('No country fields found');
             return;
         }
+
         countryFields.forEach(function (countryField, index) {
             var formId = pcm2_getFormIdentifier(countryField);
-            log('Processing country field', index, 'formId:', formId, 'value:', countryField.value);
+
+            log(
+                'Processing country field',
+                index,
+                'formId:',
+                formId,
+                'value:',
+                countryField.value
+            );
+
             if (initializedForms.indexOf(formId) !== -1) {
                 log('Form already initialized:', formId);
                 return;
             }
+
             var countryCode = countryField.value;
+
             if (countryField.pcm2ChangeHandler) {
-                countryField.removeEventListener('change', countryField.pcm2ChangeHandler);
+                countryField.removeEventListener(
+                    'change',
+                    countryField.pcm2ChangeHandler
+                );
             }
+
             countryField.pcm2ChangeHandler = function (event) {
                 var newCountryCode = event.target.value;
-                log('Country changed to:', newCountryCode, 'in form:', formId);
+
+                log(
+                    'Country changed to:',
+                    newCountryCode,
+                    'in form:',
+                    formId
+                );
+
+                pcm2CountrySwitching[formId] = true;
+
                 countryCode = newCountryCode;
+                pcm2ManualMode[formId] = false;
+
+                if (
+                    window.pcm2_config &&
+                    String(window.pcm2_config.empty_default_address_fields) === '1'
+                ) {
+                    log(
+                        'empty_default_address_fields enabled, clearing address fields'
+                    );
+
+                    pcm2_clearAllAddressFields(event.target);
+                }
 
                 if (pcm2_isSupportedCountry(countryCode)) {
-                    log('Country is supported, adding postcode lookup');
+                    log(
+                        'Country is supported, adding postcode lookup'
+                    );
+
                     pcm2_hideForm(event.target);
                     pcm2_initLookup(event.target);
                 } else {
-                    log('Country is not supported, showing default fields');
-                    pcm2_clearAllAddressFields(event.target);
+                    log(
+                        'Country is not supported, showing default fields'
+                    );
+
                     pcm2_showForm(event.target, true);
                 }
             };
-            countryField.addEventListener('change', countryField.pcm2ChangeHandler);
+
+            countryField.addEventListener(
+                'change',
+                countryField.pcm2ChangeHandler
+            );
+
+            if (
+                window.pcm2_config &&
+                String(window.pcm2_config.empty_default_address_fields) === '1'
+            ) {
+                log(
+                    'empty_default_address_fields enabled, clearing initial address fields for:',
+                    formId
+                );
+
+                pcm2_clearAllAddressFields(countryField);
+            }
+
             if (pcm2_isSupportedCountry(countryCode)) {
-                log('Country is supported, adding postcode lookup for:', formId);
-                pcm2_hideForm(countryField);
-                pcm2_initLookup(countryField);
+                log(
+                    'Country is supported, adding postcode lookup for:',
+                    formId
+                );
+
+                if (pcm2ManualMode[formId]) {
+                    pcm2_hideForm(countryField, false);
+                    pcm2_showForm(countryField, true);
+                } else {
+                    pcm2_hideForm(countryField);
+                    pcm2_initLookup(countryField);
+                }
             } else {
-                log('Country is not supported, showing default fields for:', formId);
+                log(
+                    'Country is not supported, showing default fields for:',
+                    formId
+                );
+
                 pcm2_showForm(countryField, true);
             }
+
             initializedForms.push(formId);
         });
     }
@@ -140,15 +302,24 @@
         if (_pcm2ManualAutoBound) { return; }
         _pcm2ManualAutoBound = true;
         document.addEventListener('click', function (event) {
-            if (event.target && event.target.id.startsWith('pcm2_autocomplete_manualbtn')) {
+            if (event.target && event.target.id && event.target.id.startsWith('pcm2_autocomplete_manualbtn')) {
+                event.preventDefault();
+                event.stopPropagation();
                 var suffix = event.target.id.replace('pcm2_autocomplete_manualbtn', '');
                 var relatedCountryField = pcm2_findCountryFieldBySuffix(suffix);
+                var formId = pcm2_getFormIdentifier(relatedCountryField);
+                pcm2ManualMode[formId] = true;
                 log('Manual button clicked, showing default fields for', suffix);
+                pcm2_clearAllAddressFields(relatedCountryField, true);
                 pcm2_showForm(relatedCountryField, true);
             }
-            if (event.target && event.target.id.startsWith('pcm2_autocomplete_autobtn')) {
+            if (event.target && event.target.id && event.target.id.startsWith('pcm2_autocomplete_autobtn')) {
+                event.preventDefault();
+                event.stopPropagation();
                 var suffix = event.target.id.replace('pcm2_autocomplete_autobtn', '');
                 var relatedCountryField = pcm2_findCountryFieldBySuffix(suffix);
+                var formId = pcm2_getFormIdentifier(relatedCountryField);
+                pcm2ManualMode[formId] = false;
                 log('Auto button clicked, showing lookup for', suffix);
                 pcm2_hideForm(relatedCountryField, false);
                 pcm2_initLookup(relatedCountryField);
@@ -225,7 +396,7 @@
                                         return {
                                             stage: 'final',
                                             suggestions: []
-                                        };                                    
+                                        };
                                     });
                                 }
                             };
@@ -240,7 +411,7 @@
                         onSelect: function (result) {
                             log('[Pro6PP] onSelect:', result);
                             if (!result) return;
-                            pcm2_fillAddressFields(result, contextCountryField);
+                            pcm2_fillAddressFields(result, contextCountryField, true);
                         }
                     });
                     searchField._pcm2_pro6pp = widget;
@@ -280,9 +451,19 @@
 
                 document.querySelectorAll('.postcodenl-autocomplete-menu:not([data-pcm2-overlay-guard])').forEach(function (menuEl) {
                     menuEl.setAttribute('data-pcm2-overlay-guard', '1');
-                    ['mousedown', 'pointerdown', 'touchstart', 'click'].forEach(function (evt) {
-                        menuEl.addEventListener(evt, function (e) { e.stopPropagation(); });
+                    ['mousedown', 'pointerdown', 'click'].forEach(function (evt) {
+                        menuEl.addEventListener(evt, function (e) {
+                            e.stopPropagation();
+                        });
                     });
+
+                    menuEl.addEventListener(
+                        'touchstart',
+                        function (e) {
+                            e.stopPropagation();
+                        },
+                        { passive: true }
+                    );
                 });
 
                 // Bind the select listener only once per field. It resolves the
@@ -297,7 +478,7 @@
                             activeInstance.getDetails(event.detail.context, function (response) {
                                 if (response) {
                                     var addressData = response.result;
-                                    pcm2_fillAddressFields(addressData, contextCountryField);
+                                    pcm2_fillAddressFields(addressData, contextCountryField, true);
                                 } else {
                                     pcm2_updatePreview(true, contextCountryField);
                                 }
@@ -358,9 +539,19 @@
 
                 document.querySelectorAll('.DemoIntAddress-menu:not([data-pcm2-overlay-guard])').forEach(function (menuEl) {
                     menuEl.setAttribute('data-pcm2-overlay-guard', '1');
-                    ['mousedown', 'pointerdown', 'touchstart', 'click'].forEach(function (evt) {
-                        menuEl.addEventListener(evt, function (e) { e.stopPropagation(); });
+                    ['mousedown', 'pointerdown', 'click'].forEach(function (evt) {
+                        menuEl.addEventListener(evt, function (e) {
+                            e.stopPropagation();
+                        });
                     });
+
+                    menuEl.addEventListener(
+                        'touchstart',
+                        function (e) {
+                            e.stopPropagation();
+                        },
+                        { passive: true }
+                    );
                 });
 
                 if (searchField.getAttribute('data-pcm2-select-bound') !== '1') {
@@ -375,7 +566,7 @@
                         log('[DemoInt] details response:', detailsPayload);
 
                         if (detailsPayload) {
-                            pcm2_fillAddressFields(detailsPayload, contextCountryField);
+                            pcm2_fillAddressFields(detailsPayload, contextCountryField, true);
                         } else {
                             pcm2_updatePreview(true, contextCountryField);
                         }
@@ -495,12 +686,13 @@
             }
             validationFields = pcm2_getValidationFields(contextCountryField);
         }
+        var hideFields = (window.pcm2_config && (window.pcm2_config.hide_default_address_fields === '1'));
+
         if (validationFields.searchWrapper) validationFields.searchWrapper.style.display = 'block';
-        if (validationFields.resultWrapper) validationFields.resultWrapper.style.display = 'block';
+        if (validationFields.resultWrapper) validationFields.resultWrapper.style.display = hideFields ? 'block' : 'none';
         if (validationFields.manualBtn) validationFields.manualBtn.style.display = 'inline-block';
         if (validationFields.autoBtn) validationFields.autoBtn.style.display = 'none';
 
-        var hideFields = (window.pcm2_config && (window.pcm2_config.hide_default_address_fields == 1 || window.pcm2_config.hide_default_address_fields === '1'));
         var formContext = contextCountryField ? (contextCountryField.closest('form') || document) : document;
         if (hideFields) {
             if (typeof window.Alpine !== 'undefined') {
@@ -546,51 +738,123 @@
                 });
             }
         }
+
         pcm2_applyAutocompleteOff(formContext, pcm2_getFields(contextCountryField));
+        pcm2_bindManualCompletionCheckbox(contextCountryField);
         if (!autocompleteInstances[formId]) {
             pcm2_initLookup(contextCountryField);
         }
     }
 
-    function pcm2_clearAllAddressFields(contextCountryField) {
+    function pcm2_clearAllAddressFields(contextCountryField, forceClearAddressFields) {
         const suffix = pcm2_getSuffix(contextCountryField);
         const fields = pcm2_getFields(contextCountryField);
         const _isHyva = typeof window.Alpine !== 'undefined';
+
         const clearField = (addressfield) => {
-            if (!addressfield) return;
-            if (addressfield.value === '') return;
-            addressfield.value = '';
-            if (_isHyva && addressfield._x_model && typeof addressfield._x_model.set === 'function') {
-                addressfield._x_model.set('');
+            if (!addressfield) {
                 return;
             }
-            addressfield.dispatchEvent(new Event('input', { bubbles: true }));
-            if (!_isHyva) { addressfield.dispatchEvent(new Event('change', { bubbles: true })); }
+
+            if (addressfield.value === '') {
+                return;
+            }
+
+            addressfield.value = '';
+
+            if (
+                _isHyva &&
+                addressfield._x_model &&
+                typeof addressfield._x_model.set === 'function'
+            ) {
+                addressfield._x_model.set('');
+            }
+
+            addressfield.dispatchEvent(
+                new Event('input', {
+                    bubbles: true
+                })
+            );
+
+            addressfield.dispatchEvent(
+                new Event('change', {
+                    bubbles: true
+                })
+            );
         };
-        const searchField = document.getElementById(`pcm2_autocomplete_search${suffix}`);
+
+        const searchField = document.getElementById(
+            `pcm2_autocomplete_search${suffix}`
+        );
+
         if (searchField && searchField.value !== '') {
             searchField.value = '';
-            searchField.dispatchEvent(new Event('input', { bubbles: true }));
+
+            searchField.dispatchEvent(
+                new Event('input', {
+                    bubbles: true
+                })
+            );
         }
 
-        const resultWrapper = document.getElementById(`pcm2_autocomplete_result_wrapper${suffix}`);
-        if (resultWrapper) resultWrapper.style.display = 'none';
-        const resultElement = document.getElementById(`pcm2_autocomplete_result${suffix}`);
-        if (resultElement) resultElement.innerHTML = '';
+        const resultWrapper = document.getElementById(
+            `pcm2_autocomplete_result_wrapper${suffix}`
+        );
 
-        if (window.pcm2_config && (window.pcm2_config.empty_default_address_fields == 1)) {
-            const keysToClear = ['address_1', 'address_2', 'address_3', 'postcode', 'city', 'region'];
-            for (const key of keysToClear) {
-                const addressfield = fields?.[key];
+        if (resultWrapper) {
+            resultWrapper.style.display = 'none';
+        }
+
+        const resultElement = document.getElementById(
+            `pcm2_autocomplete_result${suffix}`
+        );
+
+        if (resultElement) {
+            resultElement.innerHTML = '';
+        }
+
+        if (
+            forceClearAddressFields ||
+            (window.pcm2_config &&
+            String(window.pcm2_config.empty_default_address_fields) === '1')
+        ) {
+            const keysToClear = [
+                'address_1',
+                'address_2',
+                'address_3',
+                'postcode',
+                'city',
+                'region'
+            ];
+
+            keysToClear.forEach(function (key) {
+                const addressfield = fields && fields[key];
+
                 if (addressfield) {
                     clearField(addressfield);
                 }
-            }
+            });
         }
 
-        var _clearFCtx = contextCountryField ? (contextCountryField.closest('form') || document) : document;
-        var _clearAddRow = _clearFCtx.querySelector('.pcm2-national-addition-row');
-        if (_clearAddRow) { _clearAddRow.style.display = 'none'; var _clearIn = _clearAddRow.querySelector('.pcm2-national-addition-input'); if (_clearIn) _clearIn.value = ''; }
+        const formContext = contextCountryField
+            ? (contextCountryField.closest('form') || document)
+            : document;
+
+        const additionRow = formContext.querySelector(
+            '.pcm2-national-addition-row'
+        );
+
+        if (additionRow) {
+            additionRow.style.display = 'none';
+
+            const additionInput = additionRow.querySelector(
+                '.pcm2-national-addition-input'
+            );
+
+            if (additionInput) {
+                additionInput.value = '';
+            }
+        }
     }
 
     function pcm2_getSuffix(contextCountryField) {
@@ -598,110 +862,356 @@
         return formId !== 'default' ? '_' + formId.replace(/[^a-zA-Z0-9]/g, '') : '';
     }
 
-    function pcm2_fillAddressFields(result, contextCountryField) {
-        fields = pcm2_getFields(contextCountryField);
-        validationFields = pcm2_getValidationFields(contextCountryField);
-        if (!result || Object.keys(result).length === 0) {
-            pcm2_updatePreview(true, contextCountryField);
-            var _fCtx = contextCountryField ? (contextCountryField.closest('form') || document) : document;
-            var _addRow = _fCtx.querySelector('.pcm2-national-addition-row');
-            if (_addRow) { _addRow.style.display = 'none'; var _addIn = _addRow.querySelector('.pcm2-national-addition-input'); if (_addIn) _addIn.value = ''; }
+    function pcm2_fillAddressFields(
+        result,
+        contextCountryField,
+        fromAutocomplete = false
+    ) {
+        var formId = contextCountryField
+            ? pcm2_getFormIdentifier(contextCountryField)
+            : 'default';
+
+        if (pcm2CountrySwitching[formId] && !fromAutocomplete) {
+            log(
+                'Ignoring stale address callback during country switch:',
+                formId
+            );
+
             return;
         }
 
-        var houseNumber = result.housenumber || result.street_number || '';
+        if (fromAutocomplete) {
+            pcm2CountrySwitching[formId] = false;
+        }
 
-        var placement = window.pcm2_config && parseInt(window.pcm2_config.housenumber_addition_address2, 10);
+        fields = pcm2_getFields(contextCountryField);
+        validationFields = pcm2_getValidationFields(contextCountryField);
+
+        if (!result || Object.keys(result).length === 0) {
+            pcm2_updatePreview(true, contextCountryField);
+
+            var _fCtx = contextCountryField
+                ? (contextCountryField.closest('form') || document)
+                : document;
+
+            var _addRow = _fCtx.querySelector(
+                '.pcm2-national-addition-row'
+            );
+
+            if (_addRow) {
+                _addRow.style.display = 'none';
+
+                var _addIn = _addRow.querySelector(
+                    '.pcm2-national-addition-input'
+                );
+
+                if (_addIn) {
+                    _addIn.value = '';
+                }
+            }
+
+            return;
+        }
+
+        var houseNumber =
+            result.housenumber ||
+            result.street_number ||
+            '';
+
+        var placement =
+            window.pcm2_config &&
+            parseInt(
+                window.pcm2_config.housenumber_addition_address2,
+                10
+            );
+
         if (placement === 0) {
-            if (fields.address_1) fields.address_1.value = (result.street || '') + (houseNumber ? ' ' + houseNumber : '') + (result.addition ? ' ' + result.addition : '');
+            if (fields.address_1) {
+                fields.address_1.value =
+                    (result.street || '') +
+                    (houseNumber ? ' ' + houseNumber : '') +
+                    (result.addition ? ' ' + result.addition : '');
+            }
         } else if (placement === 1) {
-            if (fields.address_1) fields.address_1.value = (result.street || '') + (houseNumber ? ' ' + houseNumber : '');
-            if (fields.address_2) fields.address_2.value = (result.addition ? result.addition : '');
+            if (fields.address_1) {
+                fields.address_1.value =
+                    (result.street || '') +
+                    (houseNumber ? ' ' + houseNumber : '');
+            }
+
+            if (fields.address_2) {
+                fields.address_2.value =
+                    result.addition || '';
+            }
         } else if (placement === 2) {
-            if (fields.address_1) fields.address_1.value = (result.street || '');
-            if (fields.address_2) fields.address_2.value = (houseNumber ? houseNumber : '') + (result.addition ? ' ' + result.addition : '');
+            if (fields.address_1) {
+                fields.address_1.value =
+                    result.street || '';
+            }
+
+            if (fields.address_2) {
+                fields.address_2.value =
+                    (houseNumber || '') +
+                    (result.addition
+                        ? ' ' + result.addition
+                        : '');
+            }
         } else if (placement === 3) {
-            if (fields.address_1) fields.address_1.value = (result.street || '');
-            if (fields.address_2) fields.address_2.value = (houseNumber ? houseNumber : '');
-            if (fields.address_3) fields.address_3.value = (result.addition ? result.addition : '');
+            if (fields.address_1) {
+                fields.address_1.value =
+                    result.street || '';
+            }
+
+            if (fields.address_2) {
+                fields.address_2.value =
+                    houseNumber || '';
+            }
+
+            if (fields.address_3) {
+                fields.address_3.value =
+                    result.addition || '';
+            }
         }
+
         if (placement === 0) {
-            if (fields.address_2) fields.address_2.value = '';
-            if (fields.address_3) fields.address_3.value = '';
+            if (fields.address_2) {
+                fields.address_2.value = '';
+            }
+
+            if (fields.address_3) {
+                fields.address_3.value = '';
+            }
         } else if (placement === 1 || placement === 2) {
-            if (fields.address_3) fields.address_3.value = '';
+            if (fields.address_3) {
+                fields.address_3.value = '';
+            }
         }
-        if (fields.postcode) fields.postcode.value = result.postcode || '';
-        if (fields.city) fields.city.value = result.city || '';
+
+        if (fields.postcode) {
+            fields.postcode.value =
+                result.postcode || '';
+        }
+
+        if (fields.city) {
+            fields.city.value =
+                result.city || '';
+        }
+
         if (fields.region) {
             var regionValue = result.region || '';
+
             if (fields.region.tagName === 'SELECT') {
-                var opts = Array.prototype.slice.call(fields.region.options);
+                var opts = Array.prototype.slice.call(
+                    fields.region.options
+                );
+
                 var matchedOpt = opts.find(function (o) {
-                    return o.text.trim().toLowerCase() === regionValue.toLowerCase() ||
-                        o.value === regionValue;
+                    return (
+                        o.text.trim().toLowerCase() ===
+                        regionValue.toLowerCase() ||
+                        o.value === regionValue
+                    );
                 });
-                fields.region.value = matchedOpt ? matchedOpt.value : '';
+
+                fields.region.value =
+                    matchedOpt ? matchedOpt.value : '';
             } else {
                 fields.region.value = regionValue;
             }
         }
+
         var _hyva = typeof window.Alpine !== 'undefined';
-        ['address_1', 'address_2', 'address_3', 'postcode', 'city', 'region'].forEach(function (fieldName) {
-            if (fields[fieldName]) {
-                var el = fields[fieldName];
-                if (el._x_model && typeof el._x_model.set === 'function') {
-                    el._x_model.set(el.value);
-                } else {
-                    el.dispatchEvent(new Event('input', { bubbles: true }));
-                }
+
+        [
+            'address_1',
+            'address_2',
+            'address_3',
+            'postcode',
+            'city',
+            'region'
+        ].forEach(function (fieldName) {
+            if (!fields[fieldName]) {
+                return;
+            }
+
+            var el = fields[fieldName];
+
+            if (
+                el._x_model &&
+                typeof el._x_model.set === 'function'
+            ) {
+                el._x_model.set(el.value);
+            } else {
+                el.dispatchEvent(
+                    new Event('input', {
+                        bubbles: true
+                    })
+                );
             }
         });
 
         if (!_hyva) {
-            ['address_1', 'address_2', 'address_3', 'postcode', 'city', 'region'].forEach(function (fieldName) {
-                if (fields[fieldName] && fields[fieldName].value) {
-                    fields[fieldName].dispatchEvent(new Event('change', { bubbles: true }));
+            [
+                'address_1',
+                'address_2',
+                'address_3',
+                'postcode',
+                'city',
+                'region'
+            ].forEach(function (fieldName) {
+                if (
+                    fields[fieldName] &&
+                    fields[fieldName].value
+                ) {
+                    fields[fieldName].dispatchEvent(
+                        new Event('change', {
+                            bubbles: true
+                        })
+                    );
                 }
             });
         }
-        pcm2_updatePreview(false, contextCountryField);
 
-        var _formCtx = contextCountryField ? (contextCountryField.closest('form') || document) : document;
-        var _additionRow = _formCtx.querySelector('.pcm2-national-addition-row');
+        pcm2_updatePreview(
+            false,
+            contextCountryField
+        );
+
+        var _formCtx = contextCountryField
+            ? (contextCountryField.closest('form') || document)
+            : document;
+
+        var _additionRow = _formCtx.querySelector(
+            '.pcm2-national-addition-row'
+        );
+
         if (_additionRow) {
-            var _additionInput = _additionRow.querySelector('.pcm2-national-addition-input');
+            var _additionInput =
+                _additionRow.querySelector(
+                    '.pcm2-national-addition-input'
+                );
+
             if (result.addition) {
-                if (_additionInput) _additionInput.value = result.addition;
+                if (_additionInput) {
+                    _additionInput.value =
+                        result.addition;
+                }
+
                 _additionRow.style.display = '';
             } else {
-                if (_additionInput) _additionInput.value = '';
+                if (_additionInput) {
+                    _additionInput.value = '';
+                }
+
                 _additionRow.style.display = 'none';
             }
         }
     }
 
-    function pcm2_updatePreview(errorMsg = false, contextCountryField) {
-        fields = pcm2_getFields(contextCountryField);
-        validationFields = pcm2_getValidationFields(contextCountryField);
-        var suffix = pcm2_getSuffix(contextCountryField);
-        var resultElement = document.getElementById('pcm2_autocomplete_result' + suffix);
-        if (!resultElement) return;
-        if (errorMsg) {
-            resultElement.innerHTML = '<p style="color:red;">Address could not be found, please check or enter manually.</p>';
+    function pcm2_updatePreview(
+        errorMsg = false,
+        contextCountryField
+    ) {
+        var hideFields = (window.pcm2_config && String(window.pcm2_config.hide_default_address_fields) === '1');
+
+        if (!hideFields) {
             return;
         }
-        var html = '';
-        html += '<p>' + fields.address_1.value;
-        if (fields.address_2 && fields.address_2.value) {
-            html += ' ' + fields.address_2.value;
+
+        if (hideFields || errorMsg == true) {
+            var formId = contextCountryField
+                ? pcm2_getFormIdentifier(contextCountryField)
+                : 'default';
+
+            var suffix =
+                pcm2_getSuffix(contextCountryField);
+
+            var resultElement =
+                document.getElementById(
+                    'pcm2_autocomplete_result' + suffix
+                );
+
+            var resultWrapper =
+                document.getElementById(
+                    'pcm2_autocomplete_result_wrapper' + suffix
+                );
+
+            if (pcm2ManualMode[formId]) {
+                if (resultElement) {
+                    resultElement.innerHTML = '';
+                }
+                if (resultWrapper) {
+                    resultWrapper.style.display = 'none';
+                }
+                return;
+            }
+
+            if (pcm2CountrySwitching[formId]) {
+                log(
+                    'BLOCKED pcm2_updatePreview during country switch:',
+                    formId
+                );
+
+                return;
+            }
+
+            fields = pcm2_getFields(contextCountryField);
+            validationFields =
+                pcm2_getValidationFields(contextCountryField);
+
+            if (!resultElement) {
+                return;
+            }
+
+            if (errorMsg) {
+                resultElement.innerHTML =
+                    '<p style="color:red;">Address could not be found, please check or enter manually.</p>';
+
+                return;
+            }
+
+            var html = '<p>';
+
+            if (fields.address_1) {
+                html += fields.address_1.value;
+            }
+
+            if (
+                fields.address_2 &&
+                fields.address_2.value
+            ) {
+                html +=
+                    ' ' + fields.address_2.value;
+            }
+
+            if (
+                fields.address_3 &&
+                fields.address_3.value
+            ) {
+                html +=
+                    ' ' + fields.address_3.value;
+            }
+
+            html += '<br>';
+
+            if (fields.postcode) {
+                html += fields.postcode.value;
+            }
+
+            html += ' ';
+
+            if (fields.city) {
+                html += fields.city.value;
+            }
+
+            html += '</p>';
+
+            resultElement.innerHTML = html;
+
+            if (validationFields.resultWrapper && hideFields) {
+                validationFields.resultWrapper.style.display = 'block';
+            }
         }
-        if (fields.address_3 && fields.address_3.value) {
-            html += ' ' + fields.address_3.value;
-        }
-        html += '<br>' + fields.postcode.value + ' ' + fields.city.value + '</p>';
-        resultElement.innerHTML = html;
-        validationFields.resultWrapper.style.display = 'block';
     }
 
     function pcm2_showForm(contextCountryField, defaultForm = false) {
@@ -709,11 +1219,14 @@
             defaultForm = contextCountryField;
             contextCountryField = document.querySelector('select[name="country_id"]');
         }
+        if (!contextCountryField) {
+            contextCountryField = document.querySelector('select[name="country_id"]');
+        }
         fields = pcm2_getFields(contextCountryField);
         elements = pcm2_getElements(contextCountryField);
         validationFields = pcm2_getValidationFields(contextCountryField);
 
-        var hideFields = (window.pcm2_config && (window.pcm2_config.hide_default_address_fields == 1 || window.pcm2_config.hide_default_address_fields === '1'));
+        var hideFields = (window.pcm2_config && (window.pcm2_config.hide_default_address_fields === '1'));
         if (hideFields) {
             if (typeof window.Alpine !== 'undefined') {
                 var showFormContext = contextCountryField ? (contextCountryField.closest('form') || document) : document;
@@ -757,15 +1270,14 @@
                 });
             }
         }
-        if (pcm2_isSupportedCountry(contextCountryField.value)) {
+        if (contextCountryField && pcm2_isSupportedCountry(contextCountryField.value)) {
             if (defaultForm) {
                 if (validationFields.searchWrapper) validationFields.searchWrapper.style.display = 'none';
                 if (validationFields.resultWrapper) validationFields.resultWrapper.style.display = 'none';
                 if (validationFields.manualBtn) validationFields.manualBtn.style.display = 'none';
                 if (validationFields.autoBtn) validationFields.autoBtn.style.display = 'inline-block';
             }
-        } else {
-
+        } else if (contextCountryField) {
             var pcm2ContainerEl = document.getElementById('pcm2_container' + pcm2_getSuffix(contextCountryField));
             if (pcm2ContainerEl) pcm2ContainerEl.remove();
         }
@@ -1007,29 +1519,86 @@
     }
 
     function pcm2_initializeNewFields(countryFields) {
+        log('pcm2_initializeNewFields');
+
         countryFields.forEach(function (countryField) {
             var formId = pcm2_getFormIdentifier(countryField);
-            if (initializedForms.indexOf(formId) !== -1) return;
-            var countryCode = countryField.value;
-            if (countryField.pcm2ChangeHandler) {
-                countryField.removeEventListener('change', countryField.pcm2ChangeHandler);
+
+            if (initializedForms.indexOf(formId) !== -1) {
+                return;
             }
+
+            var countryCode = countryField.value;
+
+            if (countryField.pcm2ChangeHandler) {
+                countryField.removeEventListener(
+                    'change',
+                    countryField.pcm2ChangeHandler
+                );
+            }
+
             countryField.pcm2ChangeHandler = function (event) {
                 var newCountryCode = event.target.value;
 
+                pcm2CountrySwitching[formId] = true;
+                pcm2ManualMode[formId] = false;
+
+                log(
+                    'Country changed to:',
+                    newCountryCode,
+                    'in reinitialized form:',
+                    formId
+                );
+
+                if (
+                    window.pcm2_config &&
+                    String(window.pcm2_config.empty_default_address_fields) === '1'
+                ) {
+                    log(
+                        'empty_default_address_fields enabled, clearing address fields'
+                    );
+
+                    pcm2_clearAllAddressFields(event.target);
+                }
+
                 if (pcm2_isSupportedCountry(newCountryCode)) {
                     pcm2_hideForm(event.target);
+                    pcm2_initLookup(event.target);
                 } else {
-                    pcm2_clearAllAddressFields(event.target);
                     pcm2_showForm(event.target, true);
                 }
             };
-            countryField.addEventListener('change', countryField.pcm2ChangeHandler);
+
+            countryField.addEventListener(
+                'change',
+                countryField.pcm2ChangeHandler
+            );
+
+            if (
+                window.pcm2_config &&
+                String(window.pcm2_config.empty_default_address_fields) === '1'
+            ) {
+                log(
+                    'empty_default_address_fields enabled, clearing new form:',
+                    formId
+                );
+
+                pcm2_clearAllAddressFields(countryField);
+            }
+
             if (pcm2_isSupportedCountry(countryCode)) {
-                pcm2_hideForm(countryField);
+                if (pcm2ManualMode[formId]) {
+                    pcm2_hideForm(countryField, false);
+                    pcm2_showForm(countryField, true);
+                } else {
+                    pcm2_hideForm(countryField);
+                    pcm2_initLookup(countryField);
+                }
+                pcm2_bindManualCompletionCheckbox(countryField);
             } else {
                 pcm2_showForm(countryField, true);
             }
+
             initializedForms.push(formId);
         });
     }
@@ -1060,31 +1629,89 @@
 
     return {
         init: function () {
-            if (typeof pcm2_config !== 'undefined' && (pcm2_config.enabled == 1 || pcm2_config.enabled === '1')) {
+            if (typeof pcm2_config !== 'undefined' && (pcm2_config.enabled === '1')) {
                 log('[CONFIG]', window.pcm2_config);
                 placementHousenumberAdditions = pcm2_config.housenumber_addition_address2;
                 var pageContext = pcm2_detectPageContext();
                 pcm2_addLookup();
 
                 function pcm2_restoreAfterRerender() {
-                    var countryFields = document.querySelectorAll('select[name="country_id"]');
+                    var hideFields = (window.pcm2_config && String(window.pcm2_config.hide_default_address_fields) === '1');
+                    var countryFields = document.querySelectorAll(
+                        'select[name="country_id"]'
+                    );
+
                     countryFields.forEach(function (countryField) {
                         var formId = pcm2_getFormIdentifier(countryField);
-                        var suffix = formId !== 'default' ? '_' + formId.replace(/[^a-zA-Z0-9]/g, '') : '';
 
-                        var pcm2Container = document.getElementById('pcm2_container' + suffix);
+                        var suffix = formId !== 'default'
+                            ? '_' + formId.replace(/[^a-zA-Z0-9]/g, '')
+                            : '';
+
+                        if (pcm2ManualMode[formId]) {
+                            if (!document.getElementById('pcm2_container' + suffix)) {
+                                pcm2_hideForm(countryField, false);
+                            }
+                            pcm2_showForm(countryField, true);
+                            return;
+                        }
+
+                        var pcm2Container = document.getElementById(
+                            'pcm2_container' + suffix
+                        );
+
                         if (!pcm2Container && pcm2_isSupportedCountry(countryField.value)) {
                             var idx = initializedForms.indexOf(formId);
-                            if (idx !== -1) initializedForms.splice(idx, 1);
+
+                            if (idx !== -1) {
+                                initializedForms.splice(idx, 1);
+                            }
+
                             delete autocompleteInstances[formId];
+
                             pcm2_hideForm(countryField);
                             pcm2_initLookup(countryField);
+                            pcm2_bindManualCompletionCheckbox(countryField);
+
                             initializedForms.push(formId);
-                            var restoredFields = pcm2_getFields(countryField);
-                            if (restoredFields.address_1 && restoredFields.address_1.value) {
-                                pcm2_updatePreview(false, countryField);
+
+                            if (!pcm2CountrySwitching[formId]) {
+                                var restoredFields =
+                                    pcm2_getFields(countryField);
+
+                                if (restoredFields.address_1 && restoredFields.address_1.value && hideFields) {
+                                    pcm2_updatePreview(false, countryField);
+                                }
+                            } else {
+                                log(
+                                    'Skipping preview restore after country switch:',
+                                    formId
+                                );
+
+                                var resultElement =
+                                    document.getElementById(
+                                        'pcm2_autocomplete_result' + suffix
+                                    );
+
+                                if (resultElement) {
+                                    resultElement.innerHTML = '';
+                                }
+
+                                var resultWrapper =
+                                    document.getElementById(
+                                        'pcm2_autocomplete_result_wrapper' +
+                                        suffix
+                                    );
+
+                                if (resultWrapper) {
+                                    resultWrapper.style.display = 'none';
+                                }
                             }
-                        } else if (!pcm2Container && !pcm2_isSupportedCountry(countryField.value)) {
+
+                        } else if (
+                            !pcm2Container &&
+                            !pcm2_isSupportedCountry(countryField.value)
+                        ) {
                             pcm2_showForm(countryField, true);
                         }
                     });

@@ -18,6 +18,10 @@ $nonce = $block->getNonce();
     window.pcm2_config = <?= /* @noEscape */ json_encode($block->getJsConfig(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
     window.pcm2_translations = <?= /* @noEscape */ json_encode($block->getTranslations(), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT) ?>;
 
+    if (window.console && window.pcm2_config && String(window.pcm2_config.debug_mode) === '1') {
+        console.log('[PCM2][CONFIG][hyva-account-loader]', JSON.parse(JSON.stringify(window.pcm2_config)));
+    }
+
     (function () {
         var files = <?= /* @noEscape */ json_encode(array_map([$block, 'getViewFileUrl'], $jsFiles)) ?>;
 
@@ -37,6 +41,8 @@ $nonce = $block->getNonce();
         }, Promise.resolve()).then(function () {
             if (window.PCM2Core && typeof window.PCM2Core.init === 'function') {
                 window.PCM2Core.init();
+            } else if (window.PCM2 && typeof window.PCM2.init === 'function') {
+                window.PCM2.init();
             }
 
             window.dispatchEvent(new CustomEvent('postcodecheckout:hyva-account:ready', {

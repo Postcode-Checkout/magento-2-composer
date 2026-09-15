@@ -1,9 +1,13 @@
 (function () {
     'use strict';
+    var bootTimer = null;
     function boot() {
-        if (window.PCM2 && typeof window.PCM2.init === 'function') {
-            window.PCM2.init(document);
-        }
+        clearTimeout(bootTimer);
+        bootTimer = setTimeout(function () {
+            if (window.PCM2 && typeof window.PCM2.init === 'function') {
+                window.PCM2.init(document);
+            }
+        }, 50);
     }
     if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
     window.addEventListener('load', boot);

@@ -12,6 +12,9 @@
         <referenceContainer name="before.body.end">
             <block name="postcodecheckout-validation-rule"
                    template="Codebrainbv_PostcodeCheckout::hyva/form/field/national/validation-rules.phtml" />
+            <block name="hyva.checkout.postcode-checkout"
+                   class="Codebrainbv\PostcodeCheckout\Block\Config"
+                   template="Codebrainbv_PostcodeCheckout::hyva/checkout/js/national-validation.phtml" />
         </referenceContainer>
 
         <referenceBlock name="entity-form.field-renderers">
@@ -19,11 +22,5 @@
                    as="aac_address"
                    template="Codebrainbv_PostcodeCheckout::hyva/form/field/national/national-validation-fields.phtml" />
         </referenceBlock>
-
-        <referenceContainer name="hyva.checkout.api-v1.after">
-            <block name="hyva.checkout.postcode-checkout"
-                   class="Codebrainbv\PostcodeCheckout\Block\Config"
-                   template="Codebrainbv_PostcodeCheckout::hyva/checkout/js/national-validation.phtml" />
-        </referenceContainer>
     </body>
 </page>

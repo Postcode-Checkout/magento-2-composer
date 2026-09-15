@@ -13,6 +13,23 @@
     var observerTimer = null;
     var buttonsBound = false;
     var sectionCountryMap = {};
+    var sectionState = {};
+    var initializedSections = {};
+
+    function getSectionState(section) {
+        if (!sectionState[section]) {
+            sectionState[section] = {
+                manual: false,
+                postcode: '',
+                house: '',
+                addition: '',
+                additions: [],
+                result: null,
+                lastQuery: ''
+            };
+        }
+        return sectionState[section];
+    }
 
     function config() {
         return window.pcm2_config || {};
@@ -25,7 +42,7 @@
     function log() {
         if (String(config().debug_mode) === '1') {
             var args = Array.prototype.slice.call(arguments);
-            args.unshift('PCM2:');
+            args.unshift('[PCM2]');
             console.log.apply(console, args);
         }
     }
@@ -57,14 +74,15 @@
         });
     }
 
-    function clearAddressFields(section) {
-        if (String(config().empty_default_address_fields) !== '1') { return; }
+    function clearAddressFields(section, force) {
+        if (!force && String(config().empty_default_address_fields) !== '1') { return; }
+        log('Clearing address fields for section:', section);
         ['street0', 'street1', 'street2', 'postcode', 'city', 'region'].forEach(function (key) {
             var el = field(section, key);
             if (!el || el.value === '') { return; }
-            setValue(el, '');
-            if (!isHyva()) {
-                el.dispatchEvent(new Event('change', { bubbles: true }));
+            el.value = '';
+            if (el._x_model && typeof el._x_model.set === 'function') {
+                el._x_model.set('');
             }
         });
     }
@@ -75,10 +93,6 @@
 
     function provider() {
         return String(config().provider || config().configured_provider || '').toLowerCase();
-    }
-
-    function isPostcodeApiProvider() {
-        return provider() === 'postcodeapi';
     }
 
     function byId(id) {
@@ -99,15 +113,6 @@
         });
     }
 
-    function iso2ToIso3(iso2) {
-        var countries = config().supported_countries || [];
-        var found = countries.find(function (country) {
-            return country.iso2 === iso2;
-        });
-
-        return found ? found.iso3 : iso2;
-    }
-
     function registerSectionCountry(countryField) {
         if (countryField) {
             sectionCountryMap[sectionName(countryField)] = countryField;
@@ -116,25 +121,22 @@
 
     function sectionCountry(section) {
         var cached = sectionCountryMap[section];
-        if (cached && document.body.contains(cached)) {
+        if (cached && document.body.contains(cached) && sectionName(cached) === section) {
             return cached;
         }
 
         if (section === 'shipping' || section === 'billing') {
             var byid = byId(section + '-country_id');
-            if (byid) { return byid; }
+            if (byid && sectionName(byid) === section) { return byid; }
         }
 
-        var generic = byId('country') || byId('country_id');
-        if (generic) { return generic; }
-
-        var all = document.querySelectorAll('select[name="country_id"]');
+        var all = document.querySelectorAll('select[name="country_id"], select#country, select#country_id');
         for (var i = 0; i < all.length; i++) {
             if (sectionName(all[i]) === section) {
                 return all[i];
             }
         }
-        return all[0] || null;
+        return null;
     }
 
     function sectionName(countryField) {
@@ -347,7 +349,9 @@
         }
 
         if (countryField && countryField.parentNode) {
-            countryField.parentNode.insertBefore(holder, countryField.nextSibling);
+            if (holder.parentNode !== countryField.parentNode || holder.previousElementSibling !== countryField) {
+                countryField.parentNode.insertBefore(holder, countryField.nextSibling);
+            }
         }
     }
 
@@ -441,6 +445,7 @@
     }
 
     function buildLookupHtmlLuma(id) {
+        log('Building lookup HTML for Luma theme');
         var t = translations();
         var noAddition = t.no_addition || 'Geen toevoeging';
 
@@ -462,7 +467,7 @@
                         '</select></div>' +
                     '</div>' +
 
-                    '<div class="field"><div id="' + id + '-result" class="pcm2-result"></div></div>' +
+                    '<div class="field" data-pcm2-result style="display:none;"><div id="' + id + '-result" class="pcm2-result"></div></div>' +
 
                     '<div class="field lumaPostcode">' +
                         '<div class="pcm2-autocomplete-btn-group">' +
@@ -475,6 +480,7 @@
     }
 
     function buildLookupHtmlHyva(id) {
+        log('Building lookup HTML for Hyvä theme');
         var t = translations();
         var noAddition = t.no_addition || 'Geen toevoeging';
 
@@ -497,7 +503,7 @@
             '</select></div>' +
             '</div>' +
 
-            '<div class="pcm2-field col-span-12"><div id="' + id + '-result" class="pcm2-result"></div></div>' +
+            '<div class="pcm2-field col-span-12" data-pcm2-result style="display:none;"><div id="' + id + '-result" class="pcm2-result"></div></div>' +
 
             '<div class="pcm2-field col-span-12"><div class="pcm2-autocomplete-btn-group">' +
             '<button type="button" class="action secondary btn btn-secondary" id="' + id + '-manual">' + (t.manual || 'Handmatig invullen') + '</button>' +
@@ -512,6 +518,7 @@
     }
 
     function ensureLookupFields(countryField) {
+        log('Ensuring lookup fields for country field:', countryField);
         var section = sectionName(countryField);
         var id = 'pcm2-' + section;
         var holder = byId(id + '-lookup');
@@ -531,7 +538,7 @@
 
         placeLookupHolder(countryField, holder);
 
-        return {
+        var res = {
             holder: holder,
             national: holder.querySelectorAll('[data-pcm2-national]'),
             postcode: byId(id + '-national-postcode'),
@@ -539,18 +546,33 @@
             addition: byId(id + '-national-addition'),
             manual: byId(id + '-manual'),
             auto: byId(id + '-auto'),
-            result: byId(id + '-result')
+            result: byId(id + '-result'),
+            resultWrapper: holder.querySelector('[data-pcm2-result]')
         };
+
+        var st = getSectionState(section);
+        if (res.postcode && st.postcode && !res.postcode.value) {
+            res.postcode.value = st.postcode;
+        }
+        if (res.house && st.house && !res.house.value) {
+            res.house.value = st.house;
+        }
+        if (res.addition && res.addition.tagName === 'SELECT' && st.additions && st.additions.length) {
+            populateAdditionSelect(res.addition, st.additions, st.addition);
+        }
+
+        return res;
     }
 
     function setValue(element, value) {
+        log('Setting value for element:', element, 'to:', value);
         if (!element) {
             return;
         }
 
         var newValue = value || '';
 
-         if (element.value === newValue) {
+        if (element.value === newValue) {
             return;
         }
 
@@ -558,10 +580,12 @@
 
         if (element._x_model && typeof element._x_model.set === 'function') {
             element._x_model.set(element.value);
-            return;
         }
 
         element.dispatchEvent(new Event('input', { bubbles: true }));
+        if (!isHyva()) {
+            element.dispatchEvent(new Event('change', { bubbles: true }));
+        }
     }
 
     function escapeHtml(value) {
@@ -580,8 +604,22 @@
             return;
         }
 
+        var resultWrapper = resultBox.closest('[data-pcm2-result]') || resultBox.parentElement;
+        var st = getSectionState(section);
+
+        if (st.manual) {
+            resultBox.innerHTML = '';
+            if (resultWrapper && resultWrapper !== resultBox) {
+                resultWrapper.style.display = 'none';
+            }
+            return;
+        }
+
         if (error) {
             resultBox.innerHTML = '<p class="message error">Adres kon niet worden gevonden. Controleer de invoer of vul handmatig in.</p>';
+            if (resultWrapper && resultWrapper !== resultBox) {
+                resultWrapper.style.display = '';
+            }
             return;
         }
 
@@ -602,9 +640,21 @@
             city && city.value
         ].filter(Boolean).join(' ');
 
+        if (!streetLine && !cityLine) {
+            resultBox.innerHTML = '';
+            if (resultWrapper && resultWrapper !== resultBox) {
+                resultWrapper.style.display = 'none';
+            }
+            return;
+        }
+
         resultBox.innerHTML =
             '<p>' + escapeHtml(streetLine) + '</p>' +
             '<p>' + escapeHtml(cityLine) + '</p>';
+
+        if (resultWrapper && resultWrapper !== resultBox) {
+            resultWrapper.style.display = '';
+        }
     }
 
     function updateAllPreviews() {
@@ -618,6 +668,7 @@
     }
 
     function fillAddress(section, result, manualAddition, useManualAdditionOverride) {
+        log('Filling address for section:', section, 'with result:', result, 'manualAddition:', manualAddition, 'useManualAdditionOverride:', useManualAdditionOverride);
         result = result || {};
 
         var street = result.street || result.streetName || result.street_name || '';
@@ -748,15 +799,30 @@
         lookup.postcode.setAttribute('data-pcm2-bound', '1');
         lookup.house.setAttribute('data-pcm2-bound', '1');
 
-        var lastResult = null;
+        var lookupTimer = null;
+
+        function scheduleLookup() {
+            clearTimeout(lookupTimer);
+            lookupTimer = setTimeout(doLookup, 60);
+        }
 
         function doLookup() {
             var postcode = lookup.postcode.value.trim();
             var house = lookup.house.value.trim();
 
+            var st = getSectionState(section);
+            st.postcode = postcode;
+            st.house = house;
+
             if (!postcode || !house) {
                 return;
             }
+
+            var query = postcode.toLowerCase().replace(/\s+/g, '') + '_' + house.toLowerCase();
+            if (query === st.lastQuery && st.result) {
+                return;
+            }
+            st.lastQuery = query;
 
             var url = nationalLookupUrl(postcode, house);
 
@@ -771,11 +837,13 @@
                 })
                 .then(function (response) {
                     if (!response || response.status === false || !response.result) {
+                        st.result = null;
                         updateResult(section, true);
                         return;
                     }
 
-                    lastResult = response.result;
+                    st.result = response.result;
+                    st.additions = response.result.additions || [];
 
                     if (lookup.addition && lookup.addition.tagName === 'SELECT') {
                         populateAdditionSelect(
@@ -783,32 +851,37 @@
                             response.result.additions,
                             response.result.addition
                         );
+                        st.addition = lookup.addition.value;
                         fillAddress(section, response.result, lookup.addition.value, true);
                     } else {
                         var addition = lookup.addition ? lookup.addition.value.trim() : '';
+                        st.addition = addition;
                         fillAddress(section, response.result, addition, true);
                     }
                 })
                 .catch(function () {
+                    st.result = null;
                     updateResult(section, true);
                 });
         }
 
-        lookup.postcode.addEventListener('change', doLookup);
-        lookup.postcode.addEventListener('blur', doLookup);
-        lookup.house.addEventListener('change', doLookup);
-        lookup.house.addEventListener('blur', doLookup);
+        lookup.postcode.addEventListener('change', scheduleLookup);
+        lookup.postcode.addEventListener('blur', scheduleLookup);
+        lookup.house.addEventListener('change', scheduleLookup);
+        lookup.house.addEventListener('blur', scheduleLookup);
 
         if (lookup.addition) {
             if (lookup.addition.tagName === 'SELECT') {
                 lookup.addition.addEventListener('change', function () {
-                    if (lastResult) {
-                        fillAddress(section, lastResult, lookup.addition.value, true);
+                    var st = getSectionState(section);
+                    st.addition = lookup.addition.value;
+                    if (st.result) {
+                        fillAddress(section, st.result, lookup.addition.value, true);
                     }
                 });
             } else {
-                lookup.addition.addEventListener('change', doLookup);
-                lookup.addition.addEventListener('blur', doLookup);
+                lookup.addition.addEventListener('change', scheduleLookup);
+                lookup.addition.addEventListener('blur', scheduleLookup);
             }
         }
     }
@@ -822,6 +895,11 @@
         if (additionWrapper) {
             additionWrapper.style.display = 'none';
         }
+
+        var resultWrapper = lookup.holder.querySelector('[data-pcm2-result]');
+        if (resultWrapper && type !== 'national') {
+            resultWrapper.style.display = 'none';
+        }
     }
 
     function showMode(countryField) {
@@ -830,6 +908,7 @@
         var countryCode = countryField ? countryField.value : '';
         var supported = supportedCountry(countryCode);
         var shouldHide = String(config().hide_default_address_fields) === '1';
+        var st = getSectionState(section);
 
         if (!supported) {
             setLookupFieldsVisible(lookup, 'none');
@@ -838,6 +917,18 @@
             if (lookup.manual) lookup.manual.style.display = 'none';
             if (lookup.auto) lookup.auto.style.display = 'none';
             updateResult(section);
+            return;
+        }
+
+        if (st.manual) {
+            setLookupFieldsVisible(lookup, 'none');
+            setDefaultFieldsVisible(section, true);
+            if (lookup.manual) lookup.manual.style.display = 'none';
+            if (lookup.auto) lookup.auto.style.display = '';
+            var resultBox = byId('pcm2-' + section + '-result');
+            if (resultBox) resultBox.innerHTML = '';
+            var resultWrapper = lookup.holder.querySelector('[data-pcm2-result]');
+            if (resultWrapper) resultWrapper.style.display = 'none';
             return;
         }
 
@@ -858,15 +949,39 @@
         }
 
         var section = sectionName(countryField);
-        var lookup = ensureLookupFields(countryField);
-
         showMode(countryField);
 
         if (countryField.getAttribute('data-pcm2-country-bound') !== '1') {
             countryField.setAttribute('data-pcm2-country-bound', '1');
+            countryField.setAttribute('data-pcm2-last-country', countryField.value || '');
+
+            if (!initializedSections[section] && String(config().empty_default_address_fields) === '1') {
+                log('empty_default_address_fields enabled, clearing initial address fields for:', section);
+                clearAddressFields(section);
+            }
+            initializedSections[section] = true;
 
             countryField.addEventListener('change', function () {
-                if (!supportedCountry(countryField.value)) {
+                var newCountryVal = countryField.value;
+                var prevCountryVal = countryField.getAttribute('data-pcm2-last-country');
+                if (newCountryVal === prevCountryVal) {
+                    return;
+                }
+                countryField.setAttribute('data-pcm2-last-country', newCountryVal);
+                
+                var st = getSectionState(section);
+                st.manual = false;
+                st.postcode = '';
+                st.house = '';
+                st.addition = '';
+                st.additions = [];
+                st.result = null;
+                st.lastQuery = '';
+
+                if (String(config().empty_default_address_fields) === '1') {
+                    log('empty_default_address_fields enabled, clearing address fields on country change for:', section);
+                    clearAddressFields(section);
+                } else if (!supportedCountry(countryField.value)) {
                     clearAddressFields(section);
                 }
                 showMode(countryField);
@@ -893,19 +1008,44 @@
 
                 if (!btnSection) { return; }
 
+                e.preventDefault();
+                e.stopPropagation();
+
                 var btnCountryField = sectionCountry(btnSection);
                 var freshLookup = ensureLookupFields(btnCountryField);
 
                 if (isManual) {
+                    var st = getSectionState(btnSection);
+                    st.manual = true;
+                    st.postcode = '';
+                    st.house = '';
+                    st.addition = '';
+                    st.additions = [];
+                    st.result = null;
+                    st.lastQuery = '';
+
+                    clearAddressFields(btnSection, true);
                     setLookupFieldsVisible(freshLookup, 'none');
                     setDefaultFieldsVisible(btnSection, true);
                     if (freshLookup.manual) freshLookup.manual.style.display = 'none';
                     if (freshLookup.auto) freshLookup.auto.style.display = '';
+                    if (freshLookup.postcode) freshLookup.postcode.value = '';
+                    if (freshLookup.house) freshLookup.house.value = '';
+                    if (freshLookup.addition) {
+                        freshLookup.addition.value = '';
+                        var addWrapper = freshLookup.addition.closest('[data-pcm2-addition]');
+                        if (addWrapper) addWrapper.style.display = 'none';
+                    }
                     var resultBox = byId('pcm2-' + btnSection + '-result');
                     if (resultBox) resultBox.innerHTML = '';
+                    var resultWrapper = freshLookup.holder.querySelector('[data-pcm2-result]');
+                    if (resultWrapper) resultWrapper.style.display = 'none';
                 }
 
                 if (isAuto) {
+                    var st = getSectionState(btnSection);
+                    st.manual = false;
+
                     var _shouldHideAuto = String(config().hide_default_address_fields) === '1';
                     setDefaultFieldsVisible(btnSection, !_shouldHideAuto);
                     applyAutocompleteToSection(btnSection);
@@ -922,23 +1062,8 @@
     function detectCountries() {
         var countries = [];
 
-        ['shipping', 'billing'].forEach(function (section) {
-            var country = sectionCountry(section);
-
-            if (country) {
-                countries.push(country);
-            }
-        });
-
-        ['country', 'country_id'].forEach(function (id) {
-            var accountCountry = byId(id);
-
-            if (accountCountry && countries.indexOf(accountCountry) === -1) {
-                countries.push(accountCountry);
-            }
-        });
-
-        document.querySelectorAll('select[name="country_id"]').forEach(function (el) {
+        var allSelects = document.querySelectorAll('select[name="country_id"], select#country, select#country_id');
+        allSelects.forEach(function (el) {
             if (countries.indexOf(el) === -1) {
                 countries.push(el);
             }
@@ -963,10 +1088,20 @@
                 for (var j = 0; j < added.length; j++) {
                     var node = added[j];
                     if (node.nodeType !== 1) { continue; }
-                    if ((node.matches && node.matches('select[name="country_id"]')) ||
-                        (node.querySelectorAll && node.querySelectorAll('select[name="country_id"]').length > 0)) {
+                    if (node.id && node.id.indexOf('pcm2-') === 0) { continue; }
+                    if (node.classList && (node.classList.contains('pcm2-lookup') || node.classList.contains('postcodecheckout-lookup'))) { continue; }
+                    if (node.closest && node.closest('.pcm2-lookup, .postcodecheckout-lookup')) { continue; }
+                    if ((node.matches && (node.matches('select[name="country_id"]') || node.matches('select#country') || node.matches('select#country_id'))) &&
+                        !node.hasAttribute('data-pcm2-country-bound')) {
                         hasNewCountry = true;
                         break;
+                    }
+                    if (node.querySelectorAll) {
+                        var selects = node.querySelectorAll('select[name="country_id"]:not([data-pcm2-country-bound]), select#country:not([data-pcm2-country-bound]), select#country_id:not([data-pcm2-country-bound])');
+                        if (selects.length > 0) {
+                            hasNewCountry = true;
+                            break;
+                        }
                     }
                 }
                 if (hasNewCountry) { break; }
@@ -977,7 +1112,7 @@
 
                 observerTimer = window.setTimeout(function () {
                     api.init();
-                }, 400);
+                }, 200);
             }
         });
 
@@ -988,6 +1123,7 @@
     }
 
     var _magewireListenerAdded = false;
+    var _initDebounceTimer = null;
 
     var api = {
         init: function () {
@@ -1017,9 +1153,16 @@
                 });
             }
 
-            detectCountries().forEach(bindCountry);
-            updateAllPreviews();
-            startObserver();
+            clearTimeout(_initDebounceTimer);
+            _initDebounceTimer = setTimeout(function () {
+                log('Initializing PCM2 core adapter');
+                var countries = detectCountries();
+                countries.forEach(bindCountry);
+                countries.forEach(function (cf) {
+                    updateResult(sectionName(cf));
+                });
+                startObserver();
+            }, 50);
         },
         updatePreviews: updateAllPreviews
     };

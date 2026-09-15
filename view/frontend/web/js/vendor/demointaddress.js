@@ -112,6 +112,10 @@
 			self.debounceTimer = window.setTimeout(function () { self._fetchSuggestions(value); }, DEBOUNCE_MS);
 		};
 
+		this._onFocus = function () {
+			self.open();
+		};
+
 		this._onKeydown = function (e) {
 			if (!self.isOpen) { return; }
 
@@ -148,6 +152,8 @@
 		};
 
 		this.input.addEventListener('input', this._onInput);
+
+		this.input.addEventListener('focus', this._onFocus);
 
 		this.input.addEventListener('keydown', this._onKeydown);
 
@@ -399,6 +405,8 @@
 		}
 
 		this.input.removeEventListener('input', this._onInput);
+
+		this.input.removeEventListener('focus', this._onFocus);
 
 		this.input.removeEventListener('keydown', this._onKeydown);
 

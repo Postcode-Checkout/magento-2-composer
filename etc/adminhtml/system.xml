@@ -38,11 +38,11 @@
                     <comment>empty_fields_helper</comment>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
                 </field>
-                <field id="hide_default_address_fields" translate="label comment" type="select" sortOrder="65" showInDefault="1" showInWebsite="1" showInStore="1">
+                <!-- <field id="hide_default_address_fields" translate="label comment" type="select" sortOrder="65" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>hide_default_fields</label>
                     <comment>hide_default_fields_helper</comment>
                     <source_model>Magento\Config\Model\Config\Source\Yesno</source_model>
-                </field>
+                </field> -->
                 <field id="housenumber_addition_address2" translate="label comment" type="select" sortOrder="70" showInDefault="1" showInWebsite="1" showInStore="1">
                     <label>placement_housenumber_addition</label>
                     <comment>placement_housenumber_addition_helper</comment>

@@ -54,16 +54,17 @@ class ConfigHelper extends AbstractHelper
         $baseUrl = $this->_urlBuilder->getBaseUrl(['_store' => $store->getCode()]);
         $apiUrl = $baseUrl . 'rest/V1/codebrainbv_postcodecheckout/';
         $provider = $this->getConfiguredProvider();
+        $nationalProviders = ['demo', 'postcodenl', 'pro6pp', 'postcodeapi', 'nederland_postcode', 'postcode_connect'];
 
         $config = [
             'enabled' => $this->getConfigValue('postcodecheckout_section/general/enabled'),
-            'empty_default_address_fields' => $this->getConfigValue('postcodecheckout_section/address_settings/empty_default_address_fields'),
+            'empty_default_address_fields' => (string) $this->getConfigValue('postcodecheckout_section/address_settings/empty_default_address_fields'),
             'hide_default_address_fields' => $this->getConfigValue('postcodecheckout_section/address_settings/hide_default_address_fields'),
             'housenumber_addition_address2' => $this->getConfigValue('postcodecheckout_section/address_settings/housenumber_addition_address2'),
             'autocomplete_off' => $this->getConfigValue('postcodecheckout_section/extra_settings/autocomplete_off'),
             'debug_mode' => $this->getConfigValue('postcodecheckout_section/extra_settings/debug_mode'),
             'provider' => $provider,
-            'national_providers' => ['demo', 'postcodenl', 'pro6pp', 'postcodeapi', 'nederland_postcode', 'postcode_connect'],
+            'national_providers' => $nationalProviders,
             'international_providers' => ['postcodenlext', 'pro6ppext', 'demoint'],
             'api_urls' => [
                 'national' => $apiUrl . 'national/address',
